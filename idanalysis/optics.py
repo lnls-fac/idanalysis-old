@@ -1,0 +1,370 @@
+import pickle
+import numpy as np
+import pyaccel
+import matplotlib.pyplot as plt
+
+from apsuite.optics_analysis.tune_correction import TuneCorr
+
+
+CHAMBER_ON = False
+
+
+def get_id_straigh_index_interval(tr, straight_nr):
+
+    if straight_nr and 1 <= straight_nr <= 20:
+        mia = pyaccel.lattice.find_indices(tr, 'fam_name', 'mia')
+        mib = pyaccel.lattice.find_indices(tr, 'fam_name', 'mib')
+        mip = pyaccel.lattice.find_indices(tr, 'fam_name', 'mip')
+        locs = sorted(mia + mib + mip)
+        center = locs[straight_nr-1]
+        # find indices of first upstream and downstream bracketing dipole segments
+        for idx1 in range(center, -1, -1):
+            if tr[idx1].angle != 0:
+                break
+        for idx2 in range(center, len(tr), +1):
+            if tr[idx2].angle != 0:
+                break
+    else:
+        idx1, idx2 = None, None
+    return idx1, idx2
+
+
+def symm_get_locs(tr):
+    mia = pyaccel.lattice.find_indices(tr, 'fam_name', 'mia')
+    mib = pyaccel.lattice.find_indices(tr, 'fam_name', 'mib')
+    mip = pyaccel.lattice.find_indices(tr, 'fam_name', 'mip')
+    # mc = pyaccel.lattice.find_indices(tr, 'fam_name', 'mc')
+    # locs = mia + mib + mip + mc
+    locs = mia + mib + mip
+    return locs
+
+
+def symm_get_locs_beta(knobs):
+    minv, maxv = 9223372036854775807, -9223372036854775807
+    for inds in knobs.values():
+        minv = min(minv, min(inds))
+        maxv = max(maxv, max(inds))
+    return [minv-1, maxv+1]
+
+
+def symm_get_knobs(tr, straight_nr, allquads=False):
+    
+    idx1, idx2 = get_id_straigh_index_interval(tr, straight_nr)
+
+    knobs, knobs_in, knobs_out = dict(), dict(), dict()
+
+    if allquads:
+        quadfams = ['QFA', 'QFB', 'QFP', 'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2', 'Q1', 'Q2', 'Q3', 'Q4']
+    else:
+        quadfams = ['QFA', 'QFB', 'QFP', 'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2']
+
+    for fam in quadfams:
+        
+        # indices of all fam quad elements
+        idx = np.array(pyaccel.lattice.find_indices(tr, 'fam_name', fam))
+
+        knobs[fam] = list(idx)
+
+        # find indices of fam quad elements inside and outside the ID section
+        if None in (idx1, idx2):
+            sel = []
+        else:
+            sel = np.where(np.logical_and(idx > idx1, idx < idx2))
+
+        idx_in = list(idx[sel])  # inside
+        idx_out = list(set(idx) - set(idx_in))  # outside
+
+        # add knobs of fam quads in ID section
+        if np.any(idx_in):
+            knobs_in[fam+'_ID'] = idx_in
+
+        # add knobs of fam quads outside ID section
+        if np.any(idx_out):
+            knobs_out[fam] = idx_out
+
+    knobs['QFB'] += knobs['QFP']; knobs.pop('QFP')
+    knobs['QDB1'] += knobs['QDP1']; knobs.pop('QDP1')
+    knobs['QDB2'] += knobs['QDP2']; knobs.pop('QDP2')
+    
+
+    return knobs, knobs_in, knobs_out
+
+
+def correct_orbit(tr, plot=True):
+
+    bpms = pyaccel.lattice.find_indices(tr, 'fam_name', 'BPM')
+    cors = pyaccel.lattice.find_indices(tr, 'fam_name', 'IDC')
+    nrcors = len(cors)
+    nrbpms = len(bpms)
+
+
+    # calc respm
+    delta_kick = 1e-6
+    respm = np.zeros((2*nrbpms, 2*len(cors)))
+    for i in range(nrcors):
+        kick0 = tr[cors[i]].hkick_polynom
+        tr[cors[i]].hkick_polynom = kick0 + delta_kick/2
+        cod1 = pyaccel.tracking.find_orbit4(tr, indices='open')
+        tr[cors[i]].hkick_polynom = kick0 - delta_kick/2
+        cod2 = pyaccel.tracking.find_orbit4(tr, indices='open')
+        cod_delta = (cod1 - cod2) / delta_kick
+        cod_delta = cod_delta[[0, 2], :]
+        cod_delta = cod_delta[:, bpms]  # select cod in BPMs
+        respm[:, i] = cod_delta.flatten() 
+        tr[cors[i]].hkick_polynom = kick0
+    for i in range(nrcors):
+        kick0 = tr[cors[i]].vkick_polynom
+        tr[cors[i]].vkick_polynom = kick0 + delta_kick/2
+        cod1 = pyaccel.tracking.find_orbit4(tr, indices='open')
+        tr[cors[i]].vkick_polynom = kick0 - delta_kick/2
+        cod2 = pyaccel.tracking.find_orbit4(tr, indices='open')
+        cod_delta = (cod1 - cod2) / delta_kick
+        cod_delta = cod_delta[[0, 2], :]
+        cod_delta = cod_delta[:, bpms]  # select cod in BPMs
+        respm[:, nrcors + i] = cod_delta.flatten()
+        tr[cors[i]].vkick_polynom = kick0
+
+    # inverse matrix
+    umat, smat, vmat = np.linalg.svd(respm, full_matrices=False)
+    ismat = 1/smat
+    ismat = np.diag(ismat)
+    invmat = -1 * np.dot(np.dot(vmat.T, ismat), umat.T)
+    
+    # calc dk
+    cod0 = pyaccel.tracking.find_orbit4(tr, indices='open')
+    cod0 = cod0[[0, 2], :]
+    dk = np.dot(invmat, cod0[:, bpms].flatten())
+    
+    # apply correction
+    for i in range(nrcors):
+        tr[cors[i]].hkick_polynom += dk[i]
+        tr[cors[i]].vkick_polynom += dk[nrcors + i]
+
+    cod1 = pyaccel.tracking.find_orbit4(tr, indices='open')
+    cod1 = cod1[[0, 2], :]
+    
+    if plot:
+        spos = pyaccel.lattice.find_spos(tr)
+        plt.plot(spos[bpms], 1e6*cod0[0, bpms], 'o-', color='C0', label='uncorrected')
+        plt.plot(spos[bpms], 1e6*cod1[0, bpms], 'o-', color='C1', label='corrected')
+        plt.plot(spos[cors[0]:cors[-1]+1], 1e6*cod1[0, cors[0]:cors[-1]+1], 'o-', color='C2', label='@idstraight')
+        plt.legend()
+        plt.title('Horizontal COD')
+        plt.xlabel('spos [m]')
+        plt.ylabel('COD [um]')
+        plt.show()
+
+        plt.plot(spos, 1e6*cod0[1, :], 'o-', color='C0', label='uncorrected')
+        plt.plot(spos, 1e6*cod1[1,:], 'o-', color='C1', label='corrected')
+        plt.plot(spos[cors[0]:cors[-1]+1], 1e6*cod1[1, cors[0]:cors[-1]+1], 'o-', color='C2', label='@idstraight')
+        plt.legend()
+        plt.title('Vertical COD')
+        plt.xlabel('spos [m]')
+        plt.ylabel('COD [um]')
+        plt.show()
+
+    idx_x = np.argmax(np.abs(cod1[0, (cors[0]+1):cors[-1]]))
+    idx_y = np.argmax(np.abs(cod1[1, (cors[0]+1):cors[-1]]))
+    ret = (dk, 
+        cod1[0, idx_x], cod1[1, idx_y], 
+        np.std(cod0[0,:]), np.std(cod0[1,:]), np.std(cod1[0,:]), np.std(cod1[1,:]), 
+        np.max(np.abs(cod0[0,:])), np.max(np.abs(cod0[1,:])), np.max(np.abs(cod1[0,:])), np.max(np.abs(cod1[1,:]))
+    )
+    return ret
+
+
+def correct_tunes_twoknobs(tr, goal_tunes):
+
+    tunecorr = TuneCorr(tr, 'SI', method='Proportional', grouping='TwoKnobs')
+    tunemat = tunecorr.calc_jacobian_matrix()
+    tunecorr.correct_parameters(model=tr, goal_parameters=goal_tunes, jacobian_matrix=tunemat)
+
+
+def symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha, weight=False):
+    tw, _ = pyaccel.optics.calc_twiss(tr)
+    nrlocs = len(locs)
+    nrlocs_beta = len(locs_beta)
+    residue = np.zeros(2*nrlocs+4*nrlocs_beta)
+    residue[:nrlocs] = tw.alphax[locs]
+    residue[nrlocs:2*nrlocs] = tw.alphay[locs]
+    if weight:
+        residue[:nrlocs] = tw.alphax[locs]
+        residue[nrlocs:2*nrlocs] = tw.alphay[locs]
+        residue[2*nrlocs+0*nrlocs_beta:2*nrlocs+1*nrlocs_beta] = 1e3*(tw.betax[locs_beta] - goal_beta[0])
+        residue[2*nrlocs+1*nrlocs_beta:2*nrlocs+2*nrlocs_beta] = 1e3*(tw.betay[locs_beta] - goal_beta[1])
+        residue[2*nrlocs+2*nrlocs_beta:2*nrlocs+3*nrlocs_beta] = 1e3*(tw.alphax[locs_beta] - goal_alpha[0])
+        residue[2*nrlocs+3*nrlocs_beta:2*nrlocs+4*nrlocs_beta] = 1e3*(tw.alphay[locs_beta] - goal_alpha[1])
+    else:
+        residue[:nrlocs] = tw.alphax[locs]
+        residue[nrlocs:2*nrlocs] = tw.alphay[locs]
+        residue[2*nrlocs+0*nrlocs_beta:2*nrlocs+1*nrlocs_beta] = 1*(tw.betax[locs_beta] - goal_beta[0])
+        residue[2*nrlocs+1*nrlocs_beta:2*nrlocs+2*nrlocs_beta] = 1*(tw.betay[locs_beta] - goal_beta[1])
+        residue[2*nrlocs+2*nrlocs_beta:2*nrlocs+3*nrlocs_beta] = 0*(tw.alphax[locs_beta] - goal_alpha[0])
+        residue[2*nrlocs+3*nrlocs_beta:2*nrlocs+4*nrlocs_beta] = 0*(tw.alphay[locs_beta] - goal_alpha[1])
+    return residue
+
+
+def correct_symmetry_withbeta(tr, straight_nr, goal_beta, goal_alpha, delta_k=1e-5, weight=False):
+    """."""
+    
+    locs = symm_get_locs(tr)
+    nrlocs = len(locs)
+    _, knobs, _ = symm_get_knobs(tr, straight_nr)
+    locs_beta = symm_get_locs_beta(knobs)
+    nrlocs_beta = len(locs_beta)
+
+    # calc respm
+    respm = np.zeros((2*nrlocs+4*nrlocs_beta, len(knobs)))
+    for i, fam in enumerate(knobs):
+        inds = knobs[fam]
+        k0 = pyaccel.lattice.get_attribute(tr, 'polynom_b', inds, 1)
+        pyaccel.lattice.set_attribute(tr, 'polynom_b', inds, k0 + delta_k/2, 1)
+        res1 = symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha, weight=weight)
+        pyaccel.lattice.set_attribute(tr, 'polynom_b', inds, k0 - delta_k/2, 1)
+        res2 = symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha, weight=weight)
+        pyaccel.lattice.set_attribute(tr, 'polynom_b', inds, k0, 1)
+        # v = (res1 - res2)/delta_k
+        # print(i)
+        # print(v.shape)
+        # print(res1.shape)
+        # print(res2.shape)
+        # print(respm.shape)
+        respm[:, i] = (res1 - res2)/delta_k
+
+    # inverse matrix
+    umat, smat, vmat = np.linalg.svd(respm, full_matrices=False)
+    # print(smat)
+    ismat = 1/smat
+    for i in range(len(smat)):
+        if smat[i]/max(smat) < 1e-5:
+            ismat[i] = 0
+    ismat = np.diag(ismat)
+    invmat = -1 * np.dot(np.dot(vmat.T, ismat), umat.T)
+
+    # calc dk
+    alpha = symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha, weight=weight)
+    dk = np.dot(invmat, alpha.flatten())
+    
+    # apply correction
+    for i, fam in enumerate(knobs):
+        inds = knobs[fam]
+        k0 = pyaccel.lattice.get_attribute(tr, 'polynom_b', inds, 1)
+        pyaccel.lattice.set_attribute(tr, 'polynom_b', inds, k0 + dk[i], 1)
+
+    # print(list(knobs.keys()))
+    # print(dk)
+
+    return dk
+
+
+def calc_dynapt_xy(ring, nrturns, nrtheta=9, mindeltar=0.1e-3, r1=0, r2=30e-3):
+    
+    ang = np.linspace(0, np.pi, nrtheta)
+    ang[0] += 0.0001
+    ang[-1] -= 0.0001
+
+    vx, vy = list(), list()
+    for a in ang:
+        r1_, r2_ = r1, r2
+        while r2_-r1_ > mindeltar:
+            rm = (r1_+r2_) / 2
+            rx = rm * np.cos(a)
+            ry = rm * np.sin(a)
+            _, lost, _, _, _ = pyaccel.tracking.ring_pass(ring, [rx, 0, ry, 0, 0, 0], nrturns)
+            if lost:
+                r2_ = rm
+            else:
+                r1_ = rm
+            print('ang:{:5.1f} r1:{:5.2f} r2:{:5.2f}'.format(a*180/np.pi, r1_*1e3, r2_*1e3))
+        rm = 0.5*(r1_+r2_)
+        rx = rm * np.cos(a)
+        ry = rm * np.sin(a)
+        vx.append(rx)
+        vy.append(ry)
+    return np.array(vx), np.array(vy)
+
+
+def calc_dynapt_ex(ring, nrturns, demax=0.05, nrpts=33, mindeltax=0.1e-3, xmin=-30e-3, y=1e-3):
+
+    denergies = np.linspace(-demax, demax, nrpts)
+    x = []
+    for denergy in denergies:
+        xmin_, xmax_ = xmin, 0.0
+        while xmax_ - xmin_ > mindeltax:
+            xm = (xmin_ + xmax_) / 2
+            _, lost, _, _, _ = pyaccel.tracking.ring_pass(ring, [xm, 0, y, 0, denergy, 0], nrturns)
+            if lost:
+                xmin_ = xm
+            else:
+                xmax_ = xm
+            print('ene:{:+4.1f} % xmin:{:+6.2f} xmax:{:+6.2f}'.format(denergy*100, xmin_*1e3, xmax_*1e3))
+        xm = (xmin_ + xmax_) / 2
+        x.append(xm)
+        
+    return denergies, np.array(x)
+
+
+def save_dynapt_xy(models,
+    nrturns=4000,
+    nrtheta=33,
+    mindeltar=0.1e-3,
+    r1=0,
+    r2=30e-3):
+
+    # nominal_ring = si.create_accelerator(ids=None)
+    # nominal_ring.vchamber_on = CHAMBER_ON
+    # data = dict()
+    # data['ring0'] = calc_dynapt_xy(nominal_ring, nrturns=nrturns, nrtheta=nrtheta, mindeltar=mindeltar, r1=r1, r2=r2)
+    # pickle.dump(data, open('dynapt_xy_' + 'nominal' + '.pickle', 'wb'))
+    # return
+
+    for config, rings in models.items():
+        print('=== {} ==='.format(config))
+        ring0, ring1, ring2, ring3 = rings
+        data = dict()
+        print('--- ring0 ---')
+        data['ring0'] = calc_dynapt_xy(ring0, nrturns=nrturns, nrtheta=nrtheta, mindeltar=mindeltar, r1=r1, r2=r2)
+        print('--- ring1 ---')
+        data['ring1'] = calc_dynapt_xy(ring1, nrturns=nrturns, nrtheta=nrtheta, mindeltar=mindeltar, r1=r1, r2=r2)
+        print('--- ring2 ---')
+        data['ring2'] = calc_dynapt_xy(ring2, nrturns=nrturns, nrtheta=nrtheta, mindeltar=mindeltar, r1=r1, r2=r2)
+        print('--- ring3 ---')
+        data['ring3'] = calc_dynapt_xy(ring3, nrturns=nrturns, nrtheta=nrtheta, mindeltar=mindeltar, r1=r1, r2=r2)
+        pickle.dump(data, open('dynapt_xy_' + config + '.pickle', 'wb'))
+        print()
+
+
+def save_dynapt_ex(models,
+    nrturns=4000,
+    demax=0.05, 
+    nrpts=33, 
+    mindeltax=0.1e-3, 
+    xmin=-30e-3, 
+    y=1e-3):
+
+    # nominal_ring = si.create_accelerator(ids=None)
+    # nominal_ring.vchamber_on = CHAMBER_ON
+    # data = dict()
+    # data['ring0'] = calc_dynapt_ex(nominal_ring, nrturns=nrturns, demax=demax, nrpts=nrpts, mindeltax=mindeltax, xmin=xmin, y=y)
+    # pickle.dump(data, open('dynapt_ex_' + 'nominal' + '.pickle', 'wb'))
+    # return
+
+    for config, rings in models.items():
+        print('=== {} ==='.format(config))
+        ring0, ring1, ring2, ring3 = rings
+        data = dict()
+        print('--- ring0 ---')
+        data['ring0'] = calc_dynapt_ex(ring0, nrturns=nrturns, demax=demax, nrpts=nrpts, mindeltax=mindeltax, xmin=xmin, y=y)
+        print('--- ring1 ---')
+        data['ring1'] = calc_dynapt_ex(ring1, nrturns=nrturns, demax=demax, nrpts=nrpts, mindeltax=mindeltax, xmin=xmin, y=y)
+        print('--- ring2 ---')
+        data['ring2'] = calc_dynapt_ex(ring2, nrturns=nrturns, demax=demax, nrpts=nrpts, mindeltax=mindeltax, xmin=xmin, y=y)
+        print('--- ring3 ---')
+        data['ring3'] = calc_dynapt_ex(ring3, nrturns=nrturns, demax=demax, nrpts=nrpts, mindeltax=mindeltax, xmin=xmin, y=y)
+        pickle.dump(data, open('dynapt_ex_' + config + '.pickle', 'wb'))
+        print()
+
+
+def load_models(folder='./results/', modelsname = 'models'):
+    models = pickle.load(open(folder + modelsname + '.pickle', 'rb'))
+    return models
