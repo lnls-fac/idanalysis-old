@@ -7,11 +7,11 @@ FOLDER_BASE = '/home/ximenes/repos-dev/'
 
 def create_deltadata(random_ids=DEFAULT_RANDOM_IDS):
     if random_ids:
-        folder = FOLDER_BASE + DeltaData.FOLDER_SABIA_ERR
-        configs = DeltaData.CONFIGS_ERR
+        folder = FOLDER_BASE + DeltaData.FOLDER_SABIA_MAPS_ERR
+        configs = DeltaData.SABIA_CONFIGS_ERR
     else:
-        folder = FOLDER_BASE + DeltaData.FOLDER_SABIA
-        configs = DeltaData.CONFIGS
+        folder = FOLDER_BASE + DeltaData.FOLDER_SABIA_MAPS
+        configs = DeltaData.SABIA_CONFIGS
     deltadata = DeltaData(folder=folder, configs=configs)
     return deltadata
 
