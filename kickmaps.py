@@ -212,40 +212,47 @@ class IDKickMap:
             ksl.append(ksl_)
         return posy, _np.array(ksl)
 
-    def plot_kickx_vs_posy(self, indx):
+    def plot_kickx_vs_posy(self, indx, title=''):
         """."""
         posx = self.posx
         posy = self.posy
         kickx = self.kickx / self.brho**2
+        colors = _plt.cm.jet(_np.linspace(0, 1, len(indx)))
+        _plt.figure(figsize=(8, 6))
         for c, ix in enumerate(indx):
             x = posx[ix]
             _plt.plot(
-                1e3*posy, 1e6*kickx[:, ix], '-', color='C'+str(c))
+                1e3*posy, 1e6*kickx[:, ix], '-', color=colors[c])
             _plt.plot(
-                1e3*posy, 1e6*kickx[:, ix], 'o', color='C'+str(c),
+                1e3*posy, 1e6*kickx[:, ix], 'o', color=colors[c],
                 label='posx = {:+.1f} mm'.format(1e3*x))
         _plt.xlabel('posy [mm]')
         _plt.ylabel('kickx [urad]')
+        _plt.title(title)
         _plt.grid()
-        _plt.legend()
+        _plt.legend(loc='upper left', bbox_to_anchor=(1.1, 1.05))
+        _plt.tight_layout(True)
         _plt.show()
 
-    def plot_kicky_vs_posx(self, indy):
+    def plot_kicky_vs_posx(self, indy, title=''):
         """."""
         posx = self.posx
         posy = self.posy
         kicky = self.kicky / self.brho**2
-
+        colors = _plt.cm.jet(_np.linspace(0, 1, len(indy)))
+        _plt.figure(figsize=(8, 6))
         for c, iy in enumerate(indy):
             y = posy[iy]
-            _plt.plot(1e3*posx, 1e6*kicky[iy, :], '-', color='C'+str(c))
+            _plt.plot(1e3*posx, 1e6*kicky[iy, :], '-', color=colors[c])
             _plt.plot(
-                1e3*posx, 1e6*kicky[iy, :], 'o', color='C'+str(c),
+                1e3*posx, 1e6*kicky[iy, :], 'o', color=colors[c],
                 label='posy = {:+.1f} mm'.format(1e3*y))
         _plt.xlabel('posx [mm]')
         _plt.ylabel('kicky [urad]')
+        _plt.title(title)
         _plt.grid()
-        _plt.legend()
+        _plt.legend(loc='upper left', bbox_to_anchor=(1.1, 1.05))
+        _plt.tight_layout(True)
         _plt.show()
 
     def plot_KsL_kickx(self, config_ind, grad, title):
