@@ -8,7 +8,7 @@ from fieldmaptrack.fieldmap import FieldMap as _FieldMap
 
 
 class DeltaData:
-
+    """Delta fieldmap and kickmap data access class."""
     class _Aux:
         """Auxilliary consts."""
 
@@ -67,11 +67,11 @@ class DeltaData:
             'vertical_polarization/kmax/2021-08-15_DeltaSabia_RandomModelXX_VerticalPolarization_Kh=0.0_Kv=6.1' + su2,
         ]
 
-    FOLDER_SIMUL = 'id-sabia/model-03/simulation/magnetic/'
-    FOLDER_SABIA = ( FOLDER_SIMUL + 'fieldmaps_and_kickmaps/')
-    FOLDER_SABIA_ERR = ( FOLDER_SIMUL + 'fieldmaps_and_kickmaps_with_errors/')
+    FOLDER_SABIA = 'id-sabia/model-03/simulation/magnetic/'
+    FOLDER_SABIA_MAPS = ( FOLDER_SABIA + 'fieldmaps_and_kickmaps/')
+    FOLDER_SABIA_MAPS_ERR = ( FOLDER_SABIA + 'fieldmaps_and_kickmaps_with_errors/')
 
-    CONFIGS = (
+    SABIA_CONFIGS = (
         #                                                                            polarization variation
         #                                                                         |-------------------------|
         #                                                                     energy (K) variation (dGV)
@@ -100,7 +100,7 @@ class DeltaData:
         _Aux.of + _Aux.d6 + _Aux.lincp + 'Kh=2.99_Kv=2.99_+dCP' + _Aux.su,  # CSD: +00.000 CSE: +13.125 CID: -13.125 CIE: +00.000
         )
 
-    CONFIGS_ERR = (
+    SABIA_CONFIGS_ERR = (
         'horizontal_polarization/kzero/2021-08-14_DeltaSabia_RandomModel01_HorizontalPolarization_Kh=0.0_Kv=0.0_dGV_X=-7_7mm_Y=-4_4mm_Z=-800_800mm',
         'horizontal_polarization/kzero/2021-08-14_DeltaSabia_RandomModel02_HorizontalPolarization_Kh=0.0_Kv=0.0_dGV_X=-7_7mm_Y=-4_4mm_Z=-800_800mm',
         'horizontal_polarization/kzero/2021-08-14_DeltaSabia_RandomModel03_HorizontalPolarization_Kh=0.0_Kv=0.0_dGV_X=-7_7mm_Y=-4_4mm_Z=-800_800mm',
