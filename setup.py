@@ -30,7 +30,7 @@ setup(
     long_description_content_type='text/markdown',
     url='https://github.com/lnls-fac/idanalysis',
     download_url='https://github.com/lnls-fac/idanalysis',
-    license='MIT License',
+    license='GPLv3 License',
     classifiers=[
         'Intended Audience :: Science/Research',
         'Programming Language :: Python',

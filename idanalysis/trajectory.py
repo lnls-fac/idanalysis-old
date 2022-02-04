@@ -1,4 +1,4 @@
-"""Trajectories."""
+"""ID Trajectories."""
 
 import pickle as _pickle
 import numpy as _np
@@ -7,10 +7,10 @@ import matplotlib.pyplot as _plt
 from fieldmaptrack.beam import Beam as _Beam
 from fieldmaptrack.track import Trajectory as _Trajectory
 
-class Trajectory(_Trajectory):
+class IDTrajectory(_Trajectory):
     """."""
 
-    KICKS_POS = [
+    KICKS_POS_SABIA = [
         -784,  # from straight center [mm]
         +784,  # from straight center [mm]
         ]
@@ -18,16 +18,17 @@ class Trajectory(_Trajectory):
     KICKS_DELTA = 0.5e-6  # [rad]
 
     def __init__(self, label, fieldmap, output_folder=None, energy=3):
+        """."""
         self._label = label
         self._output_folder = '' if output_folder is None else output_folder
         beam=_Beam(energy=energy)
         _Trajectory.__init__(self, beam=beam, fieldmap=fieldmap)
     
-        self._init_rz = min(min(fieldmap.rz), Trajectory.KICKS_POS[0])
-        self._min_rz = max(max(fieldmap.rz), Trajectory.KICKS_POS[1])
+        self._init_rz = min(min(fieldmap.rz), IDTrajectory.KICKS_POS_SABIA[0])
+        self._min_rz = max(max(fieldmap.rz), IDTrajectory.KICKS_POS_SABIA[1])
         self._s_step = 0.1
         self._kicks = [
-            Trajectory.KICKS_POS, # rz location of kicks [mm]
+            IDTrajectory.KICKS_POS_SABIA, # rz location of kicks [mm]
             [0, 0],  # Horizontal up and down stream kicks [rad]
             [0, 0],  # Vertical up and down stream kicks [rad]
             ]
@@ -130,46 +131,6 @@ class Trajectory(_Trajectory):
             init_px=0.0, init_py=0.0, init_pz=1.0,
             min_rz=self._min_rz, s_step=s_step, kicks=self._kicks)
 
-    def calc_posang_residue(self, s_step=None):
-        """."""
-        self.calc_trajectory(s_step=s_step)
-        res = _np.array(
-            [self.rx[-1], self.px[-1], self.ry[-1], self.py[-1]])
-        return res
-
-    def calc_posang_respm(self, s_step=None, save=False):
-        """."""
-        s_step = s_step or self._s_step
-        kicks = self._kicks
-
-        delta_kick = Trajectory.KICKS_DELTA
-
-        respm = _np.zeros((4, 4))
-        for i in range(2):
-            
-            # horizontal
-            kick0 = kicks[1][i]
-            kicks[1][i] = kick0 + delta_kick/2
-            r1 = self.calc_posang_residue(s_step=s_step)
-            kicks[1][i] = kick0 - delta_kick/2
-            r2 = self.calc_posang_residue(s_step=s_step)
-            respm[:, 0+i] = (r1 - r2) / delta_kick
-            kicks[1][i] = kick0
-
-            # vertical
-            kick0 = kicks[2][i]
-            kicks[2][i] = kick0 + delta_kick/2
-            r1 = self.calc_posang_residue(s_step=s_step)
-            kicks[2][i] = kick0 - delta_kick/2
-            r2 = self.calc_posang_residue(s_step=s_step)
-            respm[:, 2+i] = (r1 - r2) / delta_kick
-            kicks[2][i] = kick0
-
-        if save:
-            self.save_posang_respm(respm, s_step)
-        
-        return respm
-
     def correct_posang_init(self, s_step=None, plot=False, title=None):
 
         s_step = s_step or self._s_step
@@ -227,6 +188,48 @@ class Trajectory(_Trajectory):
                 _plt.title(title)
             _plt.grid()
             _plt.show()
+
+    # --- soon-to-be-deprecated methods ---
+
+    def calc_posang_residue(self, s_step=None):
+        """."""
+        self.calc_trajectory(s_step=s_step)
+        res = _np.array(
+            [self.rx[-1], self.px[-1], self.ry[-1], self.py[-1]])
+        return res
+
+    def calc_posang_respm(self, s_step=None, save=False):
+        """."""
+        s_step = s_step or self._s_step
+        kicks = self._kicks
+
+        delta_kick = IDTrajectory.KICKS_DELTA
+
+        respm = _np.zeros((4, 4))
+        for i in range(2):
+            
+            # horizontal
+            kick0 = kicks[1][i]
+            kicks[1][i] = kick0 + delta_kick/2
+            r1 = self.calc_posang_residue(s_step=s_step)
+            kicks[1][i] = kick0 - delta_kick/2
+            r2 = self.calc_posang_residue(s_step=s_step)
+            respm[:, 0+i] = (r1 - r2) / delta_kick
+            kicks[1][i] = kick0
+
+            # vertical
+            kick0 = kicks[2][i]
+            kicks[2][i] = kick0 + delta_kick/2
+            r1 = self.calc_posang_residue(s_step=s_step)
+            kicks[2][i] = kick0 - delta_kick/2
+            r2 = self.calc_posang_residue(s_step=s_step)
+            respm[:, 2+i] = (r1 - r2) / delta_kick
+            kicks[2][i] = kick0
+
+        if save:
+            self.save_posang_respm(respm, s_step)
+        
+        return respm
 
     def correct_posang(self, s_step=None, respm=None):
         """."""
