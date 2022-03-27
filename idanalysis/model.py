@@ -24,6 +24,11 @@ def get_id_sabia_list(configname, ids=None):
     return ids
 
 
+def get_id_epu_list(configname, ids=None):
+    epu50 = si.IDModel(
+        subsec=si.IDModel.SUBSECTIONS.ID15SP
+    )
+
 def create_model(ids, vchamber_on=False):
     """."""
     ring = si.create_accelerator(ids=ids)
