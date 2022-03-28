@@ -26,9 +26,9 @@ def get_id_sabia_list(configname, ids=None):
 
 def get_id_epu_list(configname, ids=None):
     epu50 = si.IDModel(
-        subsec=si.IDModel.SUBSECTIONS.ID15SP, file_name=configname,
+        subsec=si.IDModel.SUBSECTIONS.ID11SP, file_name=configname,
         fam_name='EPU50',
-        nr_steps=40, rescale_kicks=1.0, rescale_length=2.4/3.6)
+        nr_steps=40, rescale_kicks=1.0, rescale_length=2.8/3.6)
     ids = ids or dict()
     if not isinstance(configname, str):
         raise TypeError

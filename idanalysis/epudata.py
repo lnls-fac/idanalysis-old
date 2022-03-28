@@ -9,9 +9,11 @@ from fieldmaptrack.fieldmap import FieldMap as _FieldMap
 
 class EPUData:
     """EPU fieldmap and kickmap data access class."""
-    
+
     DEFAULT_GAP = 22  # [mm]
     DEFAULT_PERIOD = 50  # [mm]
+
+    KMAP_FNAME_EXT = '.txt'  # // '.kck'
 
     FOLDER_EPU = (
         'MatlabMiddleLayer/Release/lnls/fac_scripts/'
@@ -48,7 +50,7 @@ class EPUData:
     def get_header(self, config):
         """."""
         return self._header[config]
-        
+
     def get_fieldmap(self, config):
         """Return Trajectory object for a given config."""
         fname = self.get_fieldmap_filename(config)
@@ -68,13 +70,14 @@ class EPUData:
 
     def get_config_label(self, config):
         """."""
+        config = config.replace('_kicktable','')
         gap = self.get_gap(config)
-        fstr = 'gap={:.3f}'
+        fstr = config + '_gap={:.3f}'
         return fstr.format(gap)
 
     def get_kickmap_filename(self, config):
         """Return kickmap filename of a config."""
-        return self._folder + config + '.kck'
+        return self._folder + config + EPUData.KMAP_FNAME_EXT
 
     def get_fieldmap_filename(self, config):
         """Return fieldmap filename of a config."""
@@ -126,7 +129,7 @@ class EPUData:
             return data['posCIE']/(self.get_period_length()/2)
         else:
             return data['posCIE']/norm
-    
+
     def get_config_names(self):
         names = []
         for config in self:
@@ -134,7 +137,7 @@ class EPUData:
         return names
 
     # --- analysis ---
-    
+
     def __getitem__(self, idx):
         """."""
         return self._configs[idx]
@@ -187,5 +190,3 @@ class EPUData:
         """."""
         fname = self.get_kickmap_filename(config)
         return pyaccel.elements.Kicktable(filename=fname)
-
-
