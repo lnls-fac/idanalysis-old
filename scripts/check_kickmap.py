@@ -85,14 +85,14 @@ def model_tracking_kick_error():
     fname, yidx=yidx, plot_flag=False)
   at_end_idx = 1  # half ID, half kick
   model, rx0_2, pxf_2, *_ = calc_model_kicks(
-    fname, idkmap, yidx=yidx, nr_steps=1, at_end_idx=at_end_idx,
+    fname, idkmap, yidx=yidx, nr_steps=40, at_end_idx=at_end_idx,
     plot_flag=False)
   pxf_err = pxf_2*2 - pxf_1  # kick error for whole kickmap
 
   # plot comparison
   plt.plot(1e3*rx0_1, 1e6*pxf_1, label='input kickmap')
   plt.plot(1e3*rx0_2, 1e6*pxf_2*2, label='tracking w/ kickmap')
-  plt.plot(1e3*rx0_2, 1e6*pxf_err*1e14, label=r'error x 10$^{14}$')
+  # plt.plot(1e3*rx0_2, 1e6*pxf_err*1e14, label=r'error x 10$^{14}$')
   plt.xlabel('rx [mm]')
   plt.ylabel('px [urad]')
   plt.title('Midplane horizontal kick from model tracking')
