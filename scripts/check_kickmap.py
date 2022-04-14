@@ -13,23 +13,38 @@ from kickmaps import IDKickMap
 from utils import create_epudata
 
 
-def calc_idkmap_kicks(fname, yidx=0, plot_flag=False):
-  idkmap = IDKickMap(fname)
+def calc_idkmap_kicks(fname, indep_var='x', plane_idx=0, plot_flag=False, idkmap=None):
+  
   rx0 = idkmap.posx
-  pxf = idkmap.kickx[yidx, :] / idkmap.brho**2
-  pyf = idkmap.kicky[yidx, :] / idkmap.brho**2
-  if plot_flag:
-    plt.plot(1e3*rx0, 1e6*pxf)
-    plt.xlabel('init rx [mm]')
-    plt.ylabel('final px [urad]')
-    plt.title('KickX')
-    plt.show()
+  ry0 = idkmap.posy
+  if(indep_var == 'x'):
+    pxf = idkmap.kickx[plane_idx, :] / idkmap.brho**2
+    pyf = idkmap.kicky[plane_idx, :] / idkmap.brho**2
+    if plot_flag:
+      plt.plot(1e3*rx0, 1e6*pxf, label = 'Kick X')
+      plt.plot(1e3*rx0, 1e6*pyf, label = 'Kick Y')
+      plt.xlabel('init rx [mm]')
+      plt.ylabel('final p [urad]')
+      plt.title('Kicks')
+      plt.legend()
+      plt.show()
+  else:
+    pxf = idkmap.kickx[ : ,plane_idx] / idkmap.brho**2
+    pyf = idkmap.kicky[ : ,plane_idx] / idkmap.brho**2
+    if plot_flag:
+      plt.plot(1e3*ry0, 1e6*pxf, label = 'Kick X')
+      plt.plot(1e3*ry0, 1e6*pyf, label = 'Kick Y')
+      plt.xlabel('init ry [mm]')
+      plt.ylabel('final p [urad]')
+      plt.title('Kicks')
+      plt.legend()
+      plt.show()
 
-  return idkmap, rx0, pxf, pyf
+  return rx0,ry0, pxf, pyf
 
 
 def calc_model_kicks(
-  fname, idkmap, yidx=0, nr_steps=40, at_end_idx=3, plot_flag=False):
+  fname, idkmap, indep_var='x', plane_idx=0, nr_steps=40, at_end_idx=3, plot_flag=False):
 
   ids = get_id_epu_list(fname, nr_steps=nr_steps)
 
@@ -37,35 +52,63 @@ def calc_model_kicks(
   model = create_model(ids=ids)
   spos = pyacc_lat.find_spos(model, indices='closed')
   circ = spos[-1]
-  print(f'circumference: {circ:.4f} m')
+  #print(f'circumference: {circ:.4f} m')
 
   # shift model so as to start at EPU50.
   inds = pyacc_lat.find_indices(model, 'fam_name', 'EPU50')
   model = pyacc_lat.shift(model, start=inds[0])
+  
+  # initial tracking conditions (particles)
+  if indep_var == 'x':
+    rx0 = np.asarray(idkmap.posx)  # [m]
+    ry0 = idkmap.posy[plane_idx]  # [m]
+    pos0 = np.zeros((6, len(rx0)))
+    pos0[0, :] = rx0
+    pos0[2, :] = ry0
+
+    # tracking
+    posf, *_ = pyacc_track.line_pass(model, particles=pos0, indices=[at_end_idx])
+    rxf = posf[0, :]
+    pxf = posf[1, :]
+    ryf = posf[2, :]
+    pyf = posf[3, :]
+
+    # plots
+    if plot_flag:
+      plt.plot(1e3*rx0, 1e6*pxf, label = 'Kick X')
+      plt.plot(1e3*rx0, 1e6*pyf, label = 'Kick Y')
+      plt.xlabel('init rx [mm]')
+      plt.ylabel('final p [urad]')
+      plt.title('Kicks')
+      plt.legend()
+      plt.show()
 
   # initial tracking conditions (particles)
-  rx0 = np.asarray(idkmap.posx)  # [m]
-  ry0 = idkmap.posy[yidx]  # [m]
-  pos0 = np.zeros((6, len(rx0)))
-  pos0[0, :] = rx0
-  pos0[2, :] = ry0
+  elif indep_var =='y':
+    rx0 = idkmap.posx[plane_idx]  # [m]
+    ry0 = np.asarray(idkmap.posy)   # [m]
+    pos0 = np.zeros((6, len(ry0)))
+    pos0[0, :] = rx0
+    pos0[2, :] = ry0
 
-  # tracking
-  posf, *_ = pyacc_track.line_pass(model, particles=pos0, indices=[at_end_idx])
-  rxf = posf[0, :]
-  pxf = posf[1, :]
-  ryf = posf[2, :]
-  pyf = posf[3, :]
+    # tracking
+    posf, *_ = pyacc_track.line_pass(model, particles=pos0, indices=[at_end_idx])
+    rxf = posf[0, :]
+    pxf = posf[1, :]
+    ryf = posf[2, :]
+    pyf = posf[3, :]
 
-  # plots
-  if plot_flag:
-    plt.plot(1e3*rx0, 1e6*pxf)
-    plt.xlabel('init rx [mm]')
-    plt.ylabel('final px [urad]')
-    plt.title('KickX vc X')
-    plt.show()
+    # plots
+    if plot_flag:
+      plt.plot(1e3*ry0, 1e6*pxf, label = 'Kick X')
+      plt.plot(1e3*ry0, 1e6*pyf, label = 'Kick Y')
+      plt.xlabel('init ry [mm]')
+      plt.ylabel('final p [urad]')
+      plt.title('Kicks')
+      plt.legend()
+      plt.show()   
 
-  return model, rx0, pxf, pyf, rxf, ryf
+  return model, rx0, ry0, pxf, pyf, rxf, ryf
 
 
 def model_tracking_kick_error():
@@ -78,25 +121,147 @@ def model_tracking_kick_error():
   configname = configs[0]
   fname = configs.get_kickmap_filename(configname)
   print('configuration: ', configs.get_config_label(configname))
+  idkmap = IDKickMap(fname)
+  num_steps = 40
 
-  # compare tracking anglex with kickmap kickx
-  yidx = 8  # [y = 0 mm]
-  idkmap, rx0_1, pxf_1, *_ = calc_idkmap_kicks(
-    fname, yidx=yidx, plot_flag=False)
-  at_end_idx = 1  # half ID, half kick
-  model, rx0_2, pxf_2, *_ = calc_model_kicks(
-    fname, idkmap, yidx=yidx, nr_steps=40, at_end_idx=at_end_idx,
-    plot_flag=False)
-  pxf_err = pxf_2*2 - pxf_1  # kick error for whole kickmap
+  # compare tracking angle X with kickmap for every X for 40 steps
+  fig1, axes1 = plt.subplots(3,sharex = 'col')
+  fig1.tight_layout()
+  fig1.suptitle('Kick X vs X {}'.format(configs.get_config_label(configname)), fontsize=10)
+  
+  num_curvy = 8
+  yidx = np.arange(0,16,2)
+  angle_f = np.ones((num_curvy,2,len(idkmap.posx)))
+  
+  for i in np.arange(num_curvy):
+    rx0_1,_, pxf_1, *_ = calc_idkmap_kicks(
+      fname, indep_var='x', plane_idx=yidx[i], plot_flag=False, idkmap = idkmap)
+    angle_f[i,0,:] = pxf_1
 
-  # plot comparison
-  plt.plot(1e3*rx0_1, 1e6*pxf_1, label='input kickmap')
-  plt.plot(1e3*rx0_2, 1e6*pxf_2*2, label='tracking w/ kickmap')
-  # plt.plot(1e3*rx0_2, 1e6*pxf_err*1e14, label=r'error x 10$^{14}$')
-  plt.xlabel('rx [mm]')
-  plt.ylabel('px [urad]')
-  plt.title('Midplane horizontal kick from model tracking')
-  plt.legend()
+    at_end_idx = 1  # half ID, half kick
+    model, rx0_2, _, pxf_2, *_ = calc_model_kicks(
+      fname, idkmap, indep_var='x', plane_idx=yidx[i], nr_steps=num_steps, at_end_idx=at_end_idx,
+      plot_flag=False)
+    angle_f[i,1,:] = pxf_2
+    
+
+    # plot comparison  
+    axes1[0].plot(1e3*rx0_1, 1e6*angle_f[i,0], label='y0 ={:.4f}'.format(1000*idkmap.posy[yidx[i]]))
+    axes1[1].plot(1e3*rx0_2, 1e6*angle_f[i,1]*2)
+    axes1[2].plot(1e3*rx0_1, 1e6*(angle_f[i,1]*2-angle_f[i,0]))
+    axes1[0].set_ylabel('Kick X - kickmap')
+    axes1[0].grid(True)
+    axes1[0].legend()
+    axes1[1].set_ylabel('Kick X - tracking')
+    axes1[1].grid(True)
+    axes1[2].set_ylabel('Error')
+    axes1[2].set_xlabel('rx [mm]')
+    axes1[2].grid(True)
+  
+  # compare tracking angle X with kickmap for every Y for 40 steps
+  fig2, axes2 = plt.subplots(3,sharex = 'col')
+  fig2.tight_layout()
+  fig2.suptitle('Kick X vs Y {}'.format(configs.get_config_label(configname)), fontsize=10)
+  
+  num_curvx = 8
+  xidx = np.arange(0,80,10)
+  angle_f = np.ones((num_curvx,2,len(idkmap.posy)))
+  
+  for i in np.arange(num_curvx):
+    _,ry0_1, pxf_1, *_ = calc_idkmap_kicks(
+      fname, indep_var='y', plane_idx=xidx[i], plot_flag=False, idkmap = idkmap)
+    angle_f[i,0,:] = pxf_1
+
+    at_end_idx = 1  # half ID, half kick
+    model, _, ry0_2, pxf_2, *_ = calc_model_kicks(
+      fname, idkmap, indep_var='y', plane_idx=xidx[i], nr_steps=num_steps, at_end_idx=at_end_idx,
+      plot_flag=False)
+    angle_f[i,1,:] = pxf_2
+    
+
+    # plot comparison  
+    axes2[0].plot(1e3*ry0_1, 1e6*angle_f[i,0], label='x0 ={:.4f}'.format(1000*idkmap.posx[xidx[i]]))
+    axes2[1].plot(1e3*ry0_2, 1e6*angle_f[i,1]*2)
+    axes2[2].plot(1e3*ry0_1, 1e6*(angle_f[i,1]*2-angle_f[i,0]))
+    axes2[0].set_ylabel('Kick X - kickmap')
+    axes2[0].grid(True)
+    axes2[0].legend()
+    axes2[1].set_ylabel('Kick X - tracking')
+    axes2[1].grid(True)
+    axes2[2].set_ylabel('Error')
+    axes2[2].set_xlabel('ry [mm]')
+    axes2[2].grid(True)  
+  
+  # compare tracking angle Y with kickmap for every X for 40 steps
+  fig3, axes3 = plt.subplots(3,sharex = 'col')
+  fig3.tight_layout()
+  fig3.suptitle('Kick Y vs X {}'.format(configs.get_config_label(configname)), fontsize=10)
+  
+  num_curvy = 8
+  yidx = np.arange(0,16,2)
+  angle_f = np.ones((num_curvy,2,len(idkmap.posx)))
+  
+  for i in np.arange(num_curvy):
+    rx0_1,_, _, pyf_1 = calc_idkmap_kicks(
+      fname, indep_var='x', plane_idx=yidx[i], plot_flag=False, idkmap = idkmap)
+    angle_f[i,0,:] = pyf_1
+
+    at_end_idx = 1  # half ID, half kick
+    model, rx0_2, _, _, pyf_2, *_ = calc_model_kicks(
+      fname, idkmap, indep_var='x', plane_idx=yidx[i], nr_steps=num_steps, at_end_idx=at_end_idx,
+      plot_flag=False)
+    angle_f[i,1,:] = pyf_2
+    
+
+    # plot comparison  
+    axes3[0].plot(1e3*rx0_1, 1e6*angle_f[i,0], label='y0 ={:.4f}'.format(1000*idkmap.posy[yidx[i]]))
+    axes3[1].plot(1e3*rx0_2, 1e6*angle_f[i,1]*2)
+    axes3[2].plot(1e3*rx0_1, 1e6*(angle_f[i,1]*2-angle_f[i,0]))
+    axes3[0].set_ylabel('Kick Y - kickmap')
+    axes3[0].grid(True)
+    axes3[0].legend()
+    axes3[1].set_ylabel('Kick Y - tracking')
+    axes3[1].grid(True)
+    axes3[2].set_ylabel('Error')
+    axes3[2].set_xlabel('rx [mm]')
+    axes3[2].grid(True)
+  
+  
+  # compare tracking angle Y with kickmap for every Y for 40 steps
+  fig4, axes4 = plt.subplots(3,sharex = 'col')
+  fig4.tight_layout()
+  fig4.suptitle('Kick Y vs Y {}'.format(configs.get_config_label(configname)), fontsize=10)
+  
+  num_curvx = 8
+  xidx = np.arange(0,80,10)
+  angle_f = np.ones((num_curvx,2,len(idkmap.posy)))
+  
+  for i in np.arange(num_curvx):
+    _,ry0_1, _, pyf_1 = calc_idkmap_kicks(
+      fname, indep_var='y', plane_idx=xidx[i], plot_flag=False, idkmap = idkmap)
+    angle_f[i,0,:] = pyf_1
+
+    at_end_idx = 1  # half ID, half kick
+    model, _, ry0_2, _, pyf_2, *_ = calc_model_kicks(
+      fname, idkmap, indep_var='y', plane_idx=xidx[i], nr_steps=num_steps, at_end_idx=at_end_idx,
+      plot_flag=False)
+    angle_f[i,1,:] = pyf_2
+    
+
+    # plot comparison  
+    axes4[0].plot(1e3*ry0_1, 1e6*angle_f[i,0], label='x0 ={:.4f}'.format(1000*idkmap.posx[xidx[i]]))
+    axes4[1].plot(1e3*ry0_2, 1e6*angle_f[i,1]*2)
+    axes4[2].plot(1e3*ry0_1, 1e6*(angle_f[i,1]*2-angle_f[i,0]))
+    axes4[0].set_ylabel('Kick Y - kickmap')
+    axes4[0].grid(True)
+    axes4[0].legend()
+    axes4[1].set_ylabel('Kick Y - tracking')
+    axes4[1].grid(True)
+    axes4[2].set_ylabel('Error')
+    axes4[2].set_xlabel('ry [mm]')
+    axes4[2].grid(True)  
+  
+  
   plt.show()
 
 
