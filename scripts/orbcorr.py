@@ -3,6 +3,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from apsuite.orbcorr import OrbitCorr, CorrParams
+from idanalysis.model import create_model, get_id_epu_list
+from kickmaps import IDKickMap
+
+from utils import create_epudata
 
 
 from pymodels import si
@@ -30,7 +34,18 @@ ocorr = OrbitCorr(model, 'SI')
 orb0 = ocorr.get_orbit()
 
 # perturb orbit
-model[chs[0]].hkick_polynom = 10e-6  # [rad]
+
+# create object with list of all possible EPU50 configurations
+configs = create_epudata()
+
+# select ID config
+configname = configs[0]
+fname = configs.get_kickmap_filename(configname)
+ids = get_id_epu_list(fname, nr_steps=40)
+#Insert ID in the model
+model = create_model(ids=ids)
+ocorr = OrbitCorr(model, 'SI')
+
 
 # get perturbed orbit
 orb1 = ocorr.get_orbit()
@@ -55,6 +70,7 @@ codcy = codc[len(bpms):]
 
 # plt.plot(spos, 1e6*codux, label='Uncorrected')
 plt.plot(spos, 1e6*codcx, label='Corrected')
+plt.plot(spos, 1e6*codux, label='Perturbed')
 plt.xlabel('spos [m]')
 plt.ylabel('codx [um]')
 plt.legend()
