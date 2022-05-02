@@ -2,8 +2,7 @@ from idanalysis import DeltaData, EPUData
 
 
 DEFAULT_RANDOM_IDS = True
-#FOLDER_BASE = '/home/ximenes/repos-dev/' 
-FOLDER_BASE = '/home/gabriel/repos-sirius/'
+FOLDER_BASE = None  # Need to be defined by user!
 
 
 def create_deltadata(random_ids=DEFAULT_RANDOM_IDS):

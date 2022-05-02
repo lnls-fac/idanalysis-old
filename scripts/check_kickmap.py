@@ -10,7 +10,9 @@ from pyaccel import tracking as pyacc_track
 from idanalysis.model import create_model, get_id_epu_list
 from kickmaps import IDKickMap
 
-from utils import create_epudata
+import utils
+# utils.FOLDER_BASE = '/home/ximenes/repos-dev/' 
+utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
 
 
 def calc_idkmap_kicks(fname, indep_var='x', plane_idx=0, plot_flag=False, idkmap=None):
@@ -115,7 +117,7 @@ def model_tracking_kick_error():
   """."""
 
   # create object with list of all possible EPU50 configurations
-  configs = create_epudata()
+  configs = utils.create_epudata()
 
   # select ID config
   configname = configs[0]
