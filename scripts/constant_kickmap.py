@@ -1,11 +1,13 @@
 #!/usr/bin/env python-sirius
 import numpy as np
 from kickmaps import IDKickMap
-from utils import create_epudata
 
+import utils
+# utils.FOLDER_BASE = '/home/ximenes/repos-dev/'
+utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
 
 # create object with list of all possible EPU50 configurations
-configs = create_epudata()
+configs = utils.create_epudata()
 
 # select ID config
 configname = configs[0]

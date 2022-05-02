@@ -11,10 +11,13 @@ from pyaccel.optics.edwards_teng import estimate_coupling_parameters
 from idanalysis.epudata import EPUData
 from idanalysis.model import calc_optics, create_model, get_id_epu_list
 
-from utils import create_epudata
+import utils
+# utils.FOLDER_BASE = '/home/ximenes/repos-dev/'
+utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
+
 
 # create object with list of all possible EPU50 configurations
-configs = create_epudata()
+configs = utils.create_epudata()
 
 #create all lists that will be used below
 config = [] 

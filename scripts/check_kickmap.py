@@ -11,7 +11,7 @@ from idanalysis.model import create_model, get_id_epu_list
 from kickmaps import IDKickMap
 
 import utils
-# utils.FOLDER_BASE = '/home/ximenes/repos-dev/' 
+# utils.FOLDER_BASE = '/home/ximenes/repos-dev/'
 utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
 
 
