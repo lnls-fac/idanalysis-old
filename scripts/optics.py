@@ -10,8 +10,9 @@ from pymodels import si
 from idanalysis import optics
 from idanalysis.model import get_id_sabia_list
 
-
-from utils import create_deltadata
+import utils
+utils.FOLDER_BASE = '/home/ximenes/repos-dev/'
+# utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
 
 
 def create_model(ids, goal_tunes=None, straight_nr=None):
@@ -514,7 +515,7 @@ def coupling(models):
 
 if __name__ == '__main__':
 
-    deltadata = create_deltadata()
+    deltadata = utils.create_deltadata()
     save_models(deltadata)
 
     # nominal
