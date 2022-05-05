@@ -1,0 +1,159 @@
+# instala algumas dependências no sistema
+sudo apt-get update
+sudo apt-get install -y sudo swig wget build-essential nano libgsl-dev libblas-dev wmctrl git
+# instala o conda, no caminho /opt/conda
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+sh Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda
+rm Miniconda3-latest-Linux-x86_64.sh
+# cria grupo conda
+groupadd conda
+# adiciona seu usuário a este grupo
+adduser {seu usuário} conda
+# ajusta permissoes da pasta
+chgrp -R conda /opt/conda
+# adiciona o conda ao seu path
+source /opt/conda/etc/profile.d/conda.sh
+# você pode adicionar ao final do seu .bashrc as linhas abaixo, para que o conda sempre esteja no caminho
+> # add conda to path
+> CONDA_ADD=/opt/conda/etc/profile.d/conda.sh
+> if [ -f "$CONDA_ADD" ] ; then
+>     source "$CONDA_ADD"
+> fi
+# configura os canais do conda
+conda config --add channels conda-forge
+conda config --set channel_priority flexible
+# cria o ambiente
+# para python 3.6.8
+conda create --name sirius python=3.6.8 -y
+# para python 3.9.2
+conda create --name sirius python=3.9.2 -y
+# ativa o ambiente virtual
+conda activate sirius
+# instala algumas dependências via conda
+conda install -c conda-forge/label/cf202003 -y epics-base=3.15.6
+conda install -c conda-forge -y pyqt=5.12.3  # já traz o qt
+conda install -c conda-forge -y pyparsing=2.4.2
+conda install -c conda-forge -y bottleneck=1.3.2
+conda install -c conda-forge -y aiohttp=3.7.4
+conda install -c conda-forge -y pyqtgraph=0.11.0
+conda install -c conda-forge -y QtAwesome=0.7.2
+conda install -c conda-forge -y matplotlib=3.1.2  # para python 3.6.8
+conda install -c conda-forge -y matplotlib=3.5.1  # para python 3.9.2
+conda install -c conda-forge -y pytest=6.2.4
+conda install -c conda-forge -y pyvisa=1.10.1
+conda install -c conda-forge -y pyvisa-py=0.3.1
+# instala as dependência do epics via pip
+pip install pyepics==3.4.0
+pip install pcaspy==0.7.3
+pip install pydm==1.10.3
+pip install timechart
+# instala o jupyter
+conda install -c conda-forge -y jupyter notebook
+conda update jupyter_client  # não precisou pra python39
+conda install -c conda-forge -y jupyter_contrib_nbextensions=0.5.1
+# cria a pasta repos no caminho do ambiente
+cd $CONDA_PREFIX
+mkdir repos
+cd repos
+# clona e instala nossos pacotes no caminho do ambiente, pasta repos
+# pacotes base
+cd $CONDA_PREFIX/repos && git clone https://github.com/lnls-fac/mathphys.git && cd mathphys && make develop-install
+cd $CONDA_PREFIX/repos && git clone https://github.com/lnls-sirius/dev-packages.git && cd dev-packages/siriuspy && make develop-install
+# pacotes de simulação
+cd $CONDA_PREFIX/repos && git clone https://github.com/lnls-fac/lnls.git && cd lnls && make develop-install
+cd $CONDA_PREFIX/repos && git clone https://github.com/lnls-fac/trackcpp.git && cd trackcpp && make clean && make install-cpp develop-install-py
+cd $CONDA_PREFIX/repos && git clone https://github.com/lnls-fac/pyaccel.git && cd pyaccel && make develop-install
+cd $CONDA_PREFIX/repos && git clone https://github.com/lnls-fac/pymodels.git && cd pymodels && make develop-install
+cd $CONDA_PREFIX/repos && git clone https://github.com/lnls-fac/apsuite.git && cd apsuite && make develop-install
+# pacotes das interfaces
+cd $CONDA_PREFIX/repos && git clone https://github.com/lnls-sirius/hla.git && cd hla/pyqt-apps && make develop-install
+cd $CONDA_PREFIX/repos && git clone https://github.com/lnls-fac/hlafac.git && cd hlafac && make develop-install
+# pacotes relacionados a IOCs
+cd $CONDA_PREFIX/repos && git clone https://github.com/lnls-sirius/eth-bridge-pru-serial485.git && cd eth-bridge-pru-serial485 && cd client && pip install --no-deps --compile -e ./
+cd $CONDA_PREFIX/repos && git clone https://github.com/lnls-sirius/machine-applications.git && cd machine-applications && make develop-install
+# configura as variáveis de ambiente do ambiente conda
+echo "# EPICS" > $CONDA_PREFIX/etc/conda/activate.d/epics_sirius.sh
+echo "# =====" >> $CONDA_PREFIX/etc/conda/activate.d/epics_sirius.sh
+echo "export EPICS_CA_ADDR_LIST=\"10.0.38.46:60000 10.0.38.59:60000\"" >> $CONDA_PREFIX/etc/conda/activate.d/epics_sirius.sh
+echo "export EPICS_PVA_ADDR_LIST=\"10.0.38.46:60000 10.0.38.59:60000\"" >> $CONDA_PREFIX/etc/conda/activate.d/epics_sirius.sh
+echo "export SIRIUS_URL_RBAC_AUTH=https://sirius-rbac-auth.lnls.br" >> $CONDA_PREFIX/etc/conda/activate.d/epics_sirius.sh
+echo "export SIRIUS_URL_RBAC=https://rbac:8445" >> $CONDA_PREFIX/etc/conda/activate.d/epics_sirius.sh
+echo "export SIRIUS_URL_NS=http://naming-service-wildfly:8089" >> $CONDA_PREFIX/etc/conda/activate.d/epics_sirius.sh
+echo "export SIRIUS_URL_CCDB=http://ccdb:8083" >> $CONDA_PREFIX/etc/conda/activate.d/epics_sirius.sh
+echo "export SIRIUS_URL_CABLES=http://cable:8086" >> $CONDA_PREFIX/etc/conda/activate.d/epics_sirius.sh
+echo "export SIRIUS_URL_CONSTS=http://10.0.38.59/control-system-constants" >> $CONDA_PREFIX/etc/conda/activate.d/epics_sirius.sh
+echo "export SIRIUS_URL_CONSTS_2=http://10.0.38.46/control-system-constants" >> $CONDA_PREFIX/etc/conda/activate.d/epics_sirius.sh
+echo "export SIRIUS_URL_CONFIGDB=http://10.0.38.59/config-db" >> $CONDA_PREFIX/etc/conda/activate.d/epics_sirius.sh
+echo "export SIRIUS_URL_CONFIGDB_2=http://10.0.38.46/config-db" >> $CONDA_PREFIX/etc/conda/activate.d/epics_sirius.sh
+echo "export SIRIUS_URL_LOGBOOK=http://sirius-logbook.lnls.br/Olog" >> $CONDA_PREFIX/etc/conda/activate.d/epics_sirius.sh
+echo "export SIRIUS_URL_ARCHIVER=https://10.0.38.42" >> $CONDA_PREFIX/etc/conda/activate.d/epics_sirius.sh
+echo "export EPICS_CA_MAX_ARRAY_BYTES=10000000" >> $CONDA_PREFIX/etc/conda/activate.d/epics_sirius.sh
+echo "# EPICS" > $CONDA_PREFIX/etc/conda/deactivate.d/epics_sirius.sh
+echo "# =====" >> $CONDA_PREFIX/etc/conda/deactivate.d/epics_sirius.sh
+echo "unset EPICS_CA_ADDR_LIST" >> $CONDA_PREFIX/etc/conda/deactivate.d/epics_sirius.sh
+echo "unset EPICS_PVA_ADDR_LIST" >> $CONDA_PREFIX/etc/conda/deactivate.d/epics_sirius.sh
+echo "unset SIRIUS_URL_RBAC_AUTH" >> $CONDA_PREFIX/etc/conda/deactivate.d/epics_sirius.sh
+echo "unset SIRIUS_URL_RBAC" >> $CONDA_PREFIX/etc/conda/deactivate.d/epics_sirius.sh
+echo "unset SIRIUS_URL_NS" >> $CONDA_PREFIX/etc/conda/deactivate.d/epics_sirius.sh
+echo "unset SIRIUS_URL_CCDB" >> $CONDA_PREFIX/etc/conda/deactivate.d/epics_sirius.sh
+echo "unset SIRIUS_URL_CABLES" >> $CONDA_PREFIX/etc/conda/deactivate.d/epics_sirius.sh
+echo "unset SIRIUS_URL_CONSTS" >> $CONDA_PREFIX/etc/conda/deactivate.d/epics_sirius.sh
+echo "unset SIRIUS_URL_CONSTS_2" >> $CONDA_PREFIX/etc/conda/deactivate.d/epics_sirius.sh
+echo "unset SIRIUS_URL_CONFIGDB" >> $CONDA_PREFIX/etc/conda/deactivate.d/epics_sirius.sh
+echo "unset SIRIUS_URL_CONFIGDB_2" >> $CONDA_PREFIX/etc/conda/deactivate.d/epics_sirius.sh
+echo "unset SIRIUS_URL_LOGBOOK" >> $CONDA_PREFIX/etc/conda/deactivate.d/epics_sirius.sh
+echo "unset SIRIUS_URL_ARCHIVER" >> $CONDA_PREFIX/etc/conda/deactivate.d/epics_sirius.sh
+echo "unset EPICS_CA_MAX_ARRAY_BYTES" >> $CONDA_PREFIX/etc/conda/deactivate.d/epics_sirius.sh
+echo "# PyDM" > $CONDA_PREFIX/etc/conda/activate.d/pydm_app.sh
+echo "# ====" >> $CONDA_PREFIX/etc/conda/activate.d/pydm_app.sh
+echo "export PYDM_DESIGNER_ONLINE=True" >> $CONDA_PREFIX/etc/conda/activate.d/pydm_app.sh
+echo "export PYDM_DEFAULT_PROTOCOL=\"ca://\"" >> $CONDA_PREFIX/etc/conda/activate.d/pydm_app.sh
+echo "export PYDM_EPICS_LIB="PYEPICS"  # PYEPICS, PYCA, CAPROTO" >> $CONDA_PREFIX/etc/conda/activate.d/pydm_app.sh
+echo "export LC_NUMERIC=en_US.UTF-8" >> $CONDA_PREFIX/etc/conda/activate.d/pydm_app.sh
+echo "# PyDM" > $CONDA_PREFIX/etc/conda/deactivate.d/pydm_app.sh
+echo "# ====" >> $CONDA_PREFIX/etc/conda/deactivate.d/pydm_app.sh
+echo "unset PYDM_DESIGNER_ONLINE" >> $CONDA_PREFIX/etc/conda/deactivate.d/pydm_app.sh
+echo "unset PYDM_DEFAULT_PROTOCOL" >> $CONDA_PREFIX/etc/conda/deactivate.d/pydm_app.sh
+echo "unset PYDM_EPICS_LIB" >> $CONDA_PREFIX/etc/conda/deactivate.d/pydm_app.sh
+echo "unset LC_NUMERIC" >> $CONDA_PREFIX/etc/conda/deactivate.d/pydm_app.sh
+echo "# PyQt" > $CONDA_PREFIX/etc/conda/activate.d/sirius_hla.sh
+echo "# ====" >> $CONDA_PREFIX/etc/conda/activate.d/sirius_hla.sh
+echo "export PYQTDESIGNERPATH=$CONDA_PREFIX/repos/hla/pyqt-apps" >> $CONDA_PREFIX/etc/conda/activate.d/sirius_hla.sh
+echo "# PyQt" > $CONDA_PREFIX/etc/conda/deactivate.d/sirius_hla.sh
+echo "# ====" >> $CONDA_PREFIX/etc/conda/deactivate.d/sirius_hla.sh
+echo "unset PYQTDESIGNERPATH" >> $CONDA_PREFIX/etc/conda/deactivate.d/sirius_hla.sh
+echo "# Aliases" > $CONDA_PREFIX/etc/conda/activate.d/alias.sh
+echo "# =======" >> $CONDA_PREFIX/etc/conda/activate.d/alias.sh
+echo "alias g-conda=\"cd $CONDA_PREFIX\"" >> $CONDA_PREFIX/etc/conda/activate.d/alias.sh
+echo "alias g-conda-repos=\"cd $CONDA_PREFIX/repos\"" >> $CONDA_PREFIX/etc/conda/activate.d/alias.sh
+echo "# Aliases" > $CONDA_PREFIX/etc/conda/deactivate.d/alias.sh
+echo "# =======" >> $CONDA_PREFIX/etc/conda/deactivate.d/alias.sh
+echo "unalias g-conda" >> $CONDA_PREFIX/etc/conda/deactivate.d/alias.sh
+echo "unalias g-conda-repos" >> $CONDA_PREFIX/etc/conda/deactivate.d/alias.sh
+# cria o link simbólico python-sirius dentro do ambiente, necessário para os scripts de janelas e IOCs
+cd $CONDA_PREFIX/bin && ln -s python3 python-sirius
+# desativa o ambiente conda
+conda deactivate
+# corrige algumas permissões após criar o ambiente, necessário sudo
+chgrp -R conda /opt/conda/pkgs  # necessário para conda clone
+chmod -R +r /opt/conda/pkgs  # necessário para conda clone
+chmod -R g+w /opt/conda/pkgs/cache/*.json  # necessário para conda search
+# cria alguns scripts convenientes para acessar o ambiente, necessário sudo
+# jupyter-sirius
+echo "#!/bin/bash" > /usr/local/bin/jupyter-sirius
+echo "bash -c \"source /opt/conda/etc/profile.d/conda.sh && conda activate sirius && jupyter notebook\"" >> /usr/local/bin/jupyter-sirius
+chmod +x /usr/local/bin/jupyter-sirius
+# ipython-sirius
+echo "#!/bin/bash" > /usr/local/bin/ipython-sirius
+echo "bash -c \"source /opt/conda/etc/profile.d/conda.sh && conda activate sirius && ipython\"" >> /usr/local/bin/ipython-sirius
+chmod +x /usr/local/bin/ipython-sirius
+# designer-sirius
+echo "#!/bin/bash" > /usr/local/bin/designer-sirius
+echo "bash -c \"source /opt/conda/etc/profile.d/conda.sh && conda activate sirius && designer\"" >> /usr/local/bin/designer-sirius
+chmod +x /usr/local/bin/designer-sirius
+# sirius-hla-as-ap-launcher
+echo "#!/bin/bash" > /usr/local/bin/sirius-hla-as-ap-launcher
+echo "bash -c \"source /opt/conda/etc/profile.d/conda.sh && conda activate sirius && sirius-hla-as-ap-launcher.py\"" >> /usr/local/bin/sirius-hla-as-ap-launcher
+chmod +x /usr/local/bin/sirius-hla-as-ap-launcher
+# para mais infos, doc do conda:
+# https://docs.conda.io/en/latest/

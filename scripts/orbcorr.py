@@ -55,8 +55,8 @@ def run():
 
     from idanalysis.model import create_model, get_id_epu_list
     import utils
-    utils.FOLDER_BASE = '/home/ximenes/repos-dev/'
-    # utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
+    #utils.FOLDER_BASE = '/home/ximenes/repos-dev/'
+    utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
 
     def plot_cod():
         plt.plot(spos_bpms, 1e6*cod_u, color=color_u, label=label_u)
