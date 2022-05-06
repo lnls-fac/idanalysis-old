@@ -1,1 +1,0 @@
-gabriel, cuidado com esta pasta 'Desktop' dentro aqui na pasta do repositório. vc corre o risco de comitar a pasta junto com os arquivos de código, e isto pode não ser o que vc quer... na segunda conversamos.
