@@ -8,7 +8,6 @@ from pymodels import si
 from apsuite.orbcorr import OrbitCorr, CorrParams
 
 
-
 def correct_orbit_sofb(model0, model1):
 
     # calculate structures
@@ -101,6 +100,7 @@ def run():
     color_u, color_c = (1.0, 0.5, 0.5), (1, 0, 0)
     cod_u, cod_c = cody_u, cody_c
     plot_cod()
+
 
 if __name__ == '__main__':
     run()

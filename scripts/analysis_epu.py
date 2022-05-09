@@ -3,136 +3,171 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from idanalysis.trajectory import IDTrajectory
-
 from pyaccel import lattice as pyacc_lat
 from pyaccel import optics as pyacc_opt
-from pyaccel.optics.edwards_teng import estimate_coupling_parameters
-from idanalysis.epudata import EPUData
-from idanalysis.model import calc_optics, create_model, get_id_epu_list
+
+from idanalysis import orbcorr as orbcorr
+from idanalysis import model as model
+from idanalysis import optics as optics
 
 import utils
 # utils.FOLDER_BASE = '/home/ximenes/repos-dev/'
 utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
 
 
-# create object with list of all possible EPU50 configurations
-configs = utils.create_epudata()
+def create_model(epu_config_idx=None, **kwargs):
+    """Create pyaccel model."""
 
-#create all lists that will be used below
-config = [] 
-kmap_fname = []
-model = []
-mux = []
-muy = []
-betax = []
-betay = []
-epu50 = []
-dtunex = []
-dtuney = []
-cod_config = []
-rmsd_x = []
-rmsd_y = []
-bbx = []
-bby = []
-max_bbx = []
-min_bbx = []
-max_bby = []
-min_bby = []
-max_abs_bbx = []
-max_abs_bby = []
+    vchamber_on = kwargs.get('vchamber_on', False)
+    straight_nr = kwargs.get('straight_nr', None)
 
+    if epu_config_idx is None:
+      # create model withou IDs, if the case
+      model_ = model.create_model(ids=None, vchamber_on=vchamber_on)
+      config_label = None
+    else:
 
+      # create object with list of all possible EPU50 configurations
+      configs = utils.create_epudata()
 
-# take all configurations
-for i in np.arange(0,3,1):
-    
-     config.append(configs[i])
-     print(configs.get_config_label(config[i]))
-     cod_config.append(configs.get_config_label(config[i]))
-     
-        
-     # create list of IDs to be inserted
-     kmap_fname.append(configs.get_kickmap_filename(config[i]))
-     ids = get_id_epu_list(kmap_fname[i])
-     print(ids[0])
+      # get config label
+      config_label = configs.get_config_label(configs[epu_config_idx])
 
-    
-     if i ==0 :
-          # create model without IDs
-          model.append(create_model(ids=None))
-          twiss, *_ = pyacc_opt.calc_twiss(model[0])
-          mux.append(twiss.mux)
-          muy.append(twiss.muy)
-          betax.append(twiss.betax)
-          betay.append(twiss.betay)   
-    
-     # create model with IDs
-        
-     model.append(create_model(ids=ids))
-     twiss, *_ = pyacc_opt.calc_twiss(model[i+1])
-     mux.append(twiss.mux)
-     muy.append(twiss.muy)
-     betax.append(twiss.betax)
-     betay.append(twiss.betay)
-     
-     bbx.append(100*(betax[i+1]-betax[0])/betax[0])
-     bby.append(100*(betay[i+1]-betay[0])/betay[0]) 
-     
-     rmsd_x.append(np.std(bbx[i]))
-     rmsd_y.append(np.std(bby[i]))
-     
-     max_abs_bbx.append(np.max(np.abs(bbx[i])))
-     max_bbx.append(np.max(bbx[i]))
-     min_bbx.append(np.min(bbx[i]))
-    
-     max_abs_bby.append(np.max(np.abs(bby[i])))
-     max_bby.append(np.max(bby[i]))
-     min_bby.append(np.min(bby[i]))
+      # list of IDs
+      nr_steps = kwargs.get('nr_steps', 40)
+      kmap_fname = configs.get_kickmap_filename(configs[epu_config_idx])
+      ids = model.get_id_epu_list(kmap_fname, ids=None, nr_steps=nr_steps)
 
-     # check optics
-     epu50.append(pyacc_lat.find_indices(model[i], 'fam_name', 'EPU50'))
-     print('EPU50 indices: ', epu50)
-     print('model length : {}'.format(model[i].length))
-     dtunex.append(((mux[i][-1] - mux[0][-1]) / 2 / np.pi))
-     dtuney.append(((muy[i][-1] - muy[0][-1]) / 2 / np.pi))
-     print('dtunex       : {}'.format(dtunex[i]))
-     print('dtuney       : {}'.format(dtuney[i]),'\n')
+      # create model
+      model_ = model.create_model(ids=ids, vchamber_on=False)
+
+    # get knobs and beta locations
+    if straight_nr is not None:
+      _, knobs, _ = optics.symm_get_knobs(model_, straight_nr)
+      locs_beta = optics.symm_get_locs_beta(knobs)
+    else:
+      knobs, locs_beta = None, None
+
+    return model_, config_label, knobs, locs_beta
 
 
-fig, axes = plt.subplots(3,2,sharex = 'col')
-fig.tight_layout()
-fig.suptitle('EPU 50 - GAP = 22.000', fontsize=10)
+def create_model_with_id(id_config_idx):
+  straight_nr = 11
+  kwargs = {
+      'vchmaber_on': False,
+      'nr_steps': 40,
+      'straight_nr': straight_nr,
+    }
+  model1, config_label, *_ = \
+    create_model(epu_config_idx=id_config_idx, **kwargs)
+  return model1, config_label, straight_nr
 
-blue = (0,0,1)
-green = (0,1,0)
+
+def calc_dtune_betabeat(twiss0, twiss1):
+    dtunex = (twiss1.mux[-1] - twiss0.mux[-1]) / 2 / np.pi
+    dtuney = (twiss1.muy[-1] - twiss0.muy[-1]) / 2 / np.pi
+    bbeatx = 100 * (twiss1.betax - twiss0.betax) / twiss0.betax
+    bbeaty = 100 * (twiss1.betay - twiss0.betay) / twiss0.betay
+    bbeatx_rms = np.std(bbeatx)
+    bbeaty_rms = np.std(bbeaty)
+    bbeatx_absmax = np.max(np.abs(bbeatx))
+    bbeaty_absmax = np.max(np.abs(bbeaty))
+    return (
+      dtunex, dtuney, bbeatx, bbeaty,
+      bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax)
 
 
+def analysis_uncorrected_perturbation(
+    config_label, model, twiss0=None, plot_flag=True):
+    """."""
+    if twiss0 is None:
+      model0, *_ = create_model(vchamber_on=False)
+      twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
+    kwargs = {
+      'vchmaber_on': False,
+      'nr_steps': 40,
+      'straight_nr': 11,
+    }
+    # model1, config_label, *_ = \
+    #   create_model(epu_config_idx=epu_config_idx, **kwargs)
+    twiss, *_ = pyacc_opt.calc_twiss(model, indices='closed')
 
-label_ax_list = ["Beta beating x (%)", "Beta beating y (%)"]
+    dtunex, dtuney, \
+    bbeatx, bbeaty, \
+    bbeatx_rms, bbeaty_rms, \
+    bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(twiss0, twiss)
+
+    if plot_flag:
+        print(config_label)
+        print(f'dtunex: {dtunex:+.6f}')
+        print(f'dtunex: {dtuney:+.6f}')
+        print(f'bbetax: {bbeatx_rms:04.1f} % rms, {bbeatx_absmax:04.1f} % absmax')
+        print(f'bbetay: {bbeaty_rms:04.1f} % rms, {bbeaty_absmax:04.1f} % absmax')
+
+        blue, red = (0.4,0.4,1), (1,0.4,0.4)
+        labelx = f'X ({bbeatx_rms:.1f} % rms)'
+        labely = f'Y ({bbeaty_rms:.1f} % rms)'
+        plt.plot(twiss.spos, bbeatx, color=blue, alpha=0.8, label=labelx)
+        plt.plot(twiss.spos, bbeaty, color=red, alpha=0.8, label=labely)
+        plt.xlabel('spos [m]')
+        plt.ylabel('Beta Beat [%]')
+        plt.title('Beta Beating from ID - ' + config_label)
+        plt.legend()
+        plt.grid()
+        plt.show()
+
+    return twiss
 
 
-for i in np.arange(2):
-    
-    for j in np.arange(3):
-        if i == 0:
-          axes[j][i].plot(twiss.spos,bbx[j], color=blue, label=("{} detune x = {:.4f}, RMS = {:.4f}, max = {:.4f}".format(cod_config[j][6:8],dtunex[j],rmsd_x[j],max_abs_bbx[j])))
-          axes[j][i].set_ylim(min_bby[0]*1.1,max_bbx[0]*1.1)
-        else:
-          axes[j][i].plot(twiss.spos,bby[j], color=green, label=("{} detune y = {:.4f}, RMS = {:.4f}, max = {:.3f}".format(cod_config[j][6:8],dtuney[j],rmsd_y[j],max_abs_bby[j])))
-          axes[j][i].set_ylim(min_bby[0]*1.1,max_bbx[0]*1.1)
-        axes[j][i].set_ylabel(label_ax_list[i])
-        axes[j][i].grid(True)
-        axes[j][i].legend()
-                        
-    axes[j][i].set_xlabel("Length (m)")
-    
-plt.show()
+def analysis():
 
-             
-            
-                        
-                        
-                        
-           
+  # create unperturbed model for reference
+  model0, _, knobs, locs_beta = create_model(vchamber_on=False, straight_nr=11)
+  twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
+  print('local quadrupole fams: ', knobs)
+  print('element indices for straight section begin and end: ', locs_beta)
 
+  # calculate nominal twiss
+  goal_tunes = np.array([twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
+  goal_beta = np.array([twiss0.betax[locs_beta], twiss0.betay[locs_beta]])
+  goal_alpha = np.array([twiss0.alphax[locs_beta], twiss0.alphay[locs_beta]])
+
+  # create model with ID
+  model1, config_label, straight_nr = create_model_with_id(id_config_idx=0)
+
+  # correct orbit
+  orbcorr.correct_orbit_sofb(model0, model1)
+
+  # calculate beta beating and tune delta tunes
+  twiss1 = analysis_uncorrected_perturbation(
+      config_label, model1, twiss0=twiss0, plot_flag=True)
+
+  # symmetrize optics (local quad fam knobs)
+  weight = False
+  dk_tot = np.zeros(len(knobs))
+  for i in range(5):
+      dk = optics.correct_symmetry_withbeta(model1, straight_nr, goal_beta, goal_alpha, weight=weight)
+      print('iteration #{}, dK: {}'.format(i+1, dk))
+      dk_tot += dk
+  for i, fam in enumerate(knobs):
+      print('{:<9s} dK: {:+9.6f} 1/m²'.format(fam, dk_tot[i]))
+  model2 = model1[:]
+  twiss2, *_ = pyacc_opt.calc_twiss(model2, indices='closed')
+  print()
+
+  # correct tunes
+  tunes = twiss1.mux[-1]/np.pi/2, twiss1.muy[-1]/np.pi/2
+  print('init    tunes: {:.9f} {:.9f}'.format(tunes[0], tunes[1]))
+  for i in range(2):
+      optics.correct_tunes_twoknobs(model1, goal_tunes)
+      twiss, *_ = pyacc_opt.calc_twiss(model1)
+      tunes = twiss.mux[-1]/np.pi/2, twiss.muy[-1]/np.pi/2
+      print('iter #{} tunes: {:.9f} {:.9f}'.format(i+1, tunes[0], tunes[1]))
+  print('goal    tunes: {:.9f} {:.9f}'.format(goal_tunes[0], goal_tunes[1]))
+  model3 = model1[:]
+  twiss3, *_ = pyacc_opt.calc_twiss(model2, indices='closed')
+  print()
+
+
+if __name__ == '__main__':
+    analysis()
