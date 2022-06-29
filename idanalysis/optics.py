@@ -1,3 +1,4 @@
+import sys
 import pickle
 import numpy as np
 import pyaccel
@@ -40,11 +41,12 @@ def symm_get_locs(tr):
 
 
 def symm_get_locs_beta(knobs):
-    minv, maxv = 9223372036854775807, -9223372036854775807
+    minv, maxv = sys.maxsize, -sys.maxsize
     for inds in knobs.values():
         minv = min(minv, min(inds))
         maxv = max(maxv, max(inds))
-    return [minv-1, maxv+1]
+    # return [minv-1, maxv+1]  # start of drift and end of last local quad
+    return [minv, maxv+1]  # start of first local quad and end of last local quad
 
 
 def symm_get_knobs(tr, straight_nr, allquads=False):
@@ -180,35 +182,32 @@ def correct_tunes_twoknobs(tr, goal_tunes):
     tunecorr.correct_parameters(model=tr, goal_parameters=goal_tunes, jacobian_matrix=tunemat)
 
 
-def symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha, weight=False):
+def symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha):
     tw, _ = pyaccel.optics.calc_twiss(tr)
     nrlocs = len(locs)
     nrlocs_beta = len(locs_beta)
     residue = np.zeros(2*nrlocs+4*nrlocs_beta)
-    residue[:nrlocs] = tw.alphax[locs]
-    residue[nrlocs:2*nrlocs] = tw.alphay[locs]
-    if weight:
-        residue[:nrlocs] = tw.alphax[locs]
-        residue[nrlocs:2*nrlocs] = tw.alphay[locs]
-        residue[2*nrlocs+0*nrlocs_beta:2*nrlocs+1*nrlocs_beta] = 1e3*(tw.betax[locs_beta] - goal_beta[0])
-        residue[2*nrlocs+1*nrlocs_beta:2*nrlocs+2*nrlocs_beta] = 1e3*(tw.betay[locs_beta] - goal_beta[1])
-        residue[2*nrlocs+2*nrlocs_beta:2*nrlocs+3*nrlocs_beta] = 1e3*(tw.alphax[locs_beta] - goal_alpha[0])
-        residue[2*nrlocs+3*nrlocs_beta:2*nrlocs+4*nrlocs_beta] = 1e3*(tw.alphay[locs_beta] - goal_alpha[1])
-    else:
-        residue[:nrlocs] = tw.alphax[locs]
-        residue[nrlocs:2*nrlocs] = tw.alphay[locs]
-        residue[2*nrlocs+0*nrlocs_beta:2*nrlocs+1*nrlocs_beta] = 1*(tw.betax[locs_beta] - goal_beta[0])
-        residue[2*nrlocs+1*nrlocs_beta:2*nrlocs+2*nrlocs_beta] = 1*(tw.betay[locs_beta] - goal_beta[1])
-        residue[2*nrlocs+2*nrlocs_beta:2*nrlocs+3*nrlocs_beta] = 0*(tw.alphax[locs_beta] - goal_alpha[0])
-        residue[2*nrlocs+3*nrlocs_beta:2*nrlocs+4*nrlocs_beta] = 0*(tw.alphay[locs_beta] - goal_alpha[1])
+
+    # residue components: preserve symmetry points
+    residue[:nrlocs] = tw.alphax[locs] - 0
+    residue[nrlocs:2*nrlocs] = tw.alphay[locs] - 0
+
+    # residue components: restore beta/alpha values
+    residue[2*nrlocs+0*nrlocs_beta:2*nrlocs+1*nrlocs_beta] = 1*(tw.betax[locs_beta] - goal_beta[0])
+    residue[2*nrlocs+1*nrlocs_beta:2*nrlocs+2*nrlocs_beta] = 1*(tw.betay[locs_beta] - goal_beta[1])
+    residue[2*nrlocs+2*nrlocs_beta:2*nrlocs+3*nrlocs_beta] = 1*(tw.alphax[locs_beta] - goal_alpha[0])
+    residue[2*nrlocs+3*nrlocs_beta:2*nrlocs+4*nrlocs_beta] = 1*(tw.alphay[locs_beta] - goal_alpha[1])
     return residue
 
 
-def correct_symmetry_withbeta(tr, straight_nr, goal_beta, goal_alpha, delta_k=1e-5, weight=False):
+def correct_symmetry_withbeta(tr, straight_nr, goal_beta, goal_alpha, delta_k=1e-5):
     """."""
     
+    # get symmetry point indices
     locs = symm_get_locs(tr)
     nrlocs = len(locs)
+
+    # get dict with local quad indices
     _, knobs, _ = symm_get_knobs(tr, straight_nr)
     locs_beta = symm_get_locs_beta(knobs)
     nrlocs_beta = len(locs_beta)
@@ -219,30 +218,24 @@ def correct_symmetry_withbeta(tr, straight_nr, goal_beta, goal_alpha, delta_k=1e
         inds = knobs[fam]
         k0 = pyaccel.lattice.get_attribute(tr, 'polynom_b', inds, 1)
         pyaccel.lattice.set_attribute(tr, 'polynom_b', inds, k0 + delta_k/2, 1)
-        res1 = symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha, weight=weight)
+        res1 = symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha)
         pyaccel.lattice.set_attribute(tr, 'polynom_b', inds, k0 - delta_k/2, 1)
-        res2 = symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha, weight=weight)
+        res2 = symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha)
         pyaccel.lattice.set_attribute(tr, 'polynom_b', inds, k0, 1)
-        # v = (res1 - res2)/delta_k
-        # print(i)
-        # print(v.shape)
-        # print(res1.shape)
-        # print(res2.shape)
-        # print(respm.shape)
         respm[:, i] = (res1 - res2)/delta_k
 
     # inverse matrix
     umat, smat, vmat = np.linalg.svd(respm, full_matrices=False)
-    # print(smat)
+    # print('singular values: ', smat)
     ismat = 1/smat
     for i in range(len(smat)):
-        if smat[i]/max(smat) < 1e-5:
+        if smat[i]/max(smat) < 1e-4:
             ismat[i] = 0
     ismat = np.diag(ismat)
     invmat = -1 * np.dot(np.dot(vmat.T, ismat), umat.T)
 
     # calc dk
-    alpha = symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha, weight=weight)
+    alpha = symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha)
     dk = np.dot(invmat, alpha.flatten())
     
     # apply correction
@@ -250,9 +243,6 @@ def correct_symmetry_withbeta(tr, straight_nr, goal_beta, goal_alpha, delta_k=1e
         inds = knobs[fam]
         k0 = pyaccel.lattice.get_attribute(tr, 'polynom_b', inds, 1)
         pyaccel.lattice.set_attribute(tr, 'polynom_b', inds, k0 + dk[i], 1)
-
-    # print(list(knobs.keys()))
-    # print(dk)
 
     return dk
 

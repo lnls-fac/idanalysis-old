@@ -36,7 +36,9 @@ def create_model(epu_config_idx=None, **kwargs):
       # list of IDs
       nr_steps = kwargs.get('nr_steps', 40)
       kmap_fname = configs.get_kickmap_filename(configs[epu_config_idx])
-      ids = model.get_id_epu_list(kmap_fname, ids=None, nr_steps=nr_steps)
+      ids = model.get_id_epu_list(
+        kmap_fname, ids=None, nr_steps=nr_steps, rescale_kicks=1.0, 
+        straight_nr=straight_nr)
 
       # create model
       model_ = model.create_model(ids=ids, vchamber_on=False)
@@ -193,20 +195,16 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
 
 
 def analysis():
+
+  # select where EPU will be installed
   straight_nr = 11
+
   # create unperturbed model for reference
-  model0, _, knobs, locs_beta = create_model(vchamber_on=False, straight_nr=straight_nr)
+  model0, _, knobs, locs_beta = create_model(
+    vchamber_on=False, straight_nr=straight_nr)
   twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
   print('local quadrupole fams: ', knobs)
   print('element indices for straight section begin and end: ', locs_beta)
-  locs_beta[0] += 1
-  locs_beta[-1] += 1
-
-  print(model0.length)
-  for idx in range(*locs_beta):
-    print(model0[idx].fam_name)
-
-  # return
 
   # calculate nominal twiss
   goal_tunes = np.array([twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
@@ -224,10 +222,9 @@ def analysis():
       config_label, model1, twiss0=twiss0, plot_flag=False, straight_nr=straight_nr)
 
   # symmetrize optics (local quad fam knobs)
-  weight = False
   dk_tot = np.zeros(len(knobs))
-  for i in range(5):
-      dk = optics.correct_symmetry_withbeta(model1, straight_nr, goal_beta, goal_alpha, weight=weight)
+  for i in range(7):
+      dk = optics.correct_symmetry_withbeta(model1, straight_nr, goal_beta, goal_alpha)
       print('iteration #{}, dK: {}'.format(i+1, dk))
       dk_tot += dk
   for i, fam in enumerate(knobs):
@@ -235,8 +232,6 @@ def analysis():
   model2 = model1[:]
   twiss2, *_ = pyacc_opt.calc_twiss(model2, indices='closed')
   print()
-
-  # return
 
   # correct tunes
   tunes = twiss1.mux[-1]/np.pi/2, twiss1.muy[-1]/np.pi/2
