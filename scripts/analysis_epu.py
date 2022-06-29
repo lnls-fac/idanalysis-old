@@ -51,8 +51,9 @@ def create_model(epu_config_idx=None, **kwargs):
     return model_, config_label, knobs, locs_beta
 
 
-def create_model_with_id(id_config_idx):
-  straight_nr = 11
+def create_model_with_id(id_config_idx, straight_nr=None):
+  if straight_nr is None: 
+    straight_nr = 11
   kwargs = {
       'vchmaber_on': False,
       'nr_steps': 40,
@@ -78,7 +79,7 @@ def calc_dtune_betabeat(twiss0, twiss1):
 
 
 def analysis_uncorrected_perturbation(
-    config_label, model, twiss0=None, plot_flag=True):
+    config_label, model, twiss0=None, plot_flag=True, straight_nr=11):
     """."""
     if twiss0 is None:
       model0, *_ = create_model(vchamber_on=False)
@@ -86,7 +87,7 @@ def analysis_uncorrected_perturbation(
     kwargs = {
       'vchmaber_on': False,
       'nr_steps': 40,
-      'straight_nr': 11,
+      'straight_nr': straight_nr,
     }
     # model1, config_label, *_ = \
     #   create_model(epu_config_idx=epu_config_idx, **kwargs)
@@ -119,13 +120,93 @@ def analysis_uncorrected_perturbation(
     return twiss
 
 
-def analysis():
+def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=True):
+  if plot_flag:
+    #Compare optics between nominal value and uncorrect optics due ID insertion
+    dtunex, dtuney, bbeatx, bbeaty, bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(twiss0,twiss1)
+    print(config_label,'\n')
+    print('Not symmetrized optics :')
+    print(f'dtunex: {dtunex:+.6f}')
+    print(f'dtunex: {dtuney:+.6f}')
+    print(f'bbetax: {bbeatx_rms:04.1f} % rms, {bbeatx_absmax:04.1f} % absmax')
+    print(f'bbetay: {bbeaty_rms:04.1f} % rms, {bbeaty_absmax:04.1f} % absmax')
+    print()
 
+    plt.figure(1)
+    blue, red = (0.4,0.4,1), (1,0.4,0.4)
+    labelx = f'X ({bbeatx_rms:.1f} % rms)'
+    labely = f'Y ({bbeaty_rms:.1f} % rms)'
+    plt.plot(twiss0.spos, bbeatx, color=blue, alpha=0.8, label=labelx)
+    plt.plot(twiss0.spos, bbeaty, color=red, alpha=0.8, label=labely)
+    plt.xlabel('spos [m]')
+    plt.ylabel('Beta Beat [%]')
+    plt.title('Beta Beating from ID - ' + config_label)
+    plt.suptitle('Not symmetrized optics')
+    plt.legend()
+    plt.grid()
+  
+
+    #Compare optics between nominal value and symmetrized optics
+    dtunex, dtuney, bbeatx, bbeaty, bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(twiss0,twiss2)
+    print('symmetrized optics but uncorrect tunes:')
+    print(f'dtunex: {dtunex:+.6f}')
+    print(f'dtunex: {dtuney:+.6f}')
+    print(f'bbetax: {bbeatx_rms:04.1f} % rms, {bbeatx_absmax:04.1f} % absmax')
+    print(f'bbetay: {bbeaty_rms:04.1f} % rms, {bbeaty_absmax:04.1f} % absmax')
+    print()
+
+    plt.figure(2)
+    blue, red = (0.4,0.4,1), (1,0.4,0.4)
+    labelx = f'X ({bbeatx_rms:.1f} % rms)'
+    labely = f'Y ({bbeaty_rms:.1f} % rms)'
+    plt.plot(twiss0.spos, bbeatx, color=blue, alpha=0.8, label=labelx)
+    plt.plot(twiss0.spos, bbeaty, color=red, alpha=0.8, label=labely)
+    plt.xlabel('spos [m]')
+    plt.ylabel('Beta Beat [%]')
+    plt.title('Beta Beating from ID - ' + config_label)
+    plt.suptitle('Symmetrized optics and uncorrect tunes')
+    plt.legend()
+    plt.grid()
+  
+
+    #Compare optics between nominal value and symmetrized optics with tune correction
+    dtunex, dtuney, bbeatx, bbeaty, bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(twiss0,twiss3)
+    print('symmetrized optics and correct tunes:')
+    print(f'dtunex: {dtunex:+.6f}')
+    print(f'dtunex: {dtuney:+.6f}')
+    print(f'bbetax: {bbeatx_rms:04.1f} % rms, {bbeatx_absmax:04.1f} % absmax')
+    print(f'bbetay: {bbeaty_rms:04.1f} % rms, {bbeaty_absmax:04.1f} % absmax')
+
+    plt.figure(3)
+    blue, red = (0.4,0.4,1), (1,0.4,0.4)
+    labelx = f'X ({bbeatx_rms:.1f} % rms)'
+    labely = f'Y ({bbeaty_rms:.1f} % rms)'
+    plt.plot(twiss0.spos, bbeatx, color=blue, alpha=0.8, label=labelx)
+    plt.plot(twiss0.spos, bbeaty, color=red, alpha=0.8, label=labely)
+    plt.xlabel('spos [m]')
+    plt.ylabel('Beta Beat [%]')
+    plt.title('Beta Beating from ID - ' + config_label)
+    plt.suptitle('Symmetrized optics and correct tunes')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+
+def analysis():
+  straight_nr = 11
   # create unperturbed model for reference
-  model0, _, knobs, locs_beta = create_model(vchamber_on=False, straight_nr=11)
+  model0, _, knobs, locs_beta = create_model(vchamber_on=False, straight_nr=straight_nr)
   twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
   print('local quadrupole fams: ', knobs)
   print('element indices for straight section begin and end: ', locs_beta)
+  locs_beta[0] += 1
+  locs_beta[-1] += 1
+
+  print(model0.length)
+  for idx in range(*locs_beta):
+    print(model0[idx].fam_name)
+
+  # return
 
   # calculate nominal twiss
   goal_tunes = np.array([twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
@@ -133,14 +214,14 @@ def analysis():
   goal_alpha = np.array([twiss0.alphax[locs_beta], twiss0.alphay[locs_beta]])
 
   # create model with ID
-  model1, config_label, straight_nr = create_model_with_id(id_config_idx=0)
+  model1, config_label, straight_nr = create_model_with_id(id_config_idx=0, straight_nr=straight_nr)
 
   # correct orbit
   orbcorr.correct_orbit_sofb(model0, model1)
 
   # calculate beta beating and tune delta tunes
   twiss1 = analysis_uncorrected_perturbation(
-      config_label, model1, twiss0=twiss0, plot_flag=True)
+      config_label, model1, twiss0=twiss0, plot_flag=False, straight_nr=straight_nr)
 
   # symmetrize optics (local quad fam knobs)
   weight = False
@@ -155,6 +236,8 @@ def analysis():
   twiss2, *_ = pyacc_opt.calc_twiss(model2, indices='closed')
   print()
 
+  # return
+
   # correct tunes
   tunes = twiss1.mux[-1]/np.pi/2, twiss1.muy[-1]/np.pi/2
   print('init    tunes: {:.9f} {:.9f}'.format(tunes[0], tunes[1]))
@@ -165,9 +248,11 @@ def analysis():
       print('iter #{} tunes: {:.9f} {:.9f}'.format(i+1, tunes[0], tunes[1]))
   print('goal    tunes: {:.9f} {:.9f}'.format(goal_tunes[0], goal_tunes[1]))
   model3 = model1[:]
-  twiss3, *_ = pyacc_opt.calc_twiss(model2, indices='closed')
+  twiss3, *_ = pyacc_opt.calc_twiss(model3, indices='closed')
   print()
 
+  plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=True)
+  
 
 if __name__ == '__main__':
     analysis()

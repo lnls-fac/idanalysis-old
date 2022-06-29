@@ -4,8 +4,8 @@
 from idanalysis import model
 
 import utils
-utils.FOLDER_BASE = '/home/ximenes/repos-dev/'
-# utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
+#utils.FOLDER_BASE = '/home/ximenes/repos-dev/'
+utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
 
 # create object with list of all possible EPU50 configurations
 configs = utils.create_epudata()
