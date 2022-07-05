@@ -36,7 +36,7 @@ def create_model(epu_config_idx=None, **kwargs):
       # list of IDs
       nr_steps = kwargs.get('nr_steps', 40)
       kmap_fname = configs.get_kickmap_filename(configs[epu_config_idx])
-      ids = model.get_id_epu_list(kmap_fname, ids=None, nr_steps=nr_steps)
+      ids = model.get_id_epu_list(kmap_fname, ids=None, nr_steps=nr_steps, rescale_kicks=1)
 
       # create model
       model_ = model.create_model(ids=ids, vchamber_on=False)
@@ -193,14 +193,19 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
 
 
 def analysis():
-  straight_nr = 11
+  straight_nr = 10
   # create unperturbed model for reference
   model0, _, knobs, locs_beta = create_model(vchamber_on=False, straight_nr=straight_nr)
   twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
   print('local quadrupole fams: ', knobs)
   print('element indices for straight section begin and end: ', locs_beta)
-  locs_beta[0] += 1
-  locs_beta[-1] += 1
+  # locs_beta[0] += 1
+  # locs_beta[-1] += 1
+
+  locs = optics.symm_get_locs(model0)
+  print(twiss0.alphax[locs])
+  print(twiss0.alphay[locs])
+
 
   print(model0.length)
   for idx in range(*locs_beta):
@@ -212,7 +217,8 @@ def analysis():
   goal_tunes = np.array([twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
   goal_beta = np.array([twiss0.betax[locs_beta], twiss0.betay[locs_beta]])
   goal_alpha = np.array([twiss0.alphax[locs_beta], twiss0.alphay[locs_beta]])
-
+  print(goal_beta)
+  goal_beta2 = np.array([twiss0.betax[locs_beta], twiss0.betay[locs_beta]])
   # create model with ID
   model1, config_label, straight_nr = create_model_with_id(id_config_idx=0, straight_nr=straight_nr)
 

@@ -223,20 +223,14 @@ def correct_symmetry_withbeta(tr, straight_nr, goal_beta, goal_alpha, delta_k=1e
         pyaccel.lattice.set_attribute(tr, 'polynom_b', inds, k0 - delta_k/2, 1)
         res2 = symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha, weight=weight)
         pyaccel.lattice.set_attribute(tr, 'polynom_b', inds, k0, 1)
-        # v = (res1 - res2)/delta_k
-        # print(i)
-        # print(v.shape)
-        # print(res1.shape)
-        # print(res2.shape)
-        # print(respm.shape)
         respm[:, i] = (res1 - res2)/delta_k
 
     # inverse matrix
     umat, smat, vmat = np.linalg.svd(respm, full_matrices=False)
-    # print(smat)
+    print(smat)
     ismat = 1/smat
     for i in range(len(smat)):
-        if smat[i]/max(smat) < 1e-5:
+        if smat[i]/max(smat) < 0.4/29:
             ismat[i] = 0
     ismat = np.diag(ismat)
     invmat = -1 * np.dot(np.dot(vmat.T, ismat), umat.T)
@@ -249,7 +243,7 @@ def correct_symmetry_withbeta(tr, straight_nr, goal_beta, goal_alpha, delta_k=1e
     for i, fam in enumerate(knobs):
         inds = knobs[fam]
         k0 = pyaccel.lattice.get_attribute(tr, 'polynom_b', inds, 1)
-        pyaccel.lattice.set_attribute(tr, 'polynom_b', inds, k0 + dk[i], 1)
+        pyaccel.lattice.set_attribute(tr, 'polynom_b', inds, k0 + 1*dk[i], 1)
 
     # print(list(knobs.keys()))
     # print(dk)

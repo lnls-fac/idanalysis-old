@@ -1,0 +1,182 @@
+#!/usr/bin/env python-sirius
+
+import numpy as np
+import matplotlib.pyplot as plt
+from fieldmaptrack import FieldMap, Beam, Trajectory
+
+class FieldmapOnAxisAnalysis:
+
+    def __init__(self,
+                 fieldmap=None,
+                 filename=None):
+        """."""
+        self.filename = filename
+        self.fieldmap = fieldmap
+        self.Bx = None
+        self.By = None
+        self.Bz = None
+        self.z = None
+        self.beam_energy = 3.0
+        self.traj = None
+
+    def calc_K(self, period,B,zmin,zmax,z=None):
+        begin_idx = np.where(z==zmin)
+        end_idx = np.where(z==zmax)
+        length = end_idx[0][0] - begin_idx[0][0]
+        k = 2*np.pi/(period)
+        a11=0
+        a12=0
+        a21=0
+        a22=0
+        b1=0
+        b2=0
+        for i in np.arange(begin_idx[0][0],end_idx[0][0]+1,1):
+            b1 = B[i]*np.cos(k*z[i])+b1
+            b2 = B[i]*np.sin(k*z[i])+b2
+            a11 = (np.cos(k*z[i]))**2+a11
+            a12 = np.cos(k*z[i])*np.sin(k*z[i])+a12
+            a22 = (np.sin(k*z[i]))**2+a22
+        a21 = a12
+        M = np.array([[a11,a12],[a21,a22]])
+        det = np.linalg.det(M)
+        M_inv = np.array([[a22,-a12],[-a21,a11]])/det
+        B_matriz = np.array([[b1],[b2]])
+        Res = np.dot(M_inv,B_matriz)
+        a = Res[0][0]
+        b = Res[1][0]
+        B0 = np.sqrt(a**2+b**2)
+        K = 93.36*B0*(period*1e-3)
+        return K,B0
+
+    def _calc_fx(self, s_step=0.5, max_rz=4000, plot_flag=True, ipos=[0,0,0], iang=[0,0,1], end=None):
+
+        init_rx = ipos[0]
+        init_ry = ipos[1]
+        init_rz = ipos[2]
+        init_px = iang[0]
+        init_py = iang[1]
+        init_pz = iang[2]
+        self.traj.calc_trajectory(s_step=s_step, min_rz=max_rz, init_rx=init_rx, init_ry=init_ry, init_rz=init_rz,
+                             init_px=init_px, init_py=init_py, init_pz=init_pz)
+        z = self.traj.rz.copy()
+        x = self.traj.rx.copy()
+        px= self.traj.px.copy()
+        dpx = np.diff(px)
+        if end == None:
+            idx_end = np.where(np.abs(dpx) <1e-7)
+            final_idx = []
+            cond = int(max_rz/(2*s_step))
+            for i in np.arange(np.shape(idx_end)[1]):
+                if idx_end[0][i] > cond:
+                    final_idx.append(idx_end[0][i])
+            final = final_idx[0]
+        else:
+            final = end
+        if plot_flag == True:
+            plt.plot(z,x, color='g', label='step = {:.1f}mm'.format(s_step))
+            plt.xlabel('Z coordinate (mm)')
+            plt.ylabel('X coordinate (mm)')
+            plt.legend()
+            plt.show()
+        return(x[final],z[final],final,px[-1])
+
+    def _calc_fy(self, s_step=0.5, max_rz=4000, plot_flag=True, ipos=[0,0,0], iang=[0,0,1], end=None):
+        init_rx = ipos[0]
+        init_ry = ipos[1]
+        init_rz = ipos[2]
+        init_px = iang[0]
+        init_py = iang[1]
+        init_pz = iang[2]
+        self.traj.calc_trajectory(s_step=s_step, min_rz=max_rz, init_rx=init_rx, init_ry=init_ry, init_rz=init_rz,
+                             init_px=init_px, init_py=init_py, init_pz=init_pz)
+        z = self.traj.rz.copy()
+        y = self.traj.ry.copy()
+        py= self.traj.py.copy()
+        dpy = np.diff(py)
+        if end == None:
+            idx_end = np.where(np.abs(dpy) == 0)
+            final_idx = []
+            cond = int(max_rz/(2*s_step))
+            for i in np.arange(np.shape(idx_end)[1]):
+                if idx_end[0][i] > cond:
+                    final_idx.append(idx_end[0][i])
+            final = final_idx[0]
+        else:
+            final = end
+        if plot_flag == True:
+            plt.plot(z,y, color='g', label='step = {:.1f}mm'.format(s_step))
+            plt.xlabel('Z coordinate (mm)')
+            plt.ylabel('Y coordinate (mm)')
+            plt.legend()
+            plt.show()
+        return(y[final],z[final],final,py[-1])
+
+    @staticmethod
+    def calc_first_integral(B, z=None):
+        dz = 1e-3*(z[-1]-z[0])/len(z)
+        integral = np.trapz(B, dx=dz)
+        return integral
+
+    @staticmethod
+    def calc_second_integral(B,z=None):
+        dz = 1e-3*(z[-1]-z[0])/len(z)
+        integral = []
+        for i in np.arange(2,len(B),1):
+            integral.append(np.trapz(B[:i], dx=dz))
+            array_integral = np.array(integral)
+        integral2 = np.trapz(array_integral, dx=dz) 
+        return integral2
+
+    def load_fieldmap(self):
+        
+        f = FieldMap(self.fieldmap)
+        b = Beam(self.beam_energy)
+        self.traj = Trajectory(beam=b, fieldmap=f)
+        # Get field components on axis
+        idx_x0 = int((len(f.rx)-1)/2)
+        idx_y0 = int((len(f.ry)-1)/2)
+        self.z = f.rz
+        self.Bx = f.bx[idx_x0,idx_y0,:]
+        self.By = f.by[idx_x0,idx_y0,:]
+        self.Bz = f.bz[idx_x0,idx_y0,:]
+
+
+    def run(self):
+        
+        x,z_end,idx_end,px = self._calc_fx(s_step=0.5, max_rz=4000, plot_flag=False, ipos=[0,0,0], iang=[0,0,1])
+        
+        y,z_end,idx_end,py = self._calc_fy(s_step=0.5, max_rz=4000, plot_flag=False, ipos=[0,0,0], iang=[0,0,1], end=idx_end)
+    
+        print("Final y position: {:.2f} um".format(1e3*y))
+        print("Final y angle: {:.2f} urad".format(1e6*py))
+
+        print("Final x position: {:.2f} um".format(1e3*x))
+        print("Final x angle: {:.2f} urad".format(1e6*px))
+
+        
+        by_integral1 = self.calc_first_integral(B=self.By,z=self.z)
+        print("By first integral (Tm): {:.3e}".format(by_integral1))
+
+        by_integral2 = self.calc_second_integral(B=self.By,z=self.z)
+        print("By second integral (Tm2): {:.3e}".format(by_integral2))
+
+        bx_integral1 = self.calc_first_integral(B=self.Bx,z=self.z)
+        print("Bx first integral (Tm): {:.3e}".format(bx_integral1))
+
+        bx_integral2 = self.calc_second_integral(B=self.Bx,z=self.z)
+        print("Bx second integral (Tm2): {:.3e}".format(bx_integral2))
+
+        Ky, Bymax = self.calc_K(period=50,B=self.By,zmin=500,zmax=2500,z=self.z)
+        print("K value for By: ", Ky)
+        print("Field amplitude for By: ", Bymax)
+
+        Kx, Bxmax = self.calc_K(period=50,B=self.Bx,zmin=500,zmax=2500,z=self.z)
+        print("K value for Bx: ", Kx)
+        print("Field amplitude for Bx: ", Bxmax)
+
+        my_file = open(self.filename,"w") #w=writing
+        my_file.write('x[um]\tpx[rad]\ty[mm]\tpy[urad]\tIx[Tm]\t        Iy[Tm]\t        I2x[Tm2]\tI2y[Tm2]\tBx[T]\tBy[T]\tKx\tKy\n')
+        my_file.write("{:.2f}\t{:.2f}\t{:.2f}\t{:.2f}\t       {:.3e}\t{:.3e}\t{:.3e}\t{:.3e}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\n".format(1e3*x,1e6*px,1e3*y,1e6*py,bx_integral1,by_integral1,bx_integral2,by_integral2,Kx,Bxmax,Ky,Bymax))
+        my_file.close()
+        
+
