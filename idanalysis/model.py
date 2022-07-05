@@ -25,9 +25,13 @@ def get_id_sabia_list(configname, ids=None):
 
 
 def get_id_epu_list(configname, ids=None,
-    nr_steps=40, rescale_kicks=1.0, rescale_length=2.8/3.6):
+    nr_steps=40, rescale_kicks=1.0, rescale_length=2.8/3.6, straight_nr=10):
+    if straight_nr == 10:
+        subsec = si.IDModel.SUBSECTIONS.ID10SB
+    elif straight_nr == 11:
+        subsec = si.IDModel.SUBSECTIONS.ID11SP
     epu50 = si.IDModel(
-        subsec=si.IDModel.SUBSECTIONS.ID10SB,
+        subsec=subsec,
         file_name=configname, fam_name='EPU50',
         nr_steps=nr_steps,
         rescale_kicks=rescale_kicks, rescale_length=rescale_length)
