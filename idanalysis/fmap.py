@@ -20,6 +20,7 @@ class FieldmapOnAxisAnalysis:
         self.bz = None
         self.beam = Beam(beam_energy)
         self.traj = None
+        self.s_step = None
 
     def calc_K(self, period, B, zmin, zmax, rz=None):
         begin_idx = np.where(rz==zmin)
@@ -47,12 +48,14 @@ class FieldmapOnAxisAnalysis:
         return K, B0
 
     def _calc_fx(self,
-                 s_step=0.5, max_rz=4000, plot_flag=True,
+                 s_step=None, max_rz=4000, plot_flag=True,
                  ipos=[0,0,0], iang=[0,0,1], end=None):
         init_rx, init_ry, init_rz = ipos
         init_px, init_py, init_pz = iang
+        if self.s_step == None:
+            self.s_step = np.average(np.diff(self.rz))/2
         self.traj.calc_trajectory(
-            s_step=s_step, min_rz=max_rz, 
+            s_step=self.s_step, min_rz=max_rz,
             init_rx=init_rx, init_ry=init_ry, init_rz=init_rz,
             init_px=init_px, init_py=init_py, init_pz=init_pz)
         z = self.traj.rz.copy()
@@ -62,7 +65,7 @@ class FieldmapOnAxisAnalysis:
         if end == None:
             idx_end = np.where(np.abs(dpx) < 1e-7)
             final_idx = []
-            cond = int(max_rz/(2*s_step))
+            cond = int(max_rz/(2*self.s_step))
             for i in np.arange(np.shape(idx_end)[1]):
                 if idx_end[0][i] > cond:
                     final_idx.append(idx_end[0][i])
@@ -70,7 +73,7 @@ class FieldmapOnAxisAnalysis:
         else:
             final = end
         if plot_flag == True:
-            plt.plot(z,x, color='g', label='step = {:.1f}mm'.format(s_step))
+            plt.plot(z,x, color='g', label='step = {:.1f}mm'.format(self.s_step))
             plt.xlabel('Z coordinate (mm)')
             plt.ylabel('X coordinate (mm)')
             plt.legend()
@@ -78,12 +81,14 @@ class FieldmapOnAxisAnalysis:
         return x[final], z[final], final, px[-1]
 
     def _calc_fy(self,
-        s_step=0.5, max_rz=4000, plot_flag=True,
+        s_step=None, max_rz=4000, plot_flag=True,
         ipos=[0,0,0], iang=[0,0,1], end=None):
         init_rx, init_ry, init_rz = ipos
         init_px, init_py, init_pz = iang
+        if self.s_step == None:
+            self.s_step = np.average(np.diff(self.rz))/2
         self.traj.calc_trajectory(
-            s_step=s_step, min_rz=max_rz,
+            s_step=self.s_step, min_rz=max_rz,
             init_rx=init_rx, init_ry=init_ry, init_rz=init_rz,
             init_px=init_px, init_py=init_py, init_pz=init_pz)
         z = self.traj.rz.copy()
@@ -93,7 +98,7 @@ class FieldmapOnAxisAnalysis:
         if end == None:
             idx_end = np.where(np.abs(dpy) == 0)
             final_idx = []
-            cond = int(max_rz/(2*s_step))
+            cond = int(max_rz/(2*self.s_step))
             for i in np.arange(np.shape(idx_end)[1]):
                 if idx_end[0][i] > cond:
                     final_idx.append(idx_end[0][i])
@@ -101,7 +106,7 @@ class FieldmapOnAxisAnalysis:
         else:
             final = end
         if plot_flag == True:
-            plt.plot(z,y, color='g', label='step = {:.1f}mm'.format(s_step))
+            plt.plot(z,y, color='g', label='step = {:.1f}mm'.format(self.s_step))
             plt.xlabel('Z coordinate (mm)')
             plt.ylabel('Y coordinate (mm)')
             plt.legend()
@@ -131,7 +136,7 @@ class FieldmapOnAxisAnalysis:
         # Get field components on axis
         idx_x0 = int((len(field.rx)-1)/2)
         idx_y0 = int((len(field.ry)-1)/2)
-        self.z = field.rz
+        self.rz = field.rz
         self.Bx = field.bx[idx_x0,idx_y0, :]
         self.By = field.by[idx_x0,idx_y0, :]
         self.Bz = field.bz[idx_x0,idx_y0, :]
@@ -140,34 +145,34 @@ class FieldmapOnAxisAnalysis:
     def run(self):
         """."""
         x, z_end, idx_end, px = \
-            self._calc_fx(s_step=0.5, max_rz=4000, plot_flag=False,
+            self._calc_fx(s_step=self.s_step, max_rz=4000, plot_flag=False,
                 ipos=[0,0,0], iang=[0,0,1])
         y, z_end, idx_end, py = \
-            self._calc_fy(s_step=0.5, max_rz=4000, plot_flag=False,
+            self._calc_fy(s_step=self.s_step, max_rz=4000, plot_flag=False,
                 ipos=[0,0,0], iang=[0,0,1], end=idx_end)
-    
+        
         print("Final y position: {:.2f} um".format(1e3*y))
         print("Final y angle   : {:.2f} urad".format(1e6*py))
         print("Final x position: {:.2f} um".format(1e3*x))
         print("Final x angle   : {:.2f} urad".format(1e6*px))
 
-        by_integral1 = self.calc_first_integral(B=self.By,z=self.z)
+        by_integral1 = self.calc_first_integral(B=self.By,rz=self.rz)
         print("By first integral (Tm)  : {:.3e}".format(by_integral1))
 
-        by_integral2 = self.calc_second_integral(B=self.By,z=self.z)
+        by_integral2 = self.calc_second_integral(B=self.By,rz=self.rz)
         print("By second integral (Tm2): {:.3e}".format(by_integral2))
 
-        bx_integral1 = self.calc_first_integral(B=self.Bx,z=self.z)
+        bx_integral1 = self.calc_first_integral(B=self.Bx,rz=self.rz)
         print("Bx first integral (Tm)  : {:.3e}".format(bx_integral1))
 
-        bx_integral2 = self.calc_second_integral(B=self.Bx,z=self.z)
+        bx_integral2 = self.calc_second_integral(B=self.Bx,rz=self.rz)
         print("Bx second integral (Tm2): {:.3e}".format(bx_integral2))
 
-        Ky, Bymax = self.calc_K(period=50,B=self.By,zmin=500,zmax=2500,z=self.z)
+        Ky, Bymax = self.calc_K(period=50,B=self.By,zmin=500,zmax=2500,rz=self.rz)
         print("K value for By          : ", Ky)
         print("Field amplitude for By  : ", Bymax)
 
-        Kx, Bxmax = self.calc_K(period=50,B=self.Bx,zmin=500,zmax=2500,z=self.z)
+        Kx, Bxmax = self.calc_K(period=50,B=self.Bx,zmin=500,zmax=2500,rz=self.rz)
         print("K value for Bx          : ", Kx)
         print("Field amplitude for Bx  : ", Bxmax)
 
