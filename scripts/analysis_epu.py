@@ -55,7 +55,7 @@ def create_model(epu_config_idx=None, **kwargs):
 
 def create_model_with_id(id_config_idx, straight_nr=None):
   if straight_nr is None: 
-    straight_nr = 11
+    straight_nr = 10
   kwargs = {
       'vchmaber_on': False,
       'nr_steps': 40,
@@ -81,7 +81,7 @@ def calc_dtune_betabeat(twiss0, twiss1):
 
 
 def analysis_uncorrected_perturbation(
-    config_label, model, twiss0=None, plot_flag=True, straight_nr=11):
+    config_label, model, twiss0=None, plot_flag=True, straight_nr=10):
     """."""
     if twiss0 is None:
       model0, *_ = create_model(vchamber_on=False)
@@ -194,10 +194,46 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
     plt.show()
 
 
-def analysis():
+def analysis_dynapt(model0, model1, model2, model3):
+  
+  model0.vchamber_on=True
+  model1.vchamber_on=True
+  model2.vchamber_on=True
+  model3.vchamber_on=True
+
+  x,y = optics.calc_dynapt_xy(model0, nrturns=100, nrtheta=9)
+  xID,yID = optics.calc_dynapt_xy(model1, nrturns=100, nrtheta=9)
+  
+  de, xe = optics.calc_dynapt_ex(model0, nrturns=100, nrpts=9)
+  deID, xeID = optics.calc_dynapt_ex(model1, nrturns=100, nrpts=9)
+
+  plt.figure(1)
+  blue, red = (0.4,0.4,1), (1,0.4,0.4)
+  plt.plot(1e3*x,1e3*y, color=blue, label='without ID')
+  plt.plot(1e3*xID,1e3*yID, color=red, label='with ID')
+  plt.xlabel('x [mm]')
+  plt.ylabel('y [mm]')
+  plt.title('Dynamic Aperture XY')
+  plt.legend()
+  plt.grid()
+  plt.show()
+
+  plt.figure(2)
+  blue, red = (0.4,0.4,1), (1,0.4,0.4)
+  plt.plot(1e2*de,1e3*xe, color=blue, label='without ID')
+  plt.plot(1e2*deID,1e3*xeID, color=red, label='with ID')
+  plt.xlabel('de [%]')
+  plt.ylabel('x [mm]')
+  plt.title('Dynamic Aperture')
+  plt.grid()
+  plt.legend()
+  plt.show()
+
+
+def analysis(plot_flag=False):
 
   # select where EPU will be installed
-  straight_nr = 11
+  straight_nr = 10
 
   # create unperturbed model for reference
   model0, _, knobs, locs_beta = create_model(
@@ -247,8 +283,9 @@ def analysis():
   twiss3, *_ = pyacc_opt.calc_twiss(model3, indices='closed')
   print()
 
-  plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=True)
+  plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=plot_flag)
   
+  analysis_dynapt(model0, model1, model2, model3)
 
 if __name__ == '__main__':
     analysis()
