@@ -11,8 +11,8 @@ from idanalysis import model as model
 from idanalysis import optics as optics
 
 import utils
-# utils.FOLDER_BASE = '/home/ximenes/repos-dev/'
-utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
+utils.FOLDER_BASE = '/home/ximenes/repos-dev/'
+# utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
 
 
 def create_model(epu_config_idx=None, **kwargs):
@@ -202,15 +202,15 @@ def analysis_dynapt(model0, model1, model2, model3):
   model3.vchamber_on=True
 
   x,y = optics.calc_dynapt_xy(model0, nrturns=100, nrtheta=9)
-  xID,yID = optics.calc_dynapt_xy(model1, nrturns=100, nrtheta=9)
+  # xID,yID = optics.calc_dynapt_xy(model1, nrturns=100, nrtheta=9)
   
   de, xe = optics.calc_dynapt_ex(model0, nrturns=100, nrpts=9)
-  deID, xeID = optics.calc_dynapt_ex(model1, nrturns=100, nrpts=9)
+  # deID, xeID = optics.calc_dynapt_ex(model1, nrturns=100, nrpts=9)
 
   plt.figure(1)
   blue, red = (0.4,0.4,1), (1,0.4,0.4)
   plt.plot(1e3*x,1e3*y, color=blue, label='without ID')
-  plt.plot(1e3*xID,1e3*yID, color=red, label='with ID')
+  # plt.plot(1e3*xID,1e3*yID, color=red, label='with ID')
   plt.xlabel('x [mm]')
   plt.ylabel('y [mm]')
   plt.title('Dynamic Aperture XY')
@@ -221,13 +221,22 @@ def analysis_dynapt(model0, model1, model2, model3):
   plt.figure(2)
   blue, red = (0.4,0.4,1), (1,0.4,0.4)
   plt.plot(1e2*de,1e3*xe, color=blue, label='without ID')
-  plt.plot(1e2*deID,1e3*xeID, color=red, label='with ID')
+  # plt.plot(1e2*deID,1e3*xeID, color=red, label='with ID')
   plt.xlabel('de [%]')
   plt.ylabel('x [mm]')
   plt.title('Dynamic Aperture')
   plt.grid()
   plt.legend()
   plt.show()
+
+  for x_, y_ in zip(x, y):
+    print(f'{x_:+.16e} {y_:+.16e}')
+  
+  print()
+
+  for de_, xe_ in zip(de, xe):
+    print(f'{de_:+.16e} {xe_:+.16e}')
+  
 
 
 def analysis(plot_flag=False):
@@ -286,6 +295,7 @@ def analysis(plot_flag=False):
   plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=plot_flag)
   
   analysis_dynapt(model0, model1, model2, model3)
+
 
 if __name__ == '__main__':
     analysis()
