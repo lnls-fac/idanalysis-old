@@ -229,15 +229,11 @@ def analysis_dynapt(model0, model1, model2, model3):
   plt.legend()
   plt.show()
 
-  for x_, y_ in zip(x, y):
-    print(f'{x_:+.16e} {y_:+.16e}')
   
-  print()
-
-  for de_, xe_ in zip(de, xe):
-    print(f'{de_:+.16e} {xe_:+.16e}')
-  
-
+  np.savetxt("xy_values.dat",list(zip(1e3*x,1e3*y)),fmt="%8.3f")
+  np.savetxt("xyID_values.dat",list(zip(1e3*xID,1e3*yID)),fmt="%8.3f")
+  np.savetxt("dex_values.dat",list(zip(1e2*de,1e3*xe)),fmt="%8.3f")
+  np.savetxt("dexID_values.dat",list(zip(1e2*deID,1e3*xeID)),fmt="%8.3f")
 
 def analysis(plot_flag=False):
 
