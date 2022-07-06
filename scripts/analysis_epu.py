@@ -11,8 +11,8 @@ from idanalysis import model as model
 from idanalysis import optics as optics
 
 import utils
-utils.FOLDER_BASE = '/home/ximenes/repos-dev/'
-# utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
+#utils.FOLDER_BASE = '/home/ximenes/repos-dev/'
+utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
 
 
 def create_model(epu_config_idx=None, **kwargs):
@@ -202,15 +202,15 @@ def analysis_dynapt(model0, model1, model2, model3):
   model3.vchamber_on=True
 
   x,y = optics.calc_dynapt_xy(model0, nrturns=100, nrtheta=9)
-  # xID,yID = optics.calc_dynapt_xy(model1, nrturns=100, nrtheta=9)
+  xID,yID = optics.calc_dynapt_xy(model1, nrturns=100, nrtheta=9)
   
   de, xe = optics.calc_dynapt_ex(model0, nrturns=100, nrpts=9)
-  # deID, xeID = optics.calc_dynapt_ex(model1, nrturns=100, nrpts=9)
+  deID, xeID = optics.calc_dynapt_ex(model1, nrturns=100, nrpts=9)
 
   plt.figure(1)
   blue, red = (0.4,0.4,1), (1,0.4,0.4)
   plt.plot(1e3*x,1e3*y, color=blue, label='without ID')
-  # plt.plot(1e3*xID,1e3*yID, color=red, label='with ID')
+  plt.plot(1e3*xID,1e3*yID, color=red, label='with ID')
   plt.xlabel('x [mm]')
   plt.ylabel('y [mm]')
   plt.title('Dynamic Aperture XY')
@@ -221,7 +221,7 @@ def analysis_dynapt(model0, model1, model2, model3):
   plt.figure(2)
   blue, red = (0.4,0.4,1), (1,0.4,0.4)
   plt.plot(1e2*de,1e3*xe, color=blue, label='without ID')
-  # plt.plot(1e2*deID,1e3*xeID, color=red, label='with ID')
+  plt.plot(1e2*deID,1e3*xeID, color=red, label='with ID')
   plt.xlabel('de [%]')
   plt.ylabel('x [mm]')
   plt.title('Dynamic Aperture')
@@ -230,11 +230,6 @@ def analysis_dynapt(model0, model1, model2, model3):
   plt.show()
 
   
-  np.savetxt("xy_values.dat",list(zip(1e3*x,1e3*y)),fmt="%8.3f")
-  np.savetxt("xyID_values.dat",list(zip(1e3*xID,1e3*yID)),fmt="%8.3f")
-  np.savetxt("dex_values.dat",list(zip(1e2*de,1e3*xe)),fmt="%8.3f")
-  np.savetxt("dexID_values.dat",list(zip(1e2*deID,1e3*xeID)),fmt="%8.3f")
-
 def analysis(plot_flag=False):
 
   # select where EPU will be installed
