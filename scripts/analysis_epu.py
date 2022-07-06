@@ -201,16 +201,16 @@ def analysis_dynapt(model0, model1, model2, model3):
   model2.vchamber_on=True
   model3.vchamber_on=True
 
-  x,y = optics.calc_dynapt_xy(model0, nrturns=100, nrtheta=9)
-  # xID,yID = optics.calc_dynapt_xy(model1, nrturns=100, nrtheta=9)
+  # x,y = optics.calc_dynapt_xy(model0, nrturns=100, nrtheta=9)
+  xID,yID = optics.calc_dynapt_xy(model1, nrturns=100, nrtheta=9)
   
-  de, xe = optics.calc_dynapt_ex(model0, nrturns=100, nrpts=9)
-  # deID, xeID = optics.calc_dynapt_ex(model1, nrturns=100, nrpts=9)
+  # de, xe = optics.calc_dynapt_ex(model0, nrturns=100, nrpts=9)
+  deID, xeID = optics.calc_dynapt_ex(model1, nrturns=100, nrpts=9)
 
   plt.figure(1)
   blue, red = (0.4,0.4,1), (1,0.4,0.4)
-  plt.plot(1e3*x,1e3*y, color=blue, label='without ID')
-  # plt.plot(1e3*xID,1e3*yID, color=red, label='with ID')
+  # plt.plot(1e3*x,1e3*y, color=blue, label='without ID')
+  plt.plot(1e3*xID,1e3*yID, color=red, label='with ID')
   plt.xlabel('x [mm]')
   plt.ylabel('y [mm]')
   plt.title('Dynamic Aperture XY')
@@ -220,8 +220,8 @@ def analysis_dynapt(model0, model1, model2, model3):
 
   plt.figure(2)
   blue, red = (0.4,0.4,1), (1,0.4,0.4)
-  plt.plot(1e2*de,1e3*xe, color=blue, label='without ID')
-  # plt.plot(1e2*deID,1e3*xeID, color=red, label='with ID')
+  # plt.plot(1e2*de,1e3*xe, color=blue, label='without ID')
+  plt.plot(1e2*deID,1e3*xeID, color=red, label='with ID')
   plt.xlabel('de [%]')
   plt.ylabel('x [mm]')
   plt.title('Dynamic Aperture')
@@ -229,12 +229,12 @@ def analysis_dynapt(model0, model1, model2, model3):
   plt.legend()
   plt.show()
 
-  for x_, y_ in zip(x, y):
+  for x_, y_ in zip(xID, yID):
     print(f'{x_:+.16e} {y_:+.16e}')
   
   print()
 
-  for de_, xe_ in zip(de, xe):
+  for de_, xe_ in zip(deID, xeID):
     print(f'{de_:+.16e} {xe_:+.16e}')
   
 
