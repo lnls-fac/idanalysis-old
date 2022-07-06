@@ -196,16 +196,25 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
 
 def analysis_dynapt(model0, model1, model2, model3):
   
-  model0.vchamber_on=True
-  model1.vchamber_on=True
-  model2.vchamber_on=True
-  model3.vchamber_on=True
+  model0.vchamber_on = True
+  model1.vchamber_on = True
+  model2.vchamber_on = True
+  model3.vchamber_on = True
+  model0.cavity_on = True
+  model1.cavity_on = True
+  model2.cavity_on = True
+  model3.cavity_on = True
+  model0.radiation_on = True
+  model1.radiation_on = True
+  model2.radiation_on = True
+  model3.radiation_on = True
 
-  x,y = optics.calc_dynapt_xy(model0, nrturns=100, nrtheta=9)
-  xID,yID = optics.calc_dynapt_xy(model1, nrturns=100, nrtheta=9)
+  x,y = optics.calc_dynapt_xy(model0, nrturns=5000, nrtheta=27)
+  xID,yID = optics.calc_dynapt_xy(model3, nrturns=5000, nrtheta=27)
   
-  de, xe = optics.calc_dynapt_ex(model0, nrturns=100, nrpts=9)
-  deID, xeID = optics.calc_dynapt_ex(model1, nrturns=100, nrpts=9)
+  
+  de, xe = optics.calc_dynapt_ex(model0, nrturns=5000, nrpts=27)
+  deID, xeID = optics.calc_dynapt_ex(model3, nrturns=5000, nrpts=27)
 
   plt.figure(1)
   blue, red = (0.4,0.4,1), (1,0.4,0.4)
@@ -228,7 +237,7 @@ def analysis_dynapt(model0, model1, model2, model3):
   plt.grid()
   plt.legend()
   plt.show()
-
+  
   
 def analysis(plot_flag=False):
 
@@ -239,6 +248,7 @@ def analysis(plot_flag=False):
   model0, _, knobs, locs_beta = create_model(
     vchamber_on=False, straight_nr=straight_nr)
   twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
+  
   print('local quadrupole fams: ', knobs)
   print('element indices for straight section begin and end: ', locs_beta)
 
@@ -250,9 +260,10 @@ def analysis(plot_flag=False):
   goal_beta2 = np.array([twiss0.betax[locs_beta], twiss0.betay[locs_beta]])
   # create model with ID
   model1, config_label, straight_nr = create_model_with_id(id_config_idx=0, straight_nr=straight_nr)
-
+ 
   # correct orbit
   orbcorr.correct_orbit_sofb(model0, model1)
+
 
   # calculate beta beating and tune delta tunes
   twiss1 = analysis_uncorrected_perturbation(
