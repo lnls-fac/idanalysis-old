@@ -247,7 +247,7 @@ def correct_symmetry_withbeta(tr, straight_nr, goal_beta, goal_alpha, delta_k=1e
     return dk
 
 
-def calc_dynapt_xy(ring, nrturns, nrtheta=9, mindeltar=0.1e-3, r1=0, r2=30e-3):
+def calc_dynapt_xy(ring, nrturns, nrtheta=9, mindeltar=0.1e-3, r1=0, r2=30e-3, print_flag=False):
     
     ang = np.linspace(0, np.pi, nrtheta)
     ang[0] += 0.0001
@@ -265,7 +265,8 @@ def calc_dynapt_xy(ring, nrturns, nrtheta=9, mindeltar=0.1e-3, r1=0, r2=30e-3):
                 r2_ = rm
             else:
                 r1_ = rm
-            print('ang:{:5.1f} r1:{:5.2f} r2:{:5.2f}'.format(a*180/np.pi, r1_*1e3, r2_*1e3))
+            if print_flag:
+                print('ang:{:5.1f} r1:{:5.2f} r2:{:5.2f}'.format(a*180/np.pi, r1_*1e3, r2_*1e3))
         rm = 0.5*(r1_+r2_)
         rx = rm * np.cos(a)
         ry = rm * np.sin(a)
@@ -274,7 +275,7 @@ def calc_dynapt_xy(ring, nrturns, nrtheta=9, mindeltar=0.1e-3, r1=0, r2=30e-3):
     return np.array(vx), np.array(vy)
 
 
-def calc_dynapt_ex(ring, nrturns, demax=0.05, nrpts=33, mindeltax=0.1e-3, xmin=-30e-3, y=1e-3):
+def calc_dynapt_ex(ring, nrturns, demax=0.05, nrpts=33, mindeltax=0.1e-3, xmin=-30e-3, y=1e-3, print_flag=False):
 
     denergies = np.linspace(-demax, demax, nrpts)
     x = []
@@ -287,7 +288,8 @@ def calc_dynapt_ex(ring, nrturns, demax=0.05, nrpts=33, mindeltax=0.1e-3, xmin=-
                 xmin_ = xm
             else:
                 xmax_ = xm
-            print('ene:{:+4.1f} % xmin:{:+6.2f} xmax:{:+6.2f}'.format(denergy*100, xmin_*1e3, xmax_*1e3))
+            if print_flag:
+                print('ene:{:+4.1f} % xmin:{:+6.2f} xmax:{:+6.2f}'.format(denergy*100, xmin_*1e3, xmax_*1e3))
         xm = (xmin_ + xmax_) / 2
         x.append(xm)
         

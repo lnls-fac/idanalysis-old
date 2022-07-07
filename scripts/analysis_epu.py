@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 
 from pyaccel import lattice as pyacc_lat
 from pyaccel import optics as pyacc_opt
+from pyaccel.optics import calc_touschek_energy_acceptance
 
 from idanalysis import orbcorr as orbcorr
 from idanalysis import model as model
@@ -15,7 +16,7 @@ import utils
 utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
 
 
-def create_model(epu_config_idx=None, **kwargs):
+def create_model(epu_config_idx=None, rescale_kicks=1.0, **kwargs):
     """Create pyaccel model."""
 
     vchamber_on = kwargs.get('vchamber_on', False)
@@ -29,7 +30,7 @@ def create_model(epu_config_idx=None, **kwargs):
 
       # create object with list of all possible EPU50 configurations
       configs = utils.create_epudata()
-
+      
       # get config label
       config_label = configs.get_config_label(configs[epu_config_idx])
 
@@ -37,7 +38,7 @@ def create_model(epu_config_idx=None, **kwargs):
       nr_steps = kwargs.get('nr_steps', 40)
       kmap_fname = configs.get_kickmap_filename(configs[epu_config_idx])
       ids = model.get_id_epu_list(
-        kmap_fname, ids=None, nr_steps=nr_steps, rescale_kicks=1.0, 
+        kmap_fname, ids=None, nr_steps=nr_steps, rescale_kicks=rescale_kicks, 
         straight_nr=straight_nr)
 
       # create model
@@ -53,7 +54,7 @@ def create_model(epu_config_idx=None, **kwargs):
     return model_, config_label, knobs, locs_beta
 
 
-def create_model_with_id(id_config_idx, straight_nr=None):
+def create_model_with_id(id_config_idx, rescale_kicks=1, straight_nr=None):
   if straight_nr is None: 
     straight_nr = 10
   kwargs = {
@@ -62,7 +63,7 @@ def create_model_with_id(id_config_idx, straight_nr=None):
       'straight_nr': straight_nr,
     }
   model1, config_label, *_ = \
-    create_model(epu_config_idx=id_config_idx, **kwargs)
+    create_model(epu_config_idx=id_config_idx, rescale_kicks=rescale_kicks, **kwargs)
   return model1, config_label, straight_nr
 
 
@@ -194,27 +195,24 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
     plt.show()
 
 
-def analysis_dynapt(model0, model1, model2, model3):
+def analysis_dynapt(model0, modelf, nrtheta=9, nrpts=9):
   
   model0.vchamber_on = True
-  model1.vchamber_on = True
-  model2.vchamber_on = True
-  model3.vchamber_on = True
-  model0.cavity_on = True
-  model1.cavity_on = True
-  model2.cavity_on = True
-  model3.cavity_on = True
-  model0.radiation_on = True
-  model1.radiation_on = True
-  model2.radiation_on = True
-  model3.radiation_on = True
+  modelf.vchamber_on = True
 
-  x,y = optics.calc_dynapt_xy(model0, nrturns=5000, nrtheta=27)
-  xID,yID = optics.calc_dynapt_xy(model3, nrturns=5000, nrtheta=27)
+  model0.cavity_on = True
+  modelf.cavity_on = True
+
+  model0.radiation_on = True
+  modelf.radiation_on = True
+
+
+  x,y = optics.calc_dynapt_xy(model0, nrturns=100, nrtheta=nrtheta, print_flag=False)
+  xID,yID = optics.calc_dynapt_xy(modelf, nrturns=100, nrtheta=nrtheta, print_flag=False)
   
   
-  de, xe = optics.calc_dynapt_ex(model0, nrturns=5000, nrpts=27)
-  deID, xeID = optics.calc_dynapt_ex(model3, nrturns=5000, nrpts=27)
+  de, xe = optics.calc_dynapt_ex(model0, nrturns=100, nrpts=nrpts, print_flag=False)
+  deID, xeID = optics.calc_dynapt_ex(modelf, nrturns=100, nrpts=nrpts, print_flag=False)
 
   plt.figure(1)
   blue, red = (0.4,0.4,1), (1,0.4,0.4)
@@ -238,8 +236,24 @@ def analysis_dynapt(model0, model1, model2, model3):
   plt.legend()
   plt.show()
   
+
+def analysis_energy_acceptance(model0, modelf, spos=None):
   
+  accep_neg, accep_pos = calc_touschek_energy_acceptance(model0)
+  accep_neg_id, accep_pos_id = calc_touschek_energy_acceptance(modelf)
+  
+  plt.figure(1)
+  blue, red = (0.4,0.4,1), (1,0.4,0.4)
+  plt.plot(spos, accep_neg, color=blue, label='Without ID')
+  plt.plot(spos, accep_pos, color=blue)
+  plt.plot(spos, accep_neg_id, color=red, label='With ID')
+  plt.plot(spos, accep_pos_id, color=red)
+  plt.grid()
+  plt.legend()
+  plt.show()
+
 def analysis(plot_flag=False):
+  rescale_kicks = 1.0
 
   # select where EPU will be installed
   straight_nr = 10
@@ -259,8 +273,8 @@ def analysis(plot_flag=False):
   print(goal_beta)
   goal_beta2 = np.array([twiss0.betax[locs_beta], twiss0.betay[locs_beta]])
   # create model with ID
-  model1, config_label, straight_nr = create_model_with_id(id_config_idx=0, straight_nr=straight_nr)
- 
+  model1, config_label, straight_nr = create_model_with_id(id_config_idx=0, rescale_kicks=rescale_kicks, straight_nr=straight_nr)
+  
   # correct orbit
   orbcorr.correct_orbit_sofb(model0, model1)
 
@@ -296,8 +310,8 @@ def analysis(plot_flag=False):
 
   plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=plot_flag)
   
-  analysis_dynapt(model0, model1, model2, model3)
-
+  analysis_dynapt(model0, model3, nrtheta=9, nrpts=9)
+  analysis_energy_acceptance(model0, model3, twiss0.spos)
 
 if __name__ == '__main__':
     analysis()
