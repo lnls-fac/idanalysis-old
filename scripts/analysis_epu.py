@@ -54,7 +54,7 @@ def create_model(epu_config_idx=None, rescale_kicks=1.0, **kwargs):
     return model_, config_label, knobs, locs_beta
 
 
-def create_model_with_id(id_config_idx, rescale_kicks=1, straight_nr=None):
+def create_model_with_id(id_config_idx, rescale_kicks=1.0, straight_nr=None):
   if straight_nr is None: 
     straight_nr = 10
   kwargs = {
@@ -207,12 +207,12 @@ def analysis_dynapt(model0, modelf, nrtheta=9, nrpts=9):
   modelf.radiation_on = True
 
 
-  x,y = optics.calc_dynapt_xy(model0, nrturns=100, nrtheta=nrtheta, print_flag=False)
-  xID,yID = optics.calc_dynapt_xy(modelf, nrturns=100, nrtheta=nrtheta, print_flag=False)
+  x,y = optics.calc_dynapt_xy(model0, nrturns=5000, nrtheta=nrtheta, print_flag=False)
+  xID,yID = optics.calc_dynapt_xy(modelf, nrturns=5000, nrtheta=nrtheta, print_flag=False)
   
   
-  de, xe = optics.calc_dynapt_ex(model0, nrturns=100, nrpts=nrpts, print_flag=False)
-  deID, xeID = optics.calc_dynapt_ex(modelf, nrturns=100, nrpts=nrpts, print_flag=False)
+  de, xe = optics.calc_dynapt_ex(model0, nrturns=5000, nrpts=nrpts, print_flag=False)
+  deID, xeID = optics.calc_dynapt_ex(modelf, nrturns=5000, nrpts=nrpts, print_flag=False)
 
   plt.figure(1)
   blue, red = (0.4,0.4,1), (1,0.4,0.4)
@@ -251,6 +251,7 @@ def analysis_energy_acceptance(model0, modelf, spos=None):
   plt.grid()
   plt.legend()
   plt.show()
+
 
 def analysis(plot_flag=False):
   rescale_kicks = 1.0
@@ -310,8 +311,9 @@ def analysis(plot_flag=False):
 
   plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=plot_flag)
   
-  analysis_dynapt(model0, model3, nrtheta=9, nrpts=9)
+  analysis_dynapt(model0, model3, nrtheta=12, nrpts=12)
   analysis_energy_acceptance(model0, model3, twiss0.spos)
+
 
 if __name__ == '__main__':
     analysis()
