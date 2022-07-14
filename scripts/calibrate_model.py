@@ -85,7 +85,7 @@ class RadiaModelCalibration:
         plt.show()
 
     def shiftscale_set(self, scale):
-        """Incorporate scale into model."""
+        """Incorporate fitted scale as effective remanent magnetization."""
         raise NotImplementedError
 
     def update_model_field(self, block_inds, new_mags):
@@ -105,14 +105,14 @@ class RadiaModelCalibration:
         #   'cid': [m10, m11, m12],
         # }
         #
-        # update: self._by_model
+        # update: self._field_model
         #
         # algorith:
         #
         # 1. build dict mags_old
         # 2. build dict mags_dif = mags_new - mags_old
         # 3. calc field_dif on axis for mags_dif dict
-        # 4. add field_dif to self._by_model
+        # 4. add field_dif to self._field_model
 
 
 def init_objects():
