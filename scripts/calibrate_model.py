@@ -1,12 +1,10 @@
 #!/usr/bin/env python-sirius
 
-import random
 import numpy as np
 from imaids.models import AppleII as _AppleII
 from imaids.models import AppleIISabia as _AppleIISabia
 from imaids.blocks import Block as _Block
 import matplotlib.pyplot as plt
-from idanalysis.fmap import FieldmapOnAxisAnalysis as _FieldmapOnAxisAnalysis
 from idanalysis.fmap import EPUOnAxisFieldMap as _EPUOnAxisFieldMap
 
 
