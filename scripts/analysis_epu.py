@@ -242,12 +242,15 @@ def analysis_energy_acceptance(model0, modelf, spos=None):
   accep_neg, accep_pos = calc_touschek_energy_acceptance(model0)
   accep_neg_id, accep_pos_id = calc_touschek_energy_acceptance(modelf)
   
-  plt.figure(1)
+  plt.figure(3)
   blue, red = (0.4,0.4,1), (1,0.4,0.4)
   plt.plot(spos, accep_neg, color=blue, label='Without ID')
   plt.plot(spos, accep_pos, color=blue)
   plt.plot(spos, accep_neg_id, color=red, label='With ID')
   plt.plot(spos, accep_pos_id, color=red)
+  plt.title('Energy acceptance')
+  plt.ylabel('de [%]')
+  plt.xlabel('s [m]')
   plt.grid()
   plt.legend()
   plt.show()
@@ -311,7 +314,7 @@ def analysis(plot_flag=False):
 
   plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=plot_flag)
   
-  analysis_dynapt(model0, model3, nrtheta=12, nrpts=12)
+  analysis_dynapt(model0, model3, nrtheta=12, nrpts=)
   analysis_energy_acceptance(model0, model3, twiss0.spos)
 
 
