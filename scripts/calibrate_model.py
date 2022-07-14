@@ -84,22 +84,28 @@ class RadiaModelCalibration:
 
     def shiftscale_set(self, scale):
         """Incorporate fitted scale as effective remanent magnetization."""
-        raise NotImplementedError
+        for cas in self._epu.cassettes_ref.values():
+            mags_old = np.array(cas.magnetization_list)
+            mags_new = (scale*mags_old).tolist()
+            cas.create_radia_object(magnetization_list=mags_new)
+        print(epu.magnetization_dict)
 
     def update_model_field(self, block_inds, new_mags):
         """Update By on-axis with new blocks magnetizations."""
+        
+        
         # Example:
         # blocks_inds = {
-        #   'csd': [34, 12, 4],
-        #   'cse': [3, 1, 7],
-        #   'cie': [4, 2, 41],
-        #   'cid': [7, 3, 81],
+        #   'csd': [34, 12, 4, 2],
+        #   'cse': [3, 1, 7, 3],
+        #   'cie': [4, 2, 41, 8],
+        #   'cid': [7, 3, 81, 6],
         # }
         #
         # mags_new = {
-        #   'csd': [m1, m2, m3],
-        #   'cse': [m4, m5, m6],
-        #   'cie': [m7, m8, m9],
+        #   'csd': [m1, m2, m3, ],
+        #   'cse': [m4, m5, m6, ],
+        #   'cie': [m7, m8, m9, ],
         #   'cid': [m10, m11, m12],
         # }
         #
@@ -138,14 +144,14 @@ if __name__ == "__main__":
 
     shifts = np.linspace(-0.25, 0.25, 31) * epu.period_length
     # shifts = np.linspace(-7.0, -6.0, 31)
-    minshift, minresidue = shifts[0], float('inf')
+    minshift, minresidue, minscale = shifts[0], float('inf'), 1
     for shift in shifts:
         residue, scale, _ = cm.shiftscale_calc_residue(shift=shift)
         print('shift: {:+08.4f} mm -> residue: {:07.5f} T'.format(shift, residue))
         if residue < minresidue:
             minresidue = residue
             minshift = shift
+            minscale = scale
 
     cm.shiftscale_plot_fields(shift=minshift)
-
-    # cm.shiftscale_set(shift=minshift)
+    cm.shiftscale_set(scale=minscale)
