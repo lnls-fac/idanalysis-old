@@ -11,22 +11,29 @@ class EPUOnAxisFieldMap(_FieldMap):
     """."""
 
     # FOLDER_BASE = None
-    FOLDER_BASE = '/home/ximenes/repos-dev/fac/atividades/insertion-devices/Ondulador UVV/'
-    # FOLDER_BASE = '/home/gabriel/repos-sirius/Ondulador UVV/'
+    #FOLDER_BASE = '/home/ximenes/repos-dev/fac/atividades/insertion-devices/Ondulador UVV/'
+    FOLDER_BASE = '/home/gabriel/repos-sirius/Ondulador UVV/'
 
     class CONFIGS:
         """."""
         HP_G22P0 = 'HP_G22P0'
+        HP_G25P7 = 'HP_G25P7'
 
     _DATA_PATH = (
             'Estrutura Magnética/Medidas e Resultados Ondulador/'
             'Operacao Ondulador  - Medidas Oficiais/')
 
     _CONFIG_FNAMES = {
+        # NOTE: order is important! Bx, Bz, By (or -Bx, By, Bz in sirius coordsys)
         'HP_G22P0': [
             'Campo Vertical/Gap 22.0/Map0802_Bx_Gap22_Fase0.0_01_X=0_Real.dat',
             'Campo Vertical/Gap 22.0/Map0802_Bz_Gap22_Fase0.0_01_X=0_Real.dat',
             'Campo Vertical/Gap 22.0/Map1202_By_Gap22_Fase0.0_01_X=0_Real.dat',
+            ],
+        'HP_G25P7': [
+            'Campo Vertical/Gap 25.7/Map1902_Bx_Gap25.7_Fase0.0_01_Real.dat',
+            'Campo Vertical/Gap 25.7/Map1902_Bz_Gap25.7_Fase0.0_01_Real.dat',
+            'Campo Vertical/Gap 25.7/Map1902_By_Gap25.7_Fase0.0_01_Real.dat',
             ],
         }
 

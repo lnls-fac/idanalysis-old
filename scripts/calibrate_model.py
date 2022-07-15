@@ -1,12 +1,13 @@
 #!/usr/bin/env python-sirius
 
 import numpy as _np
+import random as _random
 from imaids.models import AppleII as _AppleII
 from imaids.models import AppleIISabia as _AppleIISabia
 from imaids.blocks import Block as _Block
 import matplotlib.pyplot as plt
 from idanalysis.fmap import EPUOnAxisFieldMap as _EPUOnAxisFieldMap
-
+from copy import deepcopy
 
 class RadiaModelCalibration:
     """."""
@@ -19,6 +20,7 @@ class RadiaModelCalibration:
         self._field_meas = None
         self._rz_model = None
         self._field_model = None
+        self._nrselblocks = 5
 
     @property
     def rz_model(self):
@@ -67,7 +69,7 @@ class RadiaModelCalibration:
             self.rz_model, self.rz_meas + shift, self.field_meas)
         bf1, bf2 = field_meas_fit, self.field_model
         scale = _np.dot(bf1, bf2) / _np.dot(bf2, bf2)
-        residue = _np.sqrt_np.sum((bf1 - scale * bf2)**2)/len(self.rz_model)
+        residue = _np.sum((bf1 - scale * bf2)**2)/len(self.rz_model)
         return residue, scale, field_meas_fit
 
     def shiftscale_plot_fields(self, shift):
@@ -82,6 +84,14 @@ class RadiaModelCalibration:
         plt.legend()
         plt.show()
 
+    def plot_fields(self):
+        plt.plot(self.rz_model, self.field_model, label='model')
+        plt.xlim(-1600, 1600)
+        plt.xlabel('rz [mm]')
+        plt.ylabel('By [T]')
+        plt.legend()
+        plt.show()    
+
     def shiftscale_set(self, scale):
         """Incorporate fitted scale as effective remanent magnetization."""
         for cas in self._epu.cassettes_ref.values():
@@ -89,7 +99,23 @@ class RadiaModelCalibration:
             mags_new = (scale*mags_old).tolist()
             cas.create_radia_object(magnetization_list=mags_new)
 
-    def update_model_field(self, blocks_inds, blocks_mags=None):
+    def get_blocks_indices(self):
+        nrblocks = self._epu.cassettes_ref['csd'].nr_blocks
+        inds_csd = _np.arange(nrblocks)
+        inds_cse = _np.arange(nrblocks)
+        inds_cie = _np.arange(nrblocks)
+        inds_cid = _np.arange(nrblocks)
+        _random.shuffle(inds_csd)
+        _random.shuffle(inds_cse)
+        _random.shuffle(inds_cie)
+        _random.shuffle(inds_cid)
+        inds = dict(csd=inds_csd[:self._nrselblocks], cse=inds_cse[:self._nrselblocks], cie=inds_cie[:self._nrselblocks], cid=inds_cid[:self._nrselblocks])
+        return inds 
+
+    #def gen_new_mags(self, nrselblocks=5):
+
+
+    def update_model_field2(self, blocks_inds, blocks_mags=None):
         """Update model field with new blocks magnetizations."""
         # Example:
         # blocks_inds = {
@@ -121,29 +147,50 @@ class RadiaModelCalibration:
             mags = self._epu.cassetes_ref[cas].magnetization_list
             blocks_mags_diff[cas] = _np.asarray(blocks_mags[cas]) - mags[inds]
 
-
-def init_objects(gap):
+    def update_model_field(self, block_inds, new_mags):
+        """Update By on-axis with new blocks magnetizations."""
+        mags_old = self._epu.magnetization_dict
+        mags_dif = dict()
+        field_dif = _np.zeros((len(self.rz_model), 3))
+        for cas_name in block_inds:
+            cas = self._epu.cassettes_ref[cas_name]
+            mags_dif_list = []
+            for idx_mag, idx in enumerate(block_inds[cas.name]):
+                mags_dif_list.append((_np.array(new_mags[cas.name][idx_mag])-_np.array(mags_old[cas.name][idx])).tolist())
+                
+            mags_dif[cas.name] = mags_dif_list
+            for idx_mag, idx in enumerate(block_inds[cas.name]):
+                cas.blocks[idx].create_radia_object(magnetization=mags_dif[cas.name][idx_mag])
+                field_dif += cas.blocks[idx].get_field(x=0, y=0, z=self.rz_model)
+       
+        self._field_model += field_dif[:,1]
+        
+        
+def init_objects(phase, gap):
     """."""
     nr_periods = 54
     period_length = 50
     block_shape = [[[0.1, 0], [40, 0], [40, -40], [0.1, -40]]]
-    longitudinal_distance = 0.125
+    longitudinal_distance = 0.2
     block_len = period_length/4 - longitudinal_distance
     start_lengths = [block_len/4, block_len/2, 3*block_len/4, block_len]
     start_distances = [block_len/2, block_len/4, 0, longitudinal_distance]
     end_lenghts = start_lengths[-2::-1] # Tirar último elemento e inverter
     end_distances = start_distances[-2::-1] # Tirar último elemento e inverter
     epu = _AppleIISabia(
-        mr=1.24,
-        block_shape=block_shape, block_subdivision=[[1, 1, 1]],
-        nr_periods=nr_periods, period_length=period_length, gap=gap,
+        gap=gap, nr_periods=nr_periods, period_length=period_length,
+        mr=1.25, block_shape=block_shape, block_subdivision=[[1, 1, 1]],
         start_blocks_length=start_lengths, start_blocks_distance=start_distances,
         end_blocks_length=end_lenghts, end_blocks_distance=end_distances)
     # print(epu.cassettes_ref['csd'].blocks[0])
 
-    if gap == 22:
-        config = _EPUOnAxisFieldMap.CONFIGS.HP_G22P0
-    else:
+    configs = {
+        (0, 22.0) : _EPUOnAxisFieldMap.CONFIGS.HP_G22P0,
+        (0, 25.7) : _EPUOnAxisFieldMap.CONFIGS.HP_G25P7,
+    }
+    try:
+        config = configs[(phase, gap)]
+    except KeyError:
         raise NotImplementedError
     fmap = _EPUOnAxisFieldMap(config=config)
     return epu, fmap
@@ -152,8 +199,10 @@ def init_objects(gap):
 if __name__ == "__main__":
 
     # create objects and init fields
-    gap = 22  # [mm]
-    epu, fmap = init_objects(gap=gap)
+    phase = 0
+    # gap = 22  # [mm]
+    gap = 25.7  # [mm]
+    epu, fmap = init_objects(phase=0, gap=gap)
     cm = RadiaModelCalibration(fmap, epu)
     # cm.update_model_field(blocks_inds={'csd': [0, ]})
     # raise ValueError
@@ -171,3 +220,19 @@ if __name__ == "__main__":
     # plot best solution and calibrates model
     cm.shiftscale_plot_fields(shift=minshift)
     cm.shiftscale_set(scale=minscale)
+    
+    m = 1.0001
+    #Example:
+
+    
+    mags_new = {
+      'csd': [(m*_np.array(epu.cassettes['csd'].blocks[0].magnetization)).tolist()],
+    #   'cse': [(m*_np.array(epu.cassettes['cse'].blocks[3].magnetization)).tolist(), (m*_np.array(epu.cassettes['cse'].blocks[1].magnetization)).tolist(), (m*_np.array(epu.cassettes['cse'].blocks[7].magnetization)).tolist()],
+    #   'cie': [(m*_np.array(epu.cassettes['cie'].blocks[4].magnetization)).tolist(), (m*_np.array(epu.cassettes['cie'].blocks[2].magnetization)).tolist(), (m*_np.array(epu.cassettes['cie'].blocks[41].magnetization)).tolist()],
+    #   'cid': [(m*_np.array(epu.cassettes['cid'].blocks[7].magnetization)).tolist(), (m*_np.array(epu.cassettes['cid'].blocks[3].magnetization)).tolist(), (m*_np.array(epu.cassettes['cid'].blocks[81].magnetization)).tolist()],
+    }
+    
+    blocks_inds = cm.get_blocks_indices()
+    print(blocks_inds)
+    #cm.update_model_field(block_inds=blocks_inds, new_mags=mags_new)
+    cm.plot_fields()
