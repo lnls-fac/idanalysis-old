@@ -1,6 +1,6 @@
 #!/usr/bin/env python-sirius
 
-import numpy as np
+import numpy as _np
 from imaids.models import AppleII as _AppleII
 from imaids.models import AppleIISabia as _AppleIISabia
 from imaids.blocks import Block as _Block
@@ -22,17 +22,17 @@ class RadiaModelCalibration:
 
     @property
     def rz_model(self):
-        """On-axis longitudinal points where fitting is performed."""
+        """Longitudinal points where fitting is performed."""
         return self._rz_model
 
     @property
     def field_model(self):
-        """Model on-axis vertical field."""
+        """Model vertical field."""
         return self._field_model
 
     @property
     def rz_meas(self):
-        """On-axis longitudinal points where field is measured."""
+        """Longitudinal points where field is measured."""
         return self._rz_meas
     
     @property
@@ -45,7 +45,7 @@ class RadiaModelCalibration:
         field_length = 1.1 * (2 + epu.period_length) * epu.nr_periods + 2 * 5 * epu.gap
         z_step = self._epu.period_length / (nr_pts_period - 1)
         maxind = int(field_length / z_step)
-        inds = np.arange(-maxind, maxind + 1)
+        inds = _np.arange(-maxind, maxind + 1)
         rz = inds * z_step
         self._rz_model = rz
         self._field_model = None  # reset field model
@@ -63,11 +63,11 @@ class RadiaModelCalibration:
         """Calculate correction scale and residue for a given shift in data."""
         if self.field_model is None:
             raise ValueError('Field model not yet initialized!')
-        field_meas_fit = np.interp(
+        field_meas_fit = _np.interp(
             self.rz_model, self.rz_meas + shift, self.field_meas)
         bf1, bf2 = field_meas_fit, self.field_model
-        scale = np.dot(bf1, bf2) / np.dot(bf2, bf2)
-        residue = np.sqrt(np.sum((bf1 - scale * bf2)**2)/len(self.rz_model))
+        scale = _np.dot(bf1, bf2) / _np.dot(bf2, bf2)
+        residue = _np.sqrt_np.sum((bf1 - scale * bf2)**2)/len(self.rz_model)
         return residue, scale, field_meas_fit
 
     def shiftscale_plot_fields(self, shift):
@@ -85,15 +85,12 @@ class RadiaModelCalibration:
     def shiftscale_set(self, scale):
         """Incorporate fitted scale as effective remanent magnetization."""
         for cas in self._epu.cassettes_ref.values():
-            mags_old = np.array(cas.magnetization_list)
+            mags_old = _np.array(cas.magnetization_list)
             mags_new = (scale*mags_old).tolist()
             cas.create_radia_object(magnetization_list=mags_new)
-        print(epu.magnetization_dict)
 
-    def update_model_field(self, block_inds, new_mags):
-        """Update By on-axis with new blocks magnetizations."""
-        
-        
+    def update_model_field(self, blocks_inds, blocks_mags=None):
+        """Update model field with new blocks magnetizations."""
         # Example:
         # blocks_inds = {
         #   'csd': [34, 12, 4, 2],
@@ -102,7 +99,7 @@ class RadiaModelCalibration:
         #   'cid': [7, 3, 81, 6],
         # }
         #
-        # mags_new = {
+        # blocks_mags = {
         #   'csd': [m1, m2, m3, ],
         #   'cse': [m4, m5, m6, ],
         #   'cie': [m7, m8, m9, ],
@@ -113,45 +110,64 @@ class RadiaModelCalibration:
         #
         # algorith:
         #
-        # 1. build dict mags_old
-        # 2. build dict mags_dif = mags_new - mags_old
-        # 3. calc field_dif on axis for mags_dif dict
+        # 1. build dict blocks_mags_old
+        # 2. build dict blocks_mags_diff = blocks_mags - blocks_mags_old
+        # 3. calc field_dif on axis for blocks_mags_diff dict
         # 4. add field_dif to self._field_model
 
+        # builds blocks_mags_diff
+        blocks_mags_diff = dict()
+        for cas, inds in blocks_inds.items():
+            mags = self._epu.cassetes_ref[cas].magnetization_list
+            blocks_mags_diff[cas] = _np.asarray(blocks_mags[cas]) - mags[inds]
 
-def init_objects():
 
-    gap = 22
+def init_objects(gap):
+    """."""
     nr_periods = 54
     period_length = 50
-    block_shape = _Block.PREDEFINED_SHAPES['apple_uvx']
+    block_shape = [[[0.1, 0], [40, 0], [40, -40], [0.1, -40]]]
+    longitudinal_distance = 0.125
+    block_len = period_length/4 - longitudinal_distance
+    start_lengths = [block_len/4, block_len/2, 3*block_len/4, block_len]
+    start_distances = [block_len/2, block_len/4, 0, longitudinal_distance]
+    end_lenghts = start_lengths[-2::-1] # Tirar último elemento e inverter
+    end_distances = start_distances[-2::-1] # Tirar último elemento e inverter
     epu = _AppleIISabia(
         mr=1.24,
-        # mr=-0.8769 * 1.24,
         block_shape=block_shape, block_subdivision=[[1, 1, 1]],
-        nr_periods=nr_periods, period_length=period_length, gap=gap)
+        nr_periods=nr_periods, period_length=period_length, gap=gap,
+        start_blocks_length=start_lengths, start_blocks_distance=start_distances,
+        end_blocks_length=end_lenghts, end_blocks_distance=end_distances)
     # print(epu.cassettes_ref['csd'].blocks[0])
 
-    config = _EPUOnAxisFieldMap.CONFIGS.HP_G22P0
+    if gap == 22:
+        config = _EPUOnAxisFieldMap.CONFIGS.HP_G22P0
+    else:
+        raise NotImplementedError
     fmap = _EPUOnAxisFieldMap(config=config)
     return epu, fmap
 
 
 if __name__ == "__main__":
-    epu, fmap = init_objects()
+
+    # create objects and init fields
+    gap = 22  # [mm]
+    epu, fmap = init_objects(gap=gap)
     cm = RadiaModelCalibration(fmap, epu)
+    # cm.update_model_field(blocks_inds={'csd': [0, ]})
+    # raise ValueError
     cm.init_fields()
 
-    shifts = np.linspace(-0.25, 0.25, 31) * epu.period_length
-    # shifts = np.linspace(-7.0, -6.0, 31)
-    minshift, minresidue, minscale = shifts[0], float('inf'), 1
+    # search for best shift and calc scale
+    shifts = _np.linspace(-0.25, 0.25, 31) * epu.period_length
+    minshift, minscale, minresidue = shifts[0], 1.0, float('inf')
     for shift in shifts:
         residue, scale, _ = cm.shiftscale_calc_residue(shift=shift)
         print('shift: {:+08.4f} mm -> residue: {:07.5f} T'.format(shift, residue))
         if residue < minresidue:
-            minresidue = residue
-            minshift = shift
-            minscale = scale
+            minshift, minscale, minresidue = shift, scale, residue
 
+    # plot best solution and calibrates model
     cm.shiftscale_plot_fields(shift=minshift)
     cm.shiftscale_set(scale=minscale)
