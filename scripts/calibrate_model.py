@@ -84,8 +84,9 @@ class RadiaModelCalibration:
         plt.legend()
         plt.show()
 
-    def plot_fields(self):
-        plt.plot(self.rz_model, self.field_model, label='model')
+    def plot_fields(self, original_field=None):
+        dif = original_field - self.field_model
+        plt.plot(self.rz_model, dif, label='model')
         plt.xlim(-1600, 1600)
         plt.xlabel('rz [mm]')
         plt.ylabel('By [T]')
@@ -112,7 +113,26 @@ class RadiaModelCalibration:
         inds = dict(csd=inds_csd[:self._nrselblocks], cse=inds_cse[:self._nrselblocks], cie=inds_cie[:self._nrselblocks], cid=inds_cid[:self._nrselblocks])
         return inds 
 
-    #def gen_new_mags(self, nrselblocks=5):
+    def get_selected_blocks_mags(self, blocks_inds):
+        mags = dict()
+        for cas, ind in blocks_inds.items():
+            mags_ = []
+            for idx in ind:
+                mags_.append(self._epu.cassettes_ref[cas].blocks[idx].magnetization)
+            mags[cas] = mags_
+        return mags
+
+
+    def gen_mags_dif(self, blocks_inds, mag_step=0.05):
+        mags_old_dic = self.get_selected_blocks_mags(blocks_inds=blocks_inds)
+        mags_dif_dic = dict()
+        for cas, mags_old in mags_old_dic.items():
+            mags_delta = []
+            for mag_old in mags_old:
+                mag_delta = mag_step * 2*(_np.random.random(3) - 0.5)
+                mags_delta.append(mag_delta.tolist())
+            mags_dif_dic[cas] = mags_delta
+        return mags_dif_dic
 
 
     def update_model_field2(self, blocks_inds, blocks_mags=None):
@@ -147,18 +167,19 @@ class RadiaModelCalibration:
             mags = self._epu.cassetes_ref[cas].magnetization_list
             blocks_mags_diff[cas] = _np.asarray(blocks_mags[cas]) - mags[inds]
 
-    def update_model_field(self, block_inds, new_mags):
+    def update_model_field(self, block_inds, mags_dif):
         """Update By on-axis with new blocks magnetizations."""
-        mags_old = self._epu.magnetization_dict
-        mags_dif = dict()
+        
+        # mags_old = self._epu.magnetization_dict
+        # mags_dif = dict()
         field_dif = _np.zeros((len(self.rz_model), 3))
         for cas_name in block_inds:
             cas = self._epu.cassettes_ref[cas_name]
-            mags_dif_list = []
-            for idx_mag, idx in enumerate(block_inds[cas.name]):
-                mags_dif_list.append((_np.array(new_mags[cas.name][idx_mag])-_np.array(mags_old[cas.name][idx])).tolist())
-                
-            mags_dif[cas.name] = mags_dif_list
+            # mags_dif_list = []
+            # for idx_mag, idx in enumerate(block_inds[cas.name]):
+            #     mags_dif_list.append((_np.array(new_mags[cas.name][idx_mag])-_np.array(mags_old[cas.name][idx])).tolist())
+          
+            # mags_dif[cas.name] = mags_dif_list
             for idx_mag, idx in enumerate(block_inds[cas.name]):
                 cas.blocks[idx].create_radia_object(magnetization=mags_dif[cas.name][idx_mag])
                 field_dif += cas.blocks[idx].get_field(x=0, y=0, z=self.rz_model)
@@ -221,18 +242,22 @@ if __name__ == "__main__":
     cm.shiftscale_plot_fields(shift=minshift)
     cm.shiftscale_set(scale=minscale)
     
-    m = 1.0001
+    m = 1.00001
     #Example:
-
+    #block_inds = {
+    #    'csd':[40]
+    #}
     
     mags_new = {
-      'csd': [(m*_np.array(epu.cassettes['csd'].blocks[0].magnetization)).tolist()],
+      'csd': [(m*_np.array(epu.cassettes['csd'].blocks[40].magnetization)).tolist()],
     #   'cse': [(m*_np.array(epu.cassettes['cse'].blocks[3].magnetization)).tolist(), (m*_np.array(epu.cassettes['cse'].blocks[1].magnetization)).tolist(), (m*_np.array(epu.cassettes['cse'].blocks[7].magnetization)).tolist()],
     #   'cie': [(m*_np.array(epu.cassettes['cie'].blocks[4].magnetization)).tolist(), (m*_np.array(epu.cassettes['cie'].blocks[2].magnetization)).tolist(), (m*_np.array(epu.cassettes['cie'].blocks[41].magnetization)).tolist()],
     #   'cid': [(m*_np.array(epu.cassettes['cid'].blocks[7].magnetization)).tolist(), (m*_np.array(epu.cassettes['cid'].blocks[3].magnetization)).tolist(), (m*_np.array(epu.cassettes['cid'].blocks[81].magnetization)).tolist()],
     }
     
     blocks_inds = cm.get_blocks_indices()
-    print(blocks_inds)
-    #cm.update_model_field(block_inds=blocks_inds, new_mags=mags_new)
-    cm.plot_fields()
+    delta_mags = cm.gen_mags_dif(blocks_inds=blocks_inds)
+    teste = cm.field_model
+    ofield = teste.copy()
+    cm.update_model_field(block_inds=blocks_inds, mags_dif=delta_mags)
+    cm.plot_fields(original_field=ofield)
