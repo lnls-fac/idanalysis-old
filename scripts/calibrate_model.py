@@ -8,7 +8,7 @@ from imaids.blocks import Block as _Block
 import matplotlib.pyplot as plt
 from idanalysis.fmap import EPUOnAxisFieldMap as _EPUOnAxisFieldMap
 from copy import deepcopy
-
+import time
 class RadiaModelCalibration:
     """."""
 
@@ -17,10 +17,14 @@ class RadiaModelCalibration:
         self._fmap = fmap
         self._epu = epu
         self._rz_meas = None
-        self._field_meas = None
+        self._bx_meas = None
+        self._by_meas = None
+        self._bz_meas = None
         self._rz_model = None
-        self._field_model = None
-        self._nrselblocks = 5
+        self._bx_model = None
+        self._by_model = None
+        self._bz_model = None
+        self._nrselblocks = 1
 
     @property
     def rz_model(self):
@@ -28,19 +32,39 @@ class RadiaModelCalibration:
         return self._rz_model
 
     @property
-    def field_model(self):
+    def bx_model(self):
+        """Model horizontal field."""
+        return self._bx_model
+
+    @property
+    def by_model(self):
         """Model vertical field."""
-        return self._field_model
+        return self._by_model
+
+    @property
+    def bz_model(self):
+        """Model longitudinal field."""
+        return self._bz_model
 
     @property
     def rz_meas(self):
         """Longitudinal points where field is measured."""
         return self._rz_meas
-    
+
     @property
-    def field_meas(self):
+    def bx_meas(self):
+        """Measured on-axis horizontal field."""
+        return self._bx_meas    
+
+    @property
+    def by_meas(self):
         """Measured on-axis vertical field."""
-        return self._field_meas
+        return self._by_meas
+
+    @property
+    def bz_meas(self):
+        """Measured on-axis longitudinal field."""
+        return self._bz_meas
 
     def set_rz_model(self, nr_pts_period=9):
         epu = self._epu
@@ -50,32 +74,34 @@ class RadiaModelCalibration:
         inds = _np.arange(-maxind, maxind + 1)
         rz = inds * z_step
         self._rz_model = rz
-        self._field_model = None  # reset field model
+        self._by_model = None  # reset field model
 
     def init_fields(self, nr_pts_period=9):
         """Initialize model and measurement field arrays"""
         self.set_rz_model(nr_pts_period=nr_pts_period)
         field = self._epu.get_field(0, 0, self.rz_model)  # On-axis
-        self._field_model = field[:, 1]
+        self._by_model = field[:, 1]
         fmap = self._fmap
         self._rz_meas = fmap.rz
-        self._field_meas = fmap.by[fmap.ry_zero, fmap.rx_zero, :]
+        self._bx_meas = fmap.bx[fmap.ry_zero, fmap.rx_zero, :]
+        self._by_meas = fmap.by[fmap.ry_zero, fmap.rx_zero, :]
+        self._bz_meas = fmap.bz[fmap.ry_zero, fmap.rx_zero, :]
         
     def shiftscale_calc_residue(self, shift):
         """Calculate correction scale and residue for a given shift in data."""
-        if self.field_model is None:
+        if self.by_model is None:
             raise ValueError('Field model not yet initialized!')
-        field_meas_fit = _np.interp(
-            self.rz_model, self.rz_meas + shift, self.field_meas)
-        bf1, bf2 = field_meas_fit, self.field_model
+        by_meas_fit = _np.interp(
+            self.rz_model, self.rz_meas + shift, self.by_meas)
+        bf1, bf2 = by_meas_fit, self.by_model
         scale = _np.dot(bf1, bf2) / _np.dot(bf2, bf2)
         residue = _np.sum((bf1 - scale * bf2)**2)/len(self.rz_model)
-        return residue, scale, field_meas_fit
+        return residue, scale, by_meas_fit
 
     def shiftscale_plot_fields(self, shift):
-        residue, scale, field_meas_fit = self.shiftscale_calc_residue(shift)
-        plt.plot(self.rz_model, field_meas_fit, label='meas.')
-        plt.plot(self.rz_model, scale * self.field_model, label='model')
+        residue, scale, by_meas_fit = self.shiftscale_calc_residue(shift)
+        plt.plot(self.rz_model, by_meas_fit, label='meas.')
+        plt.plot(self.rz_model, scale * self.by_model, label='model')
         sfmt = 'shift: {:.4f} mm, scale: {:.4f}, residue: {:.4f} T'
         plt.title(sfmt.format(shift, scale, residue))
         plt.xlim(-1600, 1600)
@@ -83,10 +109,12 @@ class RadiaModelCalibration:
         plt.ylabel('By [T]')
         plt.legend()
         plt.show()
+        return by_meas_fit
 
-    def plot_fields(self, original_field=None):
-        dif = original_field - self.field_model
-        plt.plot(self.rz_model, dif, label='model')
+    def plot_fields(self,by_meas_fit=None):
+        #dif = self.by_meas - self.by_model
+        plt.plot(self.rz_model, by_meas_fit, label='meas')
+        plt.plot(self.rz_model, self.by_model, label='model')
         plt.xlim(-1600, 1600)
         plt.xlabel('rz [mm]')
         plt.ylabel('By [T]')
@@ -122,18 +150,21 @@ class RadiaModelCalibration:
             mags[cas] = mags_
         return mags
 
-
-    def gen_mags_dif(self, blocks_inds, mag_step=0.05):
+    def gen_mags_dif(self, blocks_inds, mag_step=1e-2):
         mags_old_dic = self.get_selected_blocks_mags(blocks_inds=blocks_inds)
         mags_dif_dic = dict()
+        mags_dif_inverted = dict()
         for cas, mags_old in mags_old_dic.items():
             mags_delta = []
+            mags_delta_inv = []
             for mag_old in mags_old:
-                mag_delta = mag_step * 2*(_np.random.random(3) - 0.5)
+                mag_delta = mag_step *2*(_np.random.random(3) -0.5)
+                mag_delta_inv = -1*mag_delta
                 mags_delta.append(mag_delta.tolist())
+                mags_delta_inv.append(mag_delta_inv.tolist()) 
             mags_dif_dic[cas] = mags_delta
-        return mags_dif_dic
-
+            mags_dif_inverted[cas] = mags_delta_inv
+        return mags_dif_dic, mags_dif_inverted
 
     def update_model_field2(self, blocks_inds, blocks_mags=None):
         """Update model field with new blocks magnetizations."""
@@ -152,14 +183,14 @@ class RadiaModelCalibration:
         #   'cid': [m10, m11, m12],
         # }
         #
-        # update: self._field_model
+        # update: self._by_model
         #
         # algorith:
         #
         # 1. build dict blocks_mags_old
         # 2. build dict blocks_mags_diff = blocks_mags - blocks_mags_old
         # 3. calc field_dif on axis for blocks_mags_diff dict
-        # 4. add field_dif to self._field_model
+        # 4. add field_dif to self._by_model
 
         # builds blocks_mags_diff
         blocks_mags_diff = dict()
@@ -170,23 +201,43 @@ class RadiaModelCalibration:
     def update_model_field(self, block_inds, mags_dif):
         """Update By on-axis with new blocks magnetizations."""
         
-        # mags_old = self._epu.magnetization_dict
-        # mags_dif = dict()
         field_dif = _np.zeros((len(self.rz_model), 3))
         for cas_name in block_inds:
             cas = self._epu.cassettes_ref[cas_name]
-            # mags_dif_list = []
-            # for idx_mag, idx in enumerate(block_inds[cas.name]):
-            #     mags_dif_list.append((_np.array(new_mags[cas.name][idx_mag])-_np.array(mags_old[cas.name][idx])).tolist())
-          
-            # mags_dif[cas.name] = mags_dif_list
             for idx_mag, idx in enumerate(block_inds[cas.name]):
-                cas.blocks[idx].create_radia_object(magnetization=mags_dif[cas.name][idx_mag])
+                cas.blocks[idx].create_radia_object(magnetization=mags_dif[cas.name][idx_mag])  
                 field_dif += cas.blocks[idx].get_field(x=0, y=0, z=self.rz_model)
-       
-        self._field_model += field_dif[:,1]
+               
+        self._by_model += field_dif[:,1]
+        return field_dif[:,1]
+    
+    def retrogress_model_field(self, block_inds, mags_dif, field_dif):
+        for cas_name in block_inds:
+            cas = self._epu.cassettes_ref[cas_name]
+            for idx_mag, idx in enumerate(block_inds[cas.name]):
+                cas.blocks[idx].create_radia_object(magnetization=mags_dif[cas.name][idx_mag])  
+        self._by_model -= field_dif            
+
+    def simulated_annealing(self,initial_residue=None, by_meas_fit=None):
         
-        
+        obj_function_old = initial_residue
+        for i in _np.arange(5000):
+            
+            blocks_inds = self.get_blocks_indices()
+            delta_mags, delta_mags_inv = self.gen_mags_dif(blocks_inds=blocks_inds, mag_step=obj_function_old/6)
+            by_dif = self.update_model_field(block_inds=blocks_inds, mags_dif=delta_mags)
+            obj_function = _np.sum((by_meas_fit - self.by_model)**2)
+            if obj_function < obj_function_old:
+                obj_function_old = obj_function
+            else:
+                self.retrogress_model_field(block_inds=blocks_inds, mags_dif=delta_mags_inv, field_dif=by_dif)
+            
+            if i%25 ==0:
+                print('residue:',obj_function_old)
+                print('iteraction:',i)
+
+        self.plot_fields(by_meas_fit=by_meas_fit)        
+
 def init_objects(phase, gap):
     """."""
     nr_periods = 54
@@ -239,25 +290,11 @@ if __name__ == "__main__":
             minshift, minscale, minresidue = shift, scale, residue
 
     # plot best solution and calibrates model
-    cm.shiftscale_plot_fields(shift=minshift)
+    
     cm.shiftscale_set(scale=minscale)
+    by_meas_fit = cm.shiftscale_plot_fields(shift=minshift)
+   
+
+    cm._by_model = minscale*cm._by_model
     
-    m = 1.00001
-    #Example:
-    #block_inds = {
-    #    'csd':[40]
-    #}
-    
-    mags_new = {
-      'csd': [(m*_np.array(epu.cassettes['csd'].blocks[40].magnetization)).tolist()],
-    #   'cse': [(m*_np.array(epu.cassettes['cse'].blocks[3].magnetization)).tolist(), (m*_np.array(epu.cassettes['cse'].blocks[1].magnetization)).tolist(), (m*_np.array(epu.cassettes['cse'].blocks[7].magnetization)).tolist()],
-    #   'cie': [(m*_np.array(epu.cassettes['cie'].blocks[4].magnetization)).tolist(), (m*_np.array(epu.cassettes['cie'].blocks[2].magnetization)).tolist(), (m*_np.array(epu.cassettes['cie'].blocks[41].magnetization)).tolist()],
-    #   'cid': [(m*_np.array(epu.cassettes['cid'].blocks[7].magnetization)).tolist(), (m*_np.array(epu.cassettes['cid'].blocks[3].magnetization)).tolist(), (m*_np.array(epu.cassettes['cid'].blocks[81].magnetization)).tolist()],
-    }
-    
-    blocks_inds = cm.get_blocks_indices()
-    delta_mags = cm.gen_mags_dif(blocks_inds=blocks_inds)
-    teste = cm.field_model
-    ofield = teste.copy()
-    cm.update_model_field(block_inds=blocks_inds, mags_dif=delta_mags)
-    cm.plot_fields(original_field=ofield)
+    cm.simulated_annealing(initial_residue=minresidue*len(cm.rz_model), by_meas_fit=by_meas_fit)
