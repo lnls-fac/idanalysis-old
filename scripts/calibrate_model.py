@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 from idanalysis.fmap import EPUOnAxisFieldMap as _EPUOnAxisFieldMap
 from copy import deepcopy
 import time
+import radia as _rad
+
 class RadiaModelCalibration:
     """."""
 
@@ -212,6 +214,7 @@ class RadiaModelCalibration:
         return field_dif[:,1]
     
     def retrogress_model_field(self, block_inds, mags_dif, field_dif):
+       
         for cas_name in block_inds:
             cas = self._epu.cassettes_ref[cas_name]
             for idx_mag, idx in enumerate(block_inds[cas.name]):
@@ -221,10 +224,10 @@ class RadiaModelCalibration:
     def simulated_annealing(self,initial_residue=None, by_meas_fit=None):
         
         obj_function_old = initial_residue
-        for i in _np.arange(5000):
+        for i in _np.arange(1500):
             
             blocks_inds = self.get_blocks_indices()
-            delta_mags, delta_mags_inv = self.gen_mags_dif(blocks_inds=blocks_inds, mag_step=obj_function_old/6)
+            delta_mags, delta_mags_inv = self.gen_mags_dif(blocks_inds=blocks_inds, mag_step=0.2*obj_function_old)
             by_dif = self.update_model_field(block_inds=blocks_inds, mags_dif=delta_mags)
             obj_function = _np.sum((by_meas_fit - self.by_model)**2)
             if obj_function < obj_function_old:
@@ -259,6 +262,9 @@ def init_objects(phase, gap):
     configs = {
         (0, 22.0) : _EPUOnAxisFieldMap.CONFIGS.HP_G22P0,
         (0, 25.7) : _EPUOnAxisFieldMap.CONFIGS.HP_G25P7,
+        (0, 29.3) : _EPUOnAxisFieldMap.CONFIGS.HP_G29P3,
+        (0, 40.9) : _EPUOnAxisFieldMap.CONFIGS.HP_G40P9,
+        (25,22.0) : _EPUOnAxisFieldMap.CONFIGS.VP_G22P0_P,
     }
     try:
         config = configs[(phase, gap)]
@@ -273,7 +279,7 @@ if __name__ == "__main__":
     # create objects and init fields
     phase = 0
     # gap = 22  # [mm]
-    gap = 25.7  # [mm]
+    gap = 22  # [mm]
     epu, fmap = init_objects(phase=0, gap=gap)
     cm = RadiaModelCalibration(fmap, epu)
     # cm.update_model_field(blocks_inds={'csd': [0, ]})
@@ -294,7 +300,5 @@ if __name__ == "__main__":
     cm.shiftscale_set(scale=minscale)
     by_meas_fit = cm.shiftscale_plot_fields(shift=minshift)
    
-
     cm._by_model = minscale*cm._by_model
-    
     cm.simulated_annealing(initial_residue=minresidue*len(cm.rz_model), by_meas_fit=by_meas_fit)

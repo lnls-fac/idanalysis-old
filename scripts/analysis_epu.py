@@ -239,8 +239,8 @@ def analysis_dynapt(model0, modelf, nrtheta=9, nrpts=9):
 
 def analysis_energy_acceptance(model0, modelf, spos=None):
   
-  accep_neg, accep_pos = calc_touschek_energy_acceptance(model0)
-  accep_neg_id, accep_pos_id = calc_touschek_energy_acceptance(modelf)
+  accep_neg, accep_pos = calc_touschek_energy_acceptance(accelerator=model0, check_tune=True)
+  accep_neg_id, accep_pos_id = calc_touschek_energy_acceptance(accelerator=modelf, check_tune=True)
   
   plt.figure(3)
   blue, red = (0.4,0.4,1), (1,0.4,0.4)
@@ -256,7 +256,7 @@ def analysis_energy_acceptance(model0, modelf, spos=None):
   plt.show()
 
 
-def analysis(plot_flag=False):
+def analysis(plot_flag=True):
   rescale_kicks = 1.0
 
   # select where EPU will be installed
@@ -277,8 +277,8 @@ def analysis(plot_flag=False):
   print(goal_beta)
   goal_beta2 = np.array([twiss0.betax[locs_beta], twiss0.betay[locs_beta]])
   # create model with ID
-  model1, config_label, straight_nr = create_model_with_id(id_config_idx=0, rescale_kicks=rescale_kicks, straight_nr=straight_nr)
-  
+  model1, config_label, straight_nr = create_model_with_id(id_config_idx=2, rescale_kicks=rescale_kicks, straight_nr=straight_nr)
+  print(config_label)
   # correct orbit
   orbcorr.correct_orbit_sofb(model0, model1)
 
@@ -314,7 +314,7 @@ def analysis(plot_flag=False):
 
   plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=plot_flag)
   
-  analysis_dynapt(model0, model3, nrtheta=12, nrpts=)
+  analysis_dynapt(model0, model3)
   analysis_energy_acceptance(model0, model3, twiss0.spos)
 
 

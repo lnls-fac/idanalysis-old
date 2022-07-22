@@ -5,6 +5,7 @@ import matplotlib.pyplot as _plt
 from fieldmaptrack import FieldMap as _FieldMap
 from fieldmaptrack import Beam as _Beam
 from fieldmaptrack import Trajectory as _Trajectory
+from scipy import integrate as _integrate
 
 
 class EPUOnAxisFieldMap(_FieldMap):
@@ -18,6 +19,9 @@ class EPUOnAxisFieldMap(_FieldMap):
         """."""
         HP_G22P0 = 'HP_G22P0'
         HP_G25P7 = 'HP_G25P7'
+        HP_G29P3 = 'HP_G29P3'
+        HP_G40P9 = 'HP_G40P9'
+        VP_G22P0_P = 'VP_G22P0_P'
 
     _DATA_PATH = (
             'Estrutura Magnética/Medidas e Resultados Ondulador/'
@@ -35,6 +39,21 @@ class EPUOnAxisFieldMap(_FieldMap):
             'Campo Vertical/Gap 25.7/Map1902_Bz_Gap25.7_Fase0.0_01_Real.dat',
             'Campo Vertical/Gap 25.7/Map1902_By_Gap25.7_Fase0.0_01_Real.dat',
             ],
+        'HP_G29P3': [
+            'Campo Vertical/Gap 29.3/Map1902_Bx_Gap29.3_Fase0.0_01_Real.dat',
+            'Campo Vertical/Gap 29.3/Map1902_Bz_Gap29.3_Fase0.0_01_Real.dat',
+            'Campo Vertical/Gap 29.3/Map1902_By_Gap29.3_Fase0.0_01_Real.dat',
+            ],            
+        'HP_G40P9': [
+            'Campo Vertical/Gap 40.9/Map1902_Bx_Gap40.9_Fase0.0_01_Real.dat',
+            'Campo Vertical/Gap 40.9/Map1902_Bz_Gap40.9_Fase0.0_01_Real.dat',
+            'Campo Vertical/Gap 40.9/Map1902_By_Gap40.9_Fase0.0_01_Real.dat',
+            ],
+        'VP_G22P0_P': [
+            'Campo Horizontal/Gap 22.0/Fase 25.0/Map0902_Bx_Gap22_Fase25.0_01_X=0_Real.dat',
+            'Campo Horizontal/Gap 22.0/Fase 25.0/Map0902_Bz_Gap22_Fase25.0_01_X=0_Real.dat',
+            'Campo Horizontal/Gap 22.0/Fase 25.0/Map1302_By_Gap22.0_Fase25.0_01_X=0_Real.dat',
+            ],                                    
         }
 
     def __init__(self,
@@ -162,7 +181,7 @@ class FieldmapOnAxisAnalysis:
         self.bz = None
         self.beam = _Beam(beam_energy)
         self.traj = None
-        self.s_step = None
+        self.s_step = 0.5
 
     def calc_K(self, period, B, zmin, zmax, rz=None):
         begin_idx = _np.where(rz==zmin)
@@ -189,7 +208,7 @@ class FieldmapOnAxisAnalysis:
         K = 93.36*B0*(period*1e-3)
         return K, B0
 
-    def _calc_fx(self,
+    def _calc_fxy(self,
                  s_step=None, max_rz=4000, plot_flag=True,
                  ipos=[0,0,0], iang=[0,0,1], end=None):
         init_rx, init_ry, init_rz = ipos
@@ -203,6 +222,8 @@ class FieldmapOnAxisAnalysis:
         z = self.traj.rz.copy()
         x = self.traj.rx.copy()
         px= self.traj.px.copy()
+        y = self.traj.ry.copy()
+        py= self.traj.py.copy()
         dpx = _np.diff(px)
         if end == None:
             idx_end = _np.where(_np.abs(dpx) < 1e-7)
@@ -220,55 +241,24 @@ class FieldmapOnAxisAnalysis:
             _plt.ylabel('X coordinate (mm)')
             _plt.legend()
             _plt.show()
-        return x[final], z[final], final, px[-1]
 
-    def _calc_fy(self,
-        s_step=None, max_rz=4000, plot_flag=True,
-        ipos=[0,0,0], iang=[0,0,1], end=None):
-        init_rx, init_ry, init_rz = ipos
-        init_px, init_py, init_pz = iang
-        if self.s_step == None:
-            self.s_step = _np.average(_np.diff(self.rz))/2
-        self.traj.calc_trajectory(
-            s_step=self.s_step, min_rz=max_rz,
-            init_rx=init_rx, init_ry=init_ry, init_rz=init_rz,
-            init_px=init_px, init_py=init_py, init_pz=init_pz)
-        z = self.traj.rz.copy()
-        y = self.traj.ry.copy()
-        py= self.traj.py.copy()
-        dpy = _np.diff(py)
-        if end == None:
-            idx_end = _np.where(_np.abs(dpy) == 0)
-            final_idx = []
-            cond = int(max_rz/(2*self.s_step))
-            for i in _np.arange(_np.shape(idx_end)[1]):
-                if idx_end[0][i] > cond:
-                    final_idx.append(idx_end[0][i])
-            final = final_idx[0]
-        else:
-            final = end
-        if plot_flag == True:
             _plt.plot(z,y, color='g', label='step = {:.1f}mm'.format(self.s_step))
             _plt.xlabel('Z coordinate (mm)')
             _plt.ylabel('Y coordinate (mm)')
             _plt.legend()
             _plt.show()
-        return y[final], z[final], final, py[-1]
+        return x[final], y[final], px[-1], py[-1], z[final], final
 
     @staticmethod
     def calc_first_integral(B, rz=None):
         dz = 1e-3*(rz[-1] - rz[0]) / len(rz)
-        integral = _np.trapz(B, dx=dz)
+        integral = _integrate.cumtrapz(y=B, dx=dz)
         return integral
 
     @staticmethod
-    def calc_second_integral(B, rz=None):
+    def calc_second_integral(I1, rz=None):
         dz = 1e-3*(rz[-1] - rz[0]) / len(rz)
-        integral = []
-        for i in _np.arange(2, len(B), 1):
-            integral.append(_np.trapz(B[:i], dx=dz))
-            array_integral = _np.array(integral)
-        integral2 = _np.trapz(array_integral, dx=dz)
+        integral2 = _integrate.cumtrapz(y=I1, dx=dz)
         return integral2
 
     def load_fieldmap(self):
@@ -286,12 +276,9 @@ class FieldmapOnAxisAnalysis:
 
     def run(self):
         """."""
-        x, z_end, idx_end, px = \
-            self._calc_fx(s_step=self.s_step, max_rz=4000, plot_flag=False,
+        x, y, px, py, z_end, idx_end = \
+            self._calc_fxy(s_step=self.s_step, max_rz=4000, plot_flag=False,
                 ipos=[0,0,0], iang=[0,0,1])
-        y, z_end, idx_end, py = \
-            self._calc_fy(s_step=self.s_step, max_rz=4000, plot_flag=False,
-                ipos=[0,0,0], iang=[0,0,1], end=idx_end)
         
         print("Final y position: {:.2f} um".format(1e3*y))
         print("Final y angle   : {:.2f} urad".format(1e6*py))
@@ -299,16 +286,16 @@ class FieldmapOnAxisAnalysis:
         print("Final x angle   : {:.2f} urad".format(1e6*px))
 
         by_integral1 = self.calc_first_integral(B=self.By,rz=self.rz)
-        print("By first integral (Tm)  : {:.3e}".format(by_integral1))
+        print("By first integral (Tm)  : {:.3e}".format(by_integral1[-1]))
 
-        by_integral2 = self.calc_second_integral(B=self.By,rz=self.rz)
-        print("By second integral (Tm2): {:.3e}".format(by_integral2))
+        by_integral2 = self.calc_second_integral(I1=by_integral1,rz=self.rz)
+        print("By second integral (Tm2): {:.3e}".format(by_integral2[-1]))
 
         bx_integral1 = self.calc_first_integral(B=self.Bx,rz=self.rz)
-        print("Bx first integral (Tm)  : {:.3e}".format(bx_integral1))
+        print("Bx first integral (Tm)  : {:.3e}".format(bx_integral1[-1]))
 
-        bx_integral2 = self.calc_second_integral(B=self.Bx,rz=self.rz)
-        print("Bx second integral (Tm2): {:.3e}".format(bx_integral2))
+        bx_integral2 = self.calc_second_integral(I1=bx_integral1,rz=self.rz)
+        print("Bx second integral (Tm2): {:.3e}".format(bx_integral2[-1]))
 
         Ky, Bymax = self.calc_K(period=50,B=self.By,zmin=500,zmax=2500,rz=self.rz)
         print("K value for By          : ", Ky)
@@ -320,7 +307,7 @@ class FieldmapOnAxisAnalysis:
 
         my_file = open(self.filename,"w") #w=writing
         my_file.write('x[um]\tpx[rad]\ty[mm]\tpy[urad]\tIx[Tm]\t        Iy[Tm]\t        I2x[Tm2]\tI2y[Tm2]\tBx[T]\tBy[T]\tKx\tKy\n')
-        my_file.write("{:.2f}\t{:.2f}\t{:.2f}\t{:.2f}\t       {:.3e}\t{:.3e}\t{:.3e}\t{:.3e}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\n".format(1e3*x,1e6*px,1e3*y,1e6*py,bx_integral1,by_integral1,bx_integral2,by_integral2,Kx,Bxmax,Ky,Bymax))
+        my_file.write("{:.2f}\t{:.2f}\t{:.2f}\t{:.2f}\t       {:.3e}\t{:.3e}\t{:.3e}\t{:.3e}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\n".format(1e3*x,1e6*px,1e3*y,1e6*py,bx_integral1[-1],by_integral1[-1],bx_integral2[-1],by_integral2[-1],Kx,Bxmax,Ky,Bymax))
         my_file.close()
         
 
