@@ -69,6 +69,7 @@ class RadiaModelCalibration:
         return self._bz_meas
 
     def set_rz_model(self, nr_pts_period=9):
+        """"""
         epu = self._epu
         field_length = 1.1 * (2 + epu.period_length) * epu.nr_periods + 2 * 5 * epu.gap
         z_step = self._epu.period_length / (nr_pts_period - 1)
@@ -241,6 +242,7 @@ class RadiaModelCalibration:
 
         self.plot_fields(by_meas_fit=by_meas_fit)        
 
+
 def init_objects(phase, gap):
     """."""
     nr_periods = 54
@@ -258,6 +260,9 @@ def init_objects(phase, gap):
         start_blocks_length=start_lengths, start_blocks_distance=start_distances,
         end_blocks_length=end_lenghts, end_blocks_distance=end_distances)
     # print(epu.cassettes_ref['csd'].blocks[0])
+
+    # TODO: we must shift the EPU according to 'phase' before
+    # returning the model!
 
     configs = {
         (0, 22.0) : _EPUOnAxisFieldMap.CONFIGS.HP_G22P0,
@@ -277,9 +282,7 @@ def init_objects(phase, gap):
 if __name__ == "__main__":
 
     # create objects and init fields
-    phase = 0
-    # gap = 22  # [mm]
-    gap = 22  # [mm]
+    phase, gap = 0.0, 22.0  # [mm], [mm]
     epu, fmap = init_objects(phase=0, gap=gap)
     cm = RadiaModelCalibration(fmap, epu)
     # cm.update_model_field(blocks_inds={'csd': [0, ]})
@@ -301,4 +304,5 @@ if __name__ == "__main__":
     by_meas_fit = cm.shiftscale_plot_fields(shift=minshift)
    
     cm._by_model = minscale*cm._by_model
-    cm.simulated_annealing(initial_residue=minresidue*len(cm.rz_model), by_meas_fit=by_meas_fit)
+    cm.simulated_annealing(
+        initial_residue=minresidue*len(cm.rz_model), by_meas_fit=by_meas_fit)
