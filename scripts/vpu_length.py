@@ -27,9 +27,9 @@ def gap_min(half_length):
     return gap_min
 
 
-def generate_model(width=None, height=None, period_length=29, gap=9.7):
+def generate_model(width=None, height=None, period_length=29, gap=10.9, prop_w=None):
     
-    p_width = 0.7*width
+    p_width = prop_w*width
     p_height= 1*height
 
     block_shape = [
@@ -46,70 +46,98 @@ def generate_model(width=None, height=None, period_length=29, gap=9.7):
         [p_width/2, 0],
     ]
 
-    vpu = Hybrid(gap=gap,period_length=period_length, mr=1.32, nr_periods=15,
+    vpu = Hybrid(gap=gap,period_length=period_length, mr=1.32, nr_periods=5,
                  longitudinal_distance = 0.1,block_shape=block_shape,
                  pole_shape=pole_shape)
-    #vpu.solve()
+    vpu.solve()
     br = 1.32
     return vpu,br
 
-
-def generate_beff_file(block_height, B_dict, name):
-    my_file = open(name,"w") #w=writing
-    for width in B_dict.keys():
-        my_file.write('\n----------------------------------------------------------------------------------------------------------------------------------------------------------------\n')
-        my_file.write('Block width = {:.0f}'.format(width))
-        my_file.write('\nBlock height[mm]\tBeff[T]\n')
-        for i in _np.arange(len(B_dict[width])):
-            my_file.write("{:.1f}\t{:.4f}\n".format(block_height[width][i],B_dict[width][i]))
-    my_file.close()
-
-
-def plot_FieldAmplitude_height(blocks_height, B_dict):
-    plt.figure(1)
-    plt.plot(blocks_height[50], B_dict[50], label='Block width = 50')
-    plt.plot(blocks_height[55], B_dict[55], label='Block width = 55')
-    plt.plot(blocks_height[60], B_dict[60], label='Block width = 60')
-    plt.xlabel('Block height [mm]')
-    plt.ylabel('Beff [T]')
-    plt.title('Effective Field')
-    plt.legend()
-    plt.grid()
-    plt.show()
-
-  
-def run(block_height):
+def calc_min_height(block_width, ID_length, prop_w):
     """."""
     
     period = 29
-    kmin = 1
+    kmin =  2.15
+    k_correction =  1.0095   #1.0095 For five periods             #1/1.018  For four periods
 
-    
-    ID_length = _np.linspace(0.8,2.7,5)
-    blocks_width = _np.linspace(40,60,6)
-    smax = ID_length/2 + 0.2
+    lim_inf_height = 40
+    lim_sup_height = 120
+
+    blocks_height = _np.linspace(lim_inf_height,lim_sup_height,20)
+    smax = ID_length/2 + 0.1 #0.1 is necessary for the vaccum chamber
     gaps = gap_min(smax)
+    print(gaps)
     k_dict = dict()
+    roff_dict = dict()
     k_interp = dict()
+    roff_interp = dict()
     for i,gap in enumerate(gaps):
         k_list = []
-        for block_width in blocks_width:
-            vpu,_ = generate_model(gap=gap, width=block_width, height=block_height)
-            Beff, B_peak = utils.get_beff_from_model(model=vpu, period=period, polarization='hp', hmax=5)
+        roff_list = []
+        for block_height in blocks_height:
+            vpu,_ = generate_model(gap=gap, width=block_width, height=block_height, prop_w=prop_w)
+            Beff, B_peak, By = utils.get_beff_from_model(model=vpu, period=period, polarization='hp', hmax=5,x=0)
+            Beff_10, B_peak_10, By_10 = utils.get_beff_from_model(model=vpu, period=period, polarization='hp', hmax=5,x=10)
+            Roll_off = 100*(B_peak - B_peak_10)/B_peak
             k = utils.undulator_b_to_k(b=Beff, period=period*1e-3)
+            k=k*k_correction
             k_list.append(k)
+            roff_list.append(Roll_off)
 
         k_dict[ID_length[i]] = k_list
+        roff_dict[ID_length[i]] = roff_list
     
-    widths = _np.linspace(40,60,100)
-    for key in k_dict.keys():
-        k_interp[key] = _np.interp(widths,blocks_width,k_dict[key])
-    print(k_interp)
-    #plot_FieldAmplitude_height(blocks_height=blocks_dict, B_dict=B_dict)
+    heights = _np.linspace(lim_inf_height,lim_sup_height,100)
+    min_height = []
+    min_roff = []
+    ID_valid_lengths = []
+    for i,key in enumerate(k_dict.keys()):
+        k_interp[key] = _np.interp(heights,blocks_height,k_dict[key])
+        roff_interp[key] = _np.interp(heights,blocks_height,roff_dict[key])
+        idx =  _np.where(k_interp[key]>=kmin)
+        try:
+            min_height.append(heights[idx[0][0]])
+            min_roff.append(roff_interp[key][idx[0][0]])
+            ID_valid_lengths.append(key)
+        except IndexError:
+            garbage = 1
+    
+    return ID_valid_lengths, min_height, min_roff
+
+    
+def generate_file(lengths_list, height_list, widths_list, roll_off_list, filename):
+    
+    my_file = open(filename,"w") #w=writing
+    for i,width in enumerate(widths_list):
+        my_file.write('Blocks width = {:.0f}'.format(width))
+        my_file.write('\nID length[m]\tBlocks height[mm]\tField Roll-off[%]\n')       
+        for j, length in enumerate(lengths_list[i]):
+            my_file.write("{:.2f}\t{:.1f}\t{:.3f}\n".format(length,height_list[i][j],roll_off_list[i][j]))        
+    my_file.close()
+
+def run(prop_w):
+   
+    widths_list = [40,50,60,70,80]   #40 - 80
+    lengths_list = []
+    height_list = []
+    roll_off_list = []
+    ID_length = _np.linspace(0.4,2,20)
+    
+    for width in widths_list:
+        lengths,heights,roll_offs = calc_min_height(ID_length= ID_length, block_width=width, prop_w=prop_w)
+        height_list.append(heights)
+        roll_off_list.append(roll_offs)
+        lengths_list.append(lengths)
+    
+    filename = "IDs_length" + str(int(prop_w*100)) + "%"
+    generate_file(lengths_list, height_list, widths_list, roll_off_list, filename)
     
     
 if __name__ == "__main__":
-    run(block_height=55)
-   
+    
+    run(prop_w=0.70)
+    
+    
+    
     
 
