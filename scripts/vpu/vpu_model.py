@@ -1,11 +1,12 @@
 #!/usr/bin/env python-sirius
 
 import numpy as _np
+import matplotlib.pyplot as plt
+
+import imaids.utils as utils
 from imaids.models import HybridPlanar as Hybrid
 from imaids.blocks import Block as Block
-import imaids.utils as utils
-import matplotlib.pyplot as plt
-import time
+
 
 def generate_model(width=None, height=None, p_width=None, p_height= None, period_length=29, gap=10.9):
     
@@ -30,6 +31,7 @@ def generate_model(width=None, height=None, p_width=None, p_height= None, period
     br = 1.32
     return vpu,br
 
+
 def generate_beff_file(block_height, B_dict, name):
     my_file = open(name,"w") #w=writing
     for width in B_dict.keys():
@@ -38,6 +40,7 @@ def generate_beff_file(block_height, B_dict, name):
         for i in _np.arange(len(B_dict[width])):
             my_file.write("{:.1f}\t{:.4f}\n".format(block_height[width][i],B_dict[width][i]))
     my_file.close()
+
 
 def generate_field_file(block_width, block_height, period, gap, filename):
     pole_width = 0.7*block_width
@@ -62,6 +65,7 @@ def generate_field_file(block_width, block_height, period, gap, filename):
 
     return
 
+
 def plot_FieldAmplitude_height(blocks_height, B_dict):
     plt.figure(1)
     plt.plot(blocks_height[60], B_dict[60], label='Block width = 60')
@@ -75,7 +79,7 @@ def plot_FieldAmplitude_height(blocks_height, B_dict):
     
 def run(prop_w):
     """."""
-    name = 'Beff_' + str(prop_w*100) + '%'
+    name = 'Beff_' + str(prop_w*100) + '%.txt'
     period = 29
     gap = 10.9
 
@@ -90,16 +94,16 @@ def run(prop_w):
         block_height = _np.arange(40,75,5)  
         for height in block_height:
             pole_height = 1*height
-            vpu,br = generate_model(width=block_width, height=height, p_width=pole_width,
+            vpu, br = generate_model(width=block_width, height=height, p_width=pole_width,
                                     p_height=pole_height, period_length=period, gap=gap)
-            Beff, B_peak = utils.get_beff_from_model(model=vpu, period=period, polarization='hp', hmax=5)
+            Beff, B_peak, *_ = utils.get_beff_from_model(
+                model=vpu, period=period, polarization='hp', hmax=5, x=0)
             B_list.append(Beff)
    
         B_dict[block_width] = B_list
         blocks_dict[block_width] = block_height
     
     generate_beff_file(block_height=blocks_dict, B_dict=B_dict, name=name)
-    
     
     
 if __name__ == "__main__":

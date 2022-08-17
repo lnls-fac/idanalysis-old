@@ -5,9 +5,9 @@
 import numpy as _np
 import matplotlib.pyplot as _plt
 
-import fieldmaptrack as _fmaptrack
-from utils import create_deltadata as _create_deltadata
+from idanalysis.utils import create_deltadata as _create_deltadata
 
+import fieldmaptrack as _fmaptrack
 
 class IDKickMap:
     """."""

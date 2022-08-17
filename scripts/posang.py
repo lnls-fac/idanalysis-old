@@ -2,8 +2,8 @@
 
 from idanalysis import IDTrajectory
 
-from utils import create_deltadata
-from utils import get_config_names
+from idanalysis.utils import create_deltadata
+from idanalysis.utils import get_config_names
 
 
 def plot_corrected_trajectory(deltadata, index):    

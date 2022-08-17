@@ -49,9 +49,10 @@ def generate_model(width=None, height=None, period_length=29, gap=10.9, prop_w=N
     vpu = Hybrid(gap=gap,period_length=period_length, mr=1.32, nr_periods=5,
                  longitudinal_distance = 0.1,block_shape=block_shape,
                  pole_shape=pole_shape)
-    vpu.solve()
+    # vpu.solve()
     br = 1.32
     return vpu,br
+
 
 def calc_min_height(block_width, ID_length, prop_w):
     """."""
@@ -87,7 +88,7 @@ def calc_min_height(block_width, ID_length, prop_w):
         k_dict[ID_length[i]] = k_list
         roff_dict[ID_length[i]] = roff_list
     
-    heights = _np.linspace(lim_inf_height,lim_sup_height,100)
+    heights = _np.linspace(lim_inf_height, lim_sup_height, 10)
     min_height = []
     min_roff = []
     ID_valid_lengths = []
@@ -115,13 +116,15 @@ def generate_file(lengths_list, height_list, widths_list, roll_off_list, filenam
             my_file.write("{:.2f}\t{:.1f}\t{:.3f}\n".format(length,height_list[i][j],roll_off_list[i][j]))        
     my_file.close()
 
+
 def run(prop_w):
    
-    widths_list = [40,50,60,70,80]   #40 - 80
+    widths_list = [40, 50, 60, 70, 80]   #40 - 80
+    widths_list = [40, 50]   #40 - 80
     lengths_list = []
     height_list = []
     roll_off_list = []
-    ID_length = _np.linspace(0.4,2,20)
+    ID_length = _np.linspace(0.4, 2, 4)
     
     for width in widths_list:
         lengths,heights,roll_offs = calc_min_height(ID_length= ID_length, block_width=width, prop_w=prop_w)
@@ -129,7 +132,7 @@ def run(prop_w):
         roll_off_list.append(roll_offs)
         lengths_list.append(lengths)
     
-    filename = "IDs_length" + str(int(prop_w*100)) + "%"
+    filename = "IDs_length" + str(int(prop_w*100)) + "%.txt"
     generate_file(lengths_list, height_list, widths_list, roll_off_list, filename)
     
     

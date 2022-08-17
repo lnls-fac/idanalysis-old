@@ -10,7 +10,7 @@ from pymodels import si
 from idanalysis import optics
 from idanalysis.model import get_id_sabia_list
 
-import utils
+import idanalysis.utils as utils
 #utils.FOLDER_BASE = '/home/ximenes/repos-dev/'
 utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
 

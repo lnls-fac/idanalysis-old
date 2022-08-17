@@ -2,7 +2,12 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+
 from imaids import utils as utils
+
+
+FOLDER_BASE = '/home/ximenes/repos-dev/ids-data/Wiggler/'
+
 
 def readfield(file_name, init):
     end_flag = 0
@@ -29,12 +34,13 @@ def readfield(file_name, init):
     B = np.array(data_col2)
     return z,B
 
+
 def readfile_axis(x):
     
-    FOLDER_BASE = 'gap 059.60 mm/ponta hall/mapeamento/'
+    folder = FOLDER_BASE + 'gap 059.60 mm/ponta hall/mapeamento/'
     fieldname = "Map2701_X=" + str(x) + ".dat"
-    filename = FOLDER_BASE + fieldname
-    rz_file,By_file = readfield(filename,24)#24 14669
+    filename = folder + fieldname
+    rz_file,By_file = readfield(filename, 24) # 24 14669
     By_file = By_file/10e3
 
     By = []
@@ -45,6 +51,7 @@ def readfile_axis(x):
         
     return By,fieldname
 
+
 def run(x_list):
 
     By_dict = dict()
@@ -53,18 +60,15 @@ def run(x_list):
         By_dict[x] = By[0:2]
     
     yvalues = np.arange(-1,2,1)
-    
-    
+        
 
 if __name__ == "__main__":
     
     zmin = -419
     zmax = 3678
     zvalues = np.arange(zmin,zmax+1,1)
-    x_list = [-20,-10,-5,-1,0,1,5,10,20]
+    x_list = [-20, -10, -5, -1, 0, 1, 5, 10, 20]
     run(x_list=x_list)
-    
-
 
     # plt.plot(zvalues,By, color='b')
     # plt.grid(True)

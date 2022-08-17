@@ -9,7 +9,7 @@ from pyaccel.optics.edwards_teng import estimate_coupling_parameters
 from idanalysis.deltadata import DeltaData
 from idanalysis.model import calc_optics, create_model, get_id_sabia_list
 
-from utils import create_deltadata, FOLDER_BASE
+from idanalysis.utils import create_deltadata, FOLDER_BASE
 
 
 def dGV_plot_config_space(configs, save=True):

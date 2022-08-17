@@ -1,8 +1,8 @@
 #!/usr/bin/env python-sirius
 import numpy as np
-from kickmaps import IDKickMap
+from scripts.kickmaps import IDKickMap
 
-import utils
+import idanalysis.utils as utils
 # utils.FOLDER_BASE = '/home/ximenes/repos-dev/'
 utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
 

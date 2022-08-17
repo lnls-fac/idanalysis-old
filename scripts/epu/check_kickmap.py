@@ -7,12 +7,10 @@ import matplotlib.pyplot as plt
 
 from pyaccel import lattice as pyacc_lat
 from pyaccel import tracking as pyacc_track
-from idanalysis.model import create_model, get_id_epu_list
-from kickmaps import IDKickMap
 
-import utils
-#utils.FOLDER_BASE = '/home/ximenes/repos-dev/'
-utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
+from idanalysis import FOLDER_BASE
+from idanalysis.model import create_model, get_id_epu_list
+from idanalysis import IDKickMap
 
 
 def calc_idkmap_kicks(fname, indep_var='x', plane_idx=0, plot_flag=False, idkmap=None):

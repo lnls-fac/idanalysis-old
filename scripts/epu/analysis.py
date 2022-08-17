@@ -7,13 +7,22 @@ from pyaccel import lattice as pyacc_lat
 from pyaccel import optics as pyacc_opt
 from pyaccel.optics import calc_touschek_energy_acceptance
 
+import idanalysis
+idanalysis.FOLDER_BASE = '/home/ximenes/repos-dev/'
+# idanalysis.FOLDER_BASE = '/home/gabriel/repos-dev/'
+
 from idanalysis import orbcorr as orbcorr
 from idanalysis import model as model
 from idanalysis import optics as optics
+from idanalysis import EPUData
 
-import utils
-#utils.FOLDER_BASE = '/home/ximenes/repos-dev/'
-utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
+
+def create_epudata():
+
+    folder = idanalysis.FOLDER_BASE + EPUData.FOLDER_EPU_MAPS
+    configs = EPUData.EPU_CONFIGS
+    epudata = EPUData(folder=folder, configs=configs)
+    return epudata
 
 
 def create_model(epu_config_idx=None, rescale_kicks=1.0, **kwargs):
@@ -29,7 +38,7 @@ def create_model(epu_config_idx=None, rescale_kicks=1.0, **kwargs):
     else:
 
       # create object with list of all possible EPU50 configurations
-      configs = utils.create_epudata()
+      configs = create_epudata()
       
       # get config label
       config_label = configs.get_config_label(configs[epu_config_idx])

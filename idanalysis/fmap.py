@@ -19,7 +19,7 @@ class EPUOnAxisFieldMap(_FieldMap):
         VP_G22P0_P = 'VP_G22P0_P'
 
     _DATA_PATH = (
-            'Estrutura Magnética/Medidas e Resultados Ondulador/'
+            'ids-data/Ondulador UVV/Estrutura Magnética/Medidas e Resultados Ondulador/'
             'Operacao Ondulador  - Medidas Oficiais/')
 
     _CONFIG_FNAMES = {

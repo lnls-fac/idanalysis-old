@@ -1,19 +1,18 @@
 #!/usr/bin/env python-sirius
 
-import numpy as _np
 import random as _random
+import numpy as _np
+import matplotlib.pyplot as plt
+
 from imaids.models import AppleII as _AppleII
 from imaids.models import AppleIISabia as _AppleIISabia
 from imaids.blocks import Block as _Block
-import matplotlib.pyplot as plt
-from idanalysis.fmap import EPUOnAxisFieldMap as _EPUOnAxisFieldMap
-from copy import deepcopy
-import time
-import radia as _rad
 
-import utils
-utils.FOLDER_BASE = '/home/ximenes/repos-dev/fac/atividades/insertion-devices/Ondulador UVV/'
-# utils.FOLDER_BASE = '/home/gabriel/repos-sirius/Ondulador UVV/'
+import idanalysis
+idanalysis.FOLDER_BASE = '/home/ximenes/repos-dev/'
+# idanalysis.FOLDER_BASE = '/home/gabriel/repos-dev/'
+
+from idanalysis.fmap import EPUOnAxisFieldMap as _EPUOnAxisFieldMap
 
 
 class RadiaModelCalibration:
@@ -213,7 +212,8 @@ class RadiaModelCalibration:
         for cas_name in block_inds:
             cas = self._epu.cassettes_ref[cas_name]
             for idx_mag, idx in enumerate(block_inds[cas.name]):
-                cas.blocks[idx].create_radia_object(magnetization=mags_dif[cas.name][idx_mag])  
+                cas.blocks[idx].magnetization = mags_dif[cas.name][idx_mag]
+                # cas.blocks[idx].create_radia_object(magnetization=mags_dif[cas.name][idx_mag])  
                 field_dif += cas.blocks[idx].get_field(x=0, y=0, z=self.rz_model)
                
         self._by_model += field_dif[:,1]
@@ -224,13 +224,14 @@ class RadiaModelCalibration:
         for cas_name in block_inds:
             cas = self._epu.cassettes_ref[cas_name]
             for idx_mag, idx in enumerate(block_inds[cas.name]):
-                cas.blocks[idx].create_radia_object(magnetization=mags_dif[cas.name][idx_mag])  
+                cas.blocks[idx].magnetization = mags_dif[cas.name][idx_mag]
+                # cas.blocks[idx].create_radia_object(magnetization=mags_dif[cas.name][idx_mag])  
         self._by_model -= field_dif            
 
     def simulated_annealing(self,initial_residue=None, by_meas_fit=None):
         
         obj_function_old = initial_residue
-        for i in _np.arange(1500):
+        for i in _np.arange(10*1500):
             
             blocks_inds = self.get_blocks_indices()
             delta_mags, delta_mags_inv = self.gen_mags_dif(blocks_inds=blocks_inds, mag_step=0.2*obj_function_old)
@@ -280,7 +281,7 @@ def init_objects(phase, gap):
         config = configs[(phase, gap)]
     except KeyError:
         raise NotImplementedError
-    fmap = _EPUOnAxisFieldMap(folder=utils.FOLDER_BASE, config=config)
+    fmap = _EPUOnAxisFieldMap(folder=idanalysis.FOLDER_BASE, config=config)
     return epu, fmap
 
 
@@ -308,6 +309,6 @@ if __name__ == "__main__":
     cm.shiftscale_set(scale=minscale)
     by_meas_fit = cm.shiftscale_plot_fields(shift=minshift)
    
-    # cm._by_model = minscale*cm._by_model
-    # cm.simulated_annealing(
-    #     initial_residue=minresidue*len(cm.rz_model), by_meas_fit=by_meas_fit)
+    cm._by_model = minscale*cm._by_model
+    cm.simulated_annealing(
+        initial_residue=minresidue*len(cm.rz_model), by_meas_fit=by_meas_fit)
