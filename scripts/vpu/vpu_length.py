@@ -135,7 +135,7 @@ def run(prop_w):
     
 if __name__ == "__main__":
     
-    run(prop_w=0.70)
+    run(prop_w=0.66)
     
     
     
