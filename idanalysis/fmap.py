@@ -10,11 +10,6 @@ from scipy import integrate as _integrate
 
 class EPUOnAxisFieldMap(_FieldMap):
     """."""
-
-    # FOLDER_BASE = None
-    #FOLDER_BASE = '/home/ximenes/repos-dev/fac/atividades/insertion-devices/Ondulador UVV/'
-    FOLDER_BASE = '/home/gabriel/repos-sirius/Ondulador UVV/'
-
     class CONFIGS:
         """."""
         HP_G22P0 = 'HP_G22P0'
@@ -56,9 +51,10 @@ class EPUOnAxisFieldMap(_FieldMap):
             ],                                    
         }
 
-    def __init__(self,
+    def __init__(self, folder,
         config, stepx=1.0, nrptsx=3, stepy=1.0, nrptsy=3, centralize=True,
         **kwargs):
+        self._folder = folder
         self._config = config
         self._stepx = stepx
         self._nrptsx = nrptsx
@@ -67,6 +63,10 @@ class EPUOnAxisFieldMap(_FieldMap):
         self._centralize = centralize
         content = self._get_fmap_content()
         super().__init__(content=content, **kwargs)
+
+    @property
+    def folder(self):
+        return self._folder
 
     @staticmethod
     def _read_field_component(file_name):
@@ -91,17 +91,15 @@ class EPUOnAxisFieldMap(_FieldMap):
         bf = _np.array(col2_values)
         return rz, bf
 
-    @staticmethod
-    def _read_field(config):
-
+    def _read_field(self, config):
         fnames = EPUOnAxisFieldMap._CONFIG_FNAMES[config]
-        fname = EPUOnAxisFieldMap.FOLDER_BASE + \
+        fname = self.folder + \
             EPUOnAxisFieldMap._DATA_PATH + fnames[0]
         rz1, bx = EPUOnAxisFieldMap._read_field_component(fname)
-        fname = EPUOnAxisFieldMap.FOLDER_BASE + \
+        fname = self.folder + \
             EPUOnAxisFieldMap._DATA_PATH + fnames[1]
         rz2, by = EPUOnAxisFieldMap._read_field_component(fname)
-        fname = EPUOnAxisFieldMap.FOLDER_BASE + \
+        fname = self.folder + \
             EPUOnAxisFieldMap._DATA_PATH + fnames[2]
         rz3, bz = EPUOnAxisFieldMap._read_field_component(fname)
 
@@ -158,11 +156,9 @@ class EPUOnAxisFieldMap(_FieldMap):
         return content
 
     def _get_fmap_content(self):
-        rz, bx, by, bz = EPUOnAxisFieldMap._read_field(self._config)
+        rz, bx, by, bz = self._read_field(self._config)
         content = self.create_fieldmap_content(rz, bx, by, bz)
         return content
-
-
 
 
 class FieldmapOnAxisAnalysis:

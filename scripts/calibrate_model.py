@@ -11,6 +11,11 @@ from copy import deepcopy
 import time
 import radia as _rad
 
+import utils
+utils.FOLDER_BASE = '/home/ximenes/repos-dev/fac/atividades/insertion-devices/Ondulador UVV/'
+# utils.FOLDER_BASE = '/home/gabriel/repos-sirius/Ondulador UVV/'
+
+
 class RadiaModelCalibration:
     """."""
 
@@ -275,7 +280,7 @@ def init_objects(phase, gap):
         config = configs[(phase, gap)]
     except KeyError:
         raise NotImplementedError
-    fmap = _EPUOnAxisFieldMap(config=config)
+    fmap = _EPUOnAxisFieldMap(folder=utils.FOLDER_BASE, config=config)
     return epu, fmap
 
 
@@ -303,6 +308,6 @@ if __name__ == "__main__":
     cm.shiftscale_set(scale=minscale)
     by_meas_fit = cm.shiftscale_plot_fields(shift=minshift)
    
-    cm._by_model = minscale*cm._by_model
-    cm.simulated_annealing(
-        initial_residue=minresidue*len(cm.rz_model), by_meas_fit=by_meas_fit)
+    # cm._by_model = minscale*cm._by_model
+    # cm.simulated_annealing(
+    #     initial_residue=minresidue*len(cm.rz_model), by_meas_fit=by_meas_fit)
