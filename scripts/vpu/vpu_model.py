@@ -7,20 +7,20 @@ import imaids.utils as utils
 import matplotlib.pyplot as plt
 import time
 
-def generate_model(width=None, height=None, p_width=None, p_height= None, period_length=29, gap=9.7):
+def generate_model(width=None, height=None, p_width=None, p_height= None, period_length=29, gap=10.9):
     
     block_shape = [
-        [-width/2, 0],
-        [-width/2, -height],
-        [width/2, -height],
         [width/2, 0],
+        [width/2, -height],
+        [-width/2, -height],
+        [-width/2, 0],
     ]
     
     pole_shape = [
-        [-p_width/2, 0],
-        [-p_width/2, -p_height],
-        [p_width/2, -p_height],
         [p_width/2, 0],
+        [p_width/2, -p_height],
+        [-p_width/2, -p_height],
+        [-p_width/2, 0],
     ]
 
     vpu = Hybrid(gap=gap,period_length=period_length, mr=1.32, nr_periods=15,
@@ -33,7 +33,6 @@ def generate_model(width=None, height=None, p_width=None, p_height= None, period
 def generate_beff_file(block_height, B_dict, name):
     my_file = open(name,"w") #w=writing
     for width in B_dict.keys():
-        my_file.write('\n----------------------------------------------------------------------------------------------------------------------------------------------------------------\n')
         my_file.write('Block width = {:.0f}'.format(width))
         my_file.write('\nBlock height[mm]\tBeff[T]\n')
         for i in _np.arange(len(B_dict[width])):
@@ -65,9 +64,7 @@ def generate_field_file(block_width, block_height, period, gap, filename):
 
 def plot_FieldAmplitude_height(blocks_height, B_dict):
     plt.figure(1)
-    plt.plot(blocks_height[55], B_dict[55], label='Block width = 55')
     plt.plot(blocks_height[60], B_dict[60], label='Block width = 60')
-    plt.plot(blocks_height[65], B_dict[65], label='Block width = 65')
     plt.xlabel('Block height [mm]')
     plt.ylabel('Beff [T]')
     plt.title('Effective Field')
@@ -76,21 +73,21 @@ def plot_FieldAmplitude_height(blocks_height, B_dict):
     plt.show()
 
     
-def run(prop_w, name):
+def run(prop_w):
     """."""
-    
+    name = 'Beff_' + str(prop_w*100) + '%'
     period = 29
     gap = 10.9
 
     B_dict = dict()
     blocks_dict = dict()
 
-    for block_width in _np.arange(55,70,5):
+    for block_width in _np.arange(60,80,5): 
         pole_width = prop_w*block_width
         print("block width: ",block_width)
         K_list = []
         B_list = []
-        block_height = _np.arange(50,70,5)
+        block_height = _np.arange(40,75,5)  
         for height in block_height:
             pole_height = 1*height
             vpu,br = generate_model(width=block_width, height=height, p_width=pole_width,
@@ -100,17 +97,15 @@ def run(prop_w, name):
    
         B_dict[block_width] = B_list
         blocks_dict[block_width] = block_height
-           
+    
     generate_beff_file(block_height=blocks_dict, B_dict=B_dict, name=name)
-    #plot_FieldAmplitude_height(blocks_height=blocks_dict, B_dict=B_dict)
+    
     
     
 if __name__ == "__main__":
     
-    run(prop_w=0.7,name='Beff_70%')
-    #generate_field_file(block_width=55, block_height=50, period=29, gap=10.9, filename='Field_55x50')
-    #generate_field_file(block_width=60, block_height=50, period=29, gap=10.9, filename='Field_60x50')
-    #run(prop_w=0.7,prop_h=1.0,name='Beff_70% vs 100%')
+    run(prop_w=0.4)
+
 
     
 

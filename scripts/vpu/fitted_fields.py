@@ -12,14 +12,14 @@ def run():
     """."""
     
     br = 1.32
-    a = [2.2438,2.2412]
-    b = [-3.7523,-3.7632]
-    c = [0.3194,0.3262]
-    config = ["Block dimensions = 60x50 mm","Block dimensions = 55x50 mm"]
+    a = [2.552,2.541,2.554,1.918]
+    b = [-4.431,-4.483,-4.807,-3.529]
+    c = [1.101,1.078,1.409,0.287]
+    config = ["Original Model Nd","My fit - 19","My fit - 29","My fit - var period"]
 
     period = 29
-    gap_over_period = np.arange(0.3,1.1,0.1)
-    gap = period*gap_over_period
+    gap = np.linspace(10.9,30,50)
+    gap_over_period = gap/period
     k_list = []
     b_list = []
 

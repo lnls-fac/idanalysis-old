@@ -13,20 +13,20 @@ import time
 
 
 
-def generate_model(width=None, height=None, p_width=None, p_height= None,period_length=29, gap=12.7):
+def generate_model(width=None, height=None, p_width=None, p_height= None,period_length=29, gap=10.9):
     
     block_shape = [
-        [-width/2, 0],
-        [-width/2, -height],
-        [width/2, -height],
         [width/2, 0],
+        [width/2, -height],
+        [-width/2, -height],
+        [-width/2, 0],
     ]
     
     pole_shape = [
-        [-p_width/2, 0],
-        [-p_width/2, -p_height],
-        [p_width/2, -p_height],
         [p_width/2, 0],
+        [p_width/2, -p_height],
+        [-p_width/2, -p_height],
+        [-p_width/2, 0],
     ]
 
     vpu = Hybrid(gap=gap,period_length=period_length, mr=1.32, nr_periods=15,
@@ -42,16 +42,14 @@ def b_function(x, a, b, c,br):
 def run(block_width, block_height):
     """."""
     
-    # block_width = 60
-    # block_height = 55
-    pole_width = 0.7*block_width
-    pole_height = 0.7*block_height
+    pole_width = 4/6*block_width
+    pole_height = 1*block_height
 
     period = 29
-    gap_over_period = _np.arange(0.3,1.1,0.1)
+    gaps = _np.linspace(10.9,20,10)
+    gap_over_period = gaps/period
     print(gap_over_period)
     print("\n")
-    gaps = period*gap_over_period
     beff_list = []
     for i,gap in enumerate(gaps):
         vpu,br = generate_model(width=block_width, height=block_height, p_width=pole_width,
@@ -88,6 +86,7 @@ def run(block_width, block_height):
     
 if __name__ == "__main__":
     
-    run(block_width=60, block_height=50)
-    run(block_width=55, block_height=50)
+    run(block_width=60, block_height=40)
+    run(block_width=60, block_height=40)
+    
     

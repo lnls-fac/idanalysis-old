@@ -4,7 +4,7 @@ import numpy as np
 import imaids.utils as utils
 import matplotlib.pyplot as plt
 
-period = 29
+period = 20
 
 def run():
     """."""
