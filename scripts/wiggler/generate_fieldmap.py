@@ -3,13 +3,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from imaids import utils as utils
-
-
-FOLDER_BASE = '/home/ximenes/repos-dev/ids-data/Wiggler/'
-
+FOLDER_BASE = '/home/gabriel/repos-dev/ids-data/Wiggler/'
 
 def readfield(file_name, init):
+    
     end_flag = 0
     with open(file_name, encoding='utf-8', errors='ignore') as my_file:
         data_col1 = []
@@ -34,13 +31,12 @@ def readfield(file_name, init):
     B = np.array(data_col2)
     return z,B
 
-
 def readfile_axis(x):
     
     folder = FOLDER_BASE + 'gap 059.60 mm/ponta hall/mapeamento/'
     fieldname = "Map2701_X=" + str(x) + ".dat"
     filename = folder + fieldname
-    rz_file,By_file = readfield(filename, 24) # 24 14669
+    rz_file,By_file = readfield(filename,24)#24 14669
     By_file = By_file/10e3
 
     By = []
@@ -51,28 +47,43 @@ def readfile_axis(x):
         
     return By,fieldname
 
-
-def run(x_list):
-
-    By_dict = dict()
-    for x in x_list:
-        By,_ = readfile_axis(x=x)
-        By_dict[x] = By[0:2]
+def run(xvalues,ymax,ystep):
     
-    yvalues = np.arange(-1,2,1)
-        
+    By_dict = dict()
+    for x in xvalues:
+        By,_ = readfile_axis(x=x)
+        By_dict[x] = By
+
+    yvalues = np.arange(-ymax,ymax+ystep,ystep)
+    
+    x_col1 = np.ones(len(xvalues)*len(yvalues)*len(zvalues))
+    y_col2 = np.ones(len(xvalues)*len(yvalues)*len(zvalues))
+    z_col3 = np.ones(len(xvalues)*len(yvalues)*len(zvalues))
+    b_col4 = np.ones(len(xvalues)*len(yvalues)*len(zvalues))
+    b_col5 = np.ones(len(xvalues)*len(yvalues)*len(zvalues))
+    line = 0
+    for i,z in enumerate(zvalues):
+        for y in yvalues:
+            for x in xvalues:
+                x_col1[line] = x
+                y_col2[line] = y
+                z_col3[line] = z
+                b_col4[line] = By_dict[x][i]
+                b_col5[line] = 0
+                line+=1
+
+    my_file = open("Fieldmap.fld","w") #w=writing
+    my_file.write('X[mm]\tY[mm]\tZ[mm]\tBx[T]\tBy[T]\tBz[T]\n')
+    my_file.write('----------------------------------------------------------------------------------------------------------------------------------------------------------------\n')
+    for i in range(x_col1.size):
+        my_file.write("{:.1f}\t{:.1f}\t{:.1f}\t{:.5e}\t{:.5e}\t{:.5e}\n".format(x_col1[i],y_col2[i],z_col3[i],b_col5[i],b_col4[i],b_col5[i]))
+    my_file.close()
 
 if __name__ == "__main__":
     
     zmin = -419
     zmax = 3678
     zvalues = np.arange(zmin,zmax+1,1)
-    x_list = [-20, -10, -5, -1, 0, 1, 5, 10, 20]
-    run(x_list=x_list)
+    xvalues = [-45,-35,-25,-20,-16,-12,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,12,16,20,25,35]
+    run(xvalues=xvalues,ymax=3,ystep=0.5)
 
-    # plt.plot(zvalues,By, color='b')
-    # plt.grid(True)
-    # plt.title("Vertical Field for " + fieldname[int(len(fieldname)/2):-4])
-    # plt.xlabel('Longitudinal distance [mm]')
-    # plt.ylabel('B [T]')
-    # plt.show()

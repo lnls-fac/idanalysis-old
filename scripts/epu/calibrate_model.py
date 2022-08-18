@@ -9,8 +9,8 @@ from imaids.models import AppleIISabia as _AppleIISabia
 from imaids.blocks import Block as _Block
 
 import idanalysis
-idanalysis.FOLDER_BASE = '/home/ximenes/repos-dev/'
-# idanalysis.FOLDER_BASE = '/home/gabriel/repos-dev/'
+#idanalysis.FOLDER_BASE = '/home/ximenes/repos-dev/'
+idanalysis.FOLDER_BASE = '/home/gabriel/repos-dev/'
 
 from idanalysis.fmap import EPUOnAxisFieldMap as _EPUOnAxisFieldMap
 

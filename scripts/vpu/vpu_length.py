@@ -88,7 +88,7 @@ def calc_min_height(block_width, ID_length, prop_w):
         k_dict[ID_length[i]] = k_list
         roff_dict[ID_length[i]] = roff_list
     
-    heights = _np.linspace(lim_inf_height, lim_sup_height, 10)
+    heights = _np.linspace(lim_inf_height, lim_sup_height, 100)
     min_height = []
     min_roff = []
     ID_valid_lengths = []
@@ -120,11 +120,10 @@ def generate_file(lengths_list, height_list, widths_list, roll_off_list, filenam
 def run(prop_w):
    
     widths_list = [40, 50, 60, 70, 80]   #40 - 80
-    widths_list = [40, 50]   #40 - 80
     lengths_list = []
     height_list = []
     roll_off_list = []
-    ID_length = _np.linspace(0.4, 2, 4)
+    ID_length = _np.linspace(0.4, 2, 20)
     
     for width in widths_list:
         lengths,heights,roll_offs = calc_min_height(ID_length= ID_length, block_width=width, prop_w=prop_w)
