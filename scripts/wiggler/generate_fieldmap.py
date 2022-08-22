@@ -85,5 +85,5 @@ if __name__ == "__main__":
     zmax = 3678
     zvalues = np.arange(zmin,zmax+1,1)
     xvalues = [-45,-35,-25,-20,-16,-12,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,12,16,20,25,35]
-    run(xvalues=xvalues,ymax=3,ystep=0.5)
+    run(xvalues=xvalues,ymax=12,ystep=1)
 

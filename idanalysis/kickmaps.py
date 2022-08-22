@@ -90,6 +90,12 @@ class IDKickMap:
             fmap_config, init_rx, init_ry, init_px, init_py)
         return fmap_config
 
+    def generate_kickmap_file(self, kickmap_filename):
+        rst = self.__str__()
+        my_file = open(kickmap_filename,"w") #w=writing
+        my_file.write(rst)
+        my_file.close()
+
     def __str__(self):
         """."""
         rst = ''
@@ -399,7 +405,7 @@ class IDKickMap:
             fieldmap=config.fmap,
             not_raise_range_exceptions=config.not_raise_range_exceptions)
         config.traj_init_rz = min(config.fmap.rz)
-
+        
         return config
 
     @staticmethod
@@ -563,6 +569,5 @@ class IDKickMap:
         return config
 
 
-if __name__ == '__main__':
-    idkickmap = IDKickMap()
-    idkickmap.plot_examples()
+#if __name__ == '__main__':
+

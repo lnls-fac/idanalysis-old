@@ -8,9 +8,22 @@ import matplotlib.pyplot as plt
 from pyaccel import lattice as pyacc_lat
 from pyaccel import tracking as pyacc_track
 
+import idanalysis
+#idanalysis.FOLDER_BASE = '/home/ximenes/repos-dev/'
+idanalysis.FOLDER_BASE = '/home/gabriel/repos-dev/'
+
 from idanalysis import FOLDER_BASE
 from idanalysis.model import create_model, get_id_epu_list
 from idanalysis import IDKickMap
+from idanalysis import EPUData
+
+
+def create_epudata():
+
+    folder = idanalysis.FOLDER_BASE + EPUData.FOLDER_EPU_MAPS
+    configs = EPUData.EPU_CONFIGS
+    epudata = EPUData(folder=folder, configs=configs)
+    return epudata
 
 
 def calc_idkmap_kicks(fname, indep_var='x', plane_idx=0, plot_flag=False, idkmap=None):
@@ -280,7 +293,7 @@ def model_tracking_kick_error():
   """."""
 
   # create object with list of all possible EPU50 configurations
-  configs = utils.create_epudata()
+  configs = create_epudata()
 
   # select ID config
   configname = configs[0]

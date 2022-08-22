@@ -1,7 +1,7 @@
 from .deltadata import DeltaData
 from .epudata import EPUData
 from .trajectory import IDTrajectory
-
+from .kickmaps import IDKickMap
 
 # This has to be defined before using the library.
 FOLDER_BASE = None

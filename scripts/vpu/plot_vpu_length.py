@@ -64,7 +64,7 @@ def plot_length_height(lengths_list, height_list, width_list):
         plt.plot(x,y,color_list[i])
     
     plt.ylim(35,120)
-    plt.xlim(0.4,1.4)
+    plt.xlim(0.4,2)
     plt.grid()
     plt.legend()
     plt.show()
@@ -125,7 +125,7 @@ def run(filename):
     plot_length_roff(lengths_list, roll_off_list, width_list)
 if __name__ == "__main__":
     
-    run("IDs_length50mm")
+    run("IDs_length70mm_noerror")
     
     
     

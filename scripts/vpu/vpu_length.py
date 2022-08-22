@@ -18,9 +18,9 @@ def calc_BSC_hlen(half_length):
 
 def gap_min(half_length):
     vaccum_chamb_thickness = 0.9 # [mm]
-    space_bsc_chamb = 0.3 # [mm]
-    space_chamb_id = 0.3 # [mm]
-    manufacturing_error = 0.15 # [mm]
+    space_bsc_chamb = 0.2 # [mm]    0.3
+    space_chamb_id = 0.1 # [mm]     0.3
+    manufacturing_error = 0 # [mm] 0.15
     tol_total = space_bsc_chamb + vaccum_chamb_thickness + manufacturing_error + space_chamb_id
     bsc_hlen = calc_BSC_hlen(half_length)
     gap_min = (tol_total + bsc_hlen)*2
@@ -49,7 +49,7 @@ def generate_model(width=None, height=None, period_length=29, gap=10.9, prop_w=N
     vpu = Hybrid(gap=gap,period_length=period_length, mr=1.32, nr_periods=5,
                  longitudinal_distance = 0.1,block_shape=block_shape,
                  pole_shape=pole_shape)
-    # vpu.solve()
+    vpu.solve()
     br = 1.32
     return vpu,br
 
@@ -123,7 +123,7 @@ def run(prop_w):
     lengths_list = []
     height_list = []
     roll_off_list = []
-    ID_length = _np.linspace(0.4, 2, 20)
+    ID_length = _np.linspace(0.4, 2.5, 20)
     
     for width in widths_list:
         lengths,heights,roll_offs = calc_min_height(ID_length= ID_length, block_width=width, prop_w=prop_w)
@@ -131,13 +131,14 @@ def run(prop_w):
         roll_off_list.append(roll_offs)
         lengths_list.append(lengths)
     
-    filename = "IDs_length" + str(int(prop_w*100)) + "%.txt"
+    filename = "IDs_length" + str(int(prop_w*100)) + "%_noerror.txt"
     generate_file(lengths_list, height_list, widths_list, roll_off_list, filename)
     
     
 if __name__ == "__main__":
     
-    run(prop_w=0.66)
+    run(prop_w=0.7)
+    
     
     
     

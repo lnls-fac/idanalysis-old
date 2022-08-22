@@ -8,8 +8,8 @@ from pyaccel import optics as pyacc_opt
 from pyaccel.optics import calc_touschek_energy_acceptance
 
 import idanalysis
-idanalysis.FOLDER_BASE = '/home/ximenes/repos-dev/'
-# idanalysis.FOLDER_BASE = '/home/gabriel/repos-dev/'
+#idanalysis.FOLDER_BASE = '/home/ximenes/repos-dev/'
+idanalysis.FOLDER_BASE = '/home/gabriel/repos-dev/'
 
 from idanalysis import orbcorr as orbcorr
 from idanalysis import model as model
