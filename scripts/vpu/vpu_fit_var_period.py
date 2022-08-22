@@ -28,7 +28,7 @@ def run():
     for gap in gaps:
         for i,lamb in enumerate(period):
             vpu,br = generate_model(block_width=block_width,period_length=lamb, gap=gap)
-            beff,b_peak = utils.get_beff_from_model(model=vpu, period=lamb, polarization='hp', hmax=5)
+            beff,b_peak,_ = vpu.get_beff(polarization='hp', hmax=5, x=0)
             gp = gap/lamb
             gap_over_period.append(gp)
             print("beff: ",beff)

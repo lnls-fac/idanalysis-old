@@ -3,13 +3,12 @@
 import numpy as _np
 from imaids.models import HybridPlanar as Hybrid
 from imaids.blocks import Block as Block
-import imaids.utils as utils
 import matplotlib.pyplot as plt
 import time
 
 
 def calc_BSC_hlen(half_length):
-    beta_center = 1.36  # [mm] - vertical.
+    beta_center = 1.36  # [mm] - horizontal.
     bsc_center = 3.2  # [mm]
     beta_hlen = beta_center + (1/beta_center) * half_length**2
     bsc_hlen = bsc_center * _np.sqrt(beta_hlen / beta_center)
@@ -49,7 +48,7 @@ def generate_model(width=None, height=None, period_length=29, gap=10.9, prop_w=N
     vpu = Hybrid(gap=gap,period_length=period_length, mr=1.32, nr_periods=5,
                  longitudinal_distance = 0.1,block_shape=block_shape,
                  pole_shape=pole_shape)
-    vpu.solve()
+    #vpu.solve()
     br = 1.32
     return vpu,br
 
@@ -77,10 +76,10 @@ def calc_min_height(block_width, ID_length, prop_w):
         roff_list = []
         for block_height in blocks_height:
             vpu,_ = generate_model(gap=gap, width=block_width, height=block_height, prop_w=prop_w)
-            Beff, B_peak, By = utils.get_beff_from_model(model=vpu, period=period, polarization='hp', hmax=5,x=0)
-            Beff_10, B_peak_10, By_10 = utils.get_beff_from_model(model=vpu, period=period, polarization='hp', hmax=5,x=10)
+            Beff, B_peak, By = vpu.get_beff(polarization='hp', hmax=5, x=0)
+            Beff_10, B_peak_10, By_10 = vpu.get_beff(polarization='hp', hmax=5,x=0)
             Roll_off = 100*(B_peak - B_peak_10)/B_peak
-            k = utils.undulator_b_to_k(b=Beff, period=period*1e-3)
+            k,_ = vpu.calc_deflection_parameter(bx_amp = Beff, by_amp = 0)
             k=k*k_correction
             k_list.append(k)
             roff_list.append(Roll_off)
