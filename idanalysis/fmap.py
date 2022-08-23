@@ -163,26 +163,27 @@ class EPUOnAxisFieldMap(_FieldMap):
 
 class WigglerFieldmap(_FieldMap):
     """."""
-    class CONFIGS:
-        """."""
-        FOLDER_BASE = ('/home/gabriel/repos-dev/ids-data/Wiggler/')
-
     def __init__(self):
-        zmin = -419
-        zmax = 3678
-        zvalues = np.arange(zmin,zmax+1,1)
-        xvalues = [-45,-35,-25,-20,-16,-12,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,12,16,20,25,35]
-        generate_fieldmap(xvalues=xvalues,ymax=12,ystep=1)
+        self.FOLDER_BASE = ('/home/gabriel/repos-dev/ids-data/Wiggler/')
+        self.filename = None
+        self.zmin = -419
+        self.zmax = 3678
+        self.zvalues = _np.arange(self.zmin,self.zmax+1,1)
+        self.ymax = 12
+        self.ystep = 1
+        self.yvalues = None
+        self.xvalues = [-45,-35,-25,-20,-16,-12,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,12,16,20,25,35]
+        self.generate_fieldmap()
 
-    def readfield(file_name, init):
+    def readfield(self):
         end_flag = 0
-        with open(file_name, encoding='utf-8', errors='ignore') as my_file:
+        with open(self.filename, encoding='utf-8', errors='ignore') as my_file:
             data_col1 = []
             data_col2 = []
             col1_values = []
             col2_values = []
             for i,line in enumerate(my_file):
-                if i >= init:
+                if i >= 24:
                     list_data = line.split('\t') #returns a list
                     if 'M' not in list_data[0]:
                         if end_flag == 0:
@@ -195,42 +196,43 @@ class WigglerFieldmap(_FieldMap):
                     else:
                         end_flag = 1
         my_file.close()
-        z = np.array(data_col1)
-        B = np.array(data_col2)
+        z = _np.array(data_col1)
+        B = _np.array(data_col2)
         return z,B
 
-    def readfile_axis(x):
-        folder = WigglerFieldmap.FOLDER_BASE + 'gap 059.60 mm/ponta hall/mapeamento/'
+    def readfile_axis(self, i):
+        x = self.xvalues[i]
+        folder = self.FOLDER_BASE + 'gap 059.60 mm/ponta hall/mapeamento/'
         fieldname = "Map2701_X=" + str(x) + ".dat"
-        filename = folder + fieldname
-        rz_file,By_file = readfield(filename,24)#24 14669
+        self.filename = folder + fieldname
+        rz_file,By_file = self.readfield()
         By_file = By_file/10e3
 
         By = []
-        for z in zvalues:
-            difference_array = np.absolute(rz_file - z)
+        for z in self.zvalues:
+            difference_array = _np.absolute(rz_file - z)
             index = difference_array.argmin()
             By.append(By_file[index])
 
         return By,fieldname
 
-    def generate_fieldmap(xvalues,ymax,ystep):
+    def generate_fieldmap(self):
         By_dict = dict()
-        for x in xvalues:
-            By,_ = readfile_axis(x=x)
+        for i,x in enumerate(self.xvalues):
+            By,_ = self.readfile_axis(i)
             By_dict[x] = By
 
-        yvalues = np.arange(-ymax,ymax+ystep,ystep)
+        self.yvalues = _np.arange(-self.ymax,self.ymax+self.ystep,self.ystep)
 
-        x_col1 = np.ones(len(xvalues)*len(yvalues)*len(zvalues))
-        y_col2 = np.ones(len(xvalues)*len(yvalues)*len(zvalues))
-        z_col3 = np.ones(len(xvalues)*len(yvalues)*len(zvalues))
-        b_col4 = np.ones(len(xvalues)*len(yvalues)*len(zvalues))
-        b_col5 = np.ones(len(xvalues)*len(yvalues)*len(zvalues))
+        x_col1 = _np.ones(len(self.xvalues)*len(self.yvalues)*len(self.zvalues))
+        y_col2 = _np.ones(len(self.xvalues)*len(self.yvalues)*len(self.zvalues))
+        z_col3 = _np.ones(len(self.xvalues)*len(self.yvalues)*len(self.zvalues))
+        b_col4 = _np.ones(len(self.xvalues)*len(self.yvalues)*len(self.zvalues))
+        b_col5 = _np.ones(len(self.xvalues)*len(self.yvalues)*len(self.zvalues))
         line = 0
-        for i,z in enumerate(zvalues):
-            for y in yvalues:
-                for x in xvalues:
+        for i,z in enumerate(self.zvalues):
+            for y in self.yvalues:
+                for x in self.xvalues:
                     x_col1[line] = x
                     y_col2[line] = y
                     z_col3[line] = z
@@ -244,6 +246,7 @@ class WigglerFieldmap(_FieldMap):
         for i in range(x_col1.size):
             my_file.write("{:.1f}\t{:.1f}\t{:.1f}\t{:.5e}\t{:.5e}\t{:.5e}\n".format(x_col1[i],y_col2[i],z_col3[i],b_col5[i],b_col4[i],b_col5[i]))
         my_file.close()
+
 
 class FieldmapOnAxisAnalysis:
 
