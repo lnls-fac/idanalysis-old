@@ -55,6 +55,6 @@ def calc_idkmap_kicks(indep_var='x', plane_idx=0, plot_flag=False, idkmap=None):
 
 if __name__ == '__main__':
    
-  wiggler_kickmap = IDKickMap("wiggler_kickmap.txt")
+  wiggler_kickmap = IDKickMap("wiggler-kickmap-ID3969.txt")
   rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(idkmap = wiggler_kickmap, indep_var='x', plane_idx=0, plot_flag=True)
 

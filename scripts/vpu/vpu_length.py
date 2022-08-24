@@ -79,7 +79,7 @@ def calc_min_height(block_width, ID_length, prop_w):
             Beff, B_peak, By = vpu.get_beff(polarization='hp', hmax=5, x=0)
             Beff_10, B_peak_10, By_10 = vpu.get_beff(polarization='hp', hmax=5,x=0)
             Roll_off = 100*(B_peak - B_peak_10)/B_peak
-            k,_ = vpu.calc_deflection_parameter(bx_amp = Beff, by_amp = 0)
+            k,_ = vpu.calc_deflection_parameter(bx_amp = Beff, by_amp = Beff)
             k=k*k_correction
             k_list.append(k)
             roff_list.append(Roll_off)
