@@ -3,7 +3,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-FOLDER_BASE = '/home/gabriel/repos-dev/ids-data/Wiggler/'
+FOLDER_BASE = '/home/gabriel/repos-dev/wiggler-2T-STI/original-measurements/'
+# FOLDER_BASE = '/home/ximenes/repos-dev/wiggler-2T-STI/original-measurements/'
 
 def readfield(file_name, init):
     

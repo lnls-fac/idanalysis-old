@@ -163,8 +163,12 @@ class EPUOnAxisFieldMap(_FieldMap):
 
 class WigglerFieldmap(_FieldMap):
     """."""
-    def __init__(self):
-        self.FOLDER_BASE = ('/home/gabriel/repos-dev/ids-data/Wiggler/')
+
+    _DATA_PATH = (
+        'wiggler-2T-STI/original-measurements/')
+
+    def __init__(self, folder):
+        self._folder = folder
         self.filename = None
         self.zmin = -419
         self.zmax = 3678
@@ -202,7 +206,8 @@ class WigglerFieldmap(_FieldMap):
 
     def readfile_axis(self, i):
         x = self.xvalues[i]
-        folder = self.FOLDER_BASE + 'gap 059.60 mm/ponta hall/mapeamento/'
+        folder = self._folder + WigglerFieldmap._DATA_PATH + \
+            'gap 059.60 mm/ponta hall/mapeamento/'
         fieldname = "Map2701_X=" + str(x) + ".dat"
         self.filename = folder + fieldname
         rz_file,By_file = self.readfield()
