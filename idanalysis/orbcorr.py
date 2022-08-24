@@ -12,7 +12,6 @@ def correct_orbit_sofb(model0, model1):
 
     # calculate structures
     famdata = si.get_family_data(model1)
-    # chs = [val[0] for val in famdata['CH']['index']]
     bpms = famdata['BPM']['index']
     spos_bpms = pyaccel.lattice.find_spos(model1, indices=bpms)
 
@@ -41,13 +40,14 @@ def correct_orbit_sofb(model0, model1):
 
         # get corrected orbit
     orb2 = ocorr.get_orbit()
+    kicks = ocorr.get_kicks()
 
     # calc closed orbit distortions (cod) after correction
     cod_c = orb2 - orb0
     codx_c = cod_c[:len(bpms)]
     cody_c = cod_c[len(bpms):]
 
-    return spos_bpms, codx_c, cody_c, codx_u, cody_u
+    return kicks, spos_bpms, codx_c, cody_c, codx_u, cody_u
 
 
 def run():
@@ -81,7 +81,9 @@ def run():
     # insert ID in the model
     model1 = create_model(ids=ids)
 
-    spos_bpms, codx_c, cody_c, codx_u, cody_u = correct_orbit_sofb(model0, model1)
+    _, spos_bpms, codx_c, cody_c, codx_u, cody_u = \
+        correct_orbit_sofb(model0, model1)
+
     codx_u_rms, cody_u_rms = np.std(codx_u), np.std(cody_u)
     codx_c_rms, cody_c_rms = np.std(codx_c), np.std(cody_c)
 
