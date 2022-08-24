@@ -6,26 +6,19 @@ import pyaccel
 import pyaccel.optics
 import pymodels
 
+from idanalysis import orbcorr as orbcorr
 
-FOLDER_BASE = '/home/ximenes/repos-dev/'
-
-# create IDs
-fname = FOLDER_BASE + 'idanalysis/scripts/wiggler/wiggler-kickmap-ID3969.txt'
-IDModel = pymodels.si.IDModel
-wig180 = IDModel(
-    subsec = IDModel.SUBSECTIONS.ID14SB,
-    file_name=fname,
-    fam_name='WIG180', nr_steps=10, rescale_kicks=1.0, rescale_length=1.0)
-ids = [wig180, ]
+import utils
 
 # bare lattice
-ring0 = pymodels.si.create_accelerator()
-twiss0, *_ = pyaccel.optics.calc_twiss(ring0, indices='closed')
-print('length : {:.4f} m'.format(ring0.length))
+model0 = pymodels.si.create_accelerator()
+twiss0, *_ = pyaccel.optics.calc_twiss(model0, indices='closed')
+print('length : {:.4f} m'.format(model0.length))
 print('tunex  : {:.6f}'.format(twiss0.mux[-1]/2/np.pi))
 print('tuney  : {:.6f}'.format(twiss0.muy[-1]/2/np.pi))
 
 # lattice with IDs
+ids = utils.create_ids(rescale_kicks=0)
 ring1 = pymodels.si.create_accelerator(ids=ids)
 twiss1, *_ = pyaccel.optics.calc_twiss(ring1, indices='closed')
 print('length : {:.4f} m'.format(ring1.length))
@@ -34,3 +27,9 @@ print('tuney  : {:.6f}'.format(twiss1.muy[-1]/2/np.pi))
 
 inds = pyaccel.lattice.find_indices(ring1, 'fam_name', 'WIG180')
 print(inds)
+
+
+# kicks, *_ = orbcorr.correct_orbit_sofb(model0, model1)
+# codx, cody = utils.get_orb4d(ring1)
+
+
