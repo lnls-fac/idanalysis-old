@@ -87,6 +87,7 @@ def sofb_correct(id_hkick, id_hdisp, id_vkick, id_vdisp, ramp_nrpts, minsingval)
         model0, model1, twiss1.spos,
         id_hkick, id_hdisp, id_vkick, id_vdisp, ramp_nrpts, minsingval)
     codrx, codpx, codry, codpy = utils.get_orb4d(model1)
+    twiss1, *_ = pyaccel.optics.calc_twiss(model1, indices='closed')
 
     return kicks, codrx, codpx, codry, codpy, twiss1.spos, twiss0, twiss1
 
@@ -101,7 +102,7 @@ def run(minsingval):
     kicks, codrx, codpx, codry, codpy, spos, twiss0, twiss1 = sofb_correct(
         id_hkick, id_hdisp, id_vkick, id_vdisp, ramp_nrpts, minsingval)
 
-    bbeatx, bbeaty = calc_betabeat(twiss0,twiss1)
+    bbeatx, bbeaty = calc_betabeat(twiss0, twiss1)
     plot_results(kicks, codrx, codpx, codry, codpy, spos, bbeatx, bbeaty, minsingval)
 
 def plot_results(kicks, codrx, codpx, codry, codpy, spos, bbeatx, bbeaty, minsingval):
