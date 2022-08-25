@@ -95,7 +95,7 @@ def run(prop_w):
             pole_height = 1*height
             vpu, br = generate_model(width=block_width, height=height, p_width=pole_width,
                                     p_height=pole_height, period_length=period, gap=gap)
-            Beff, B_peak, *_ = vpu.get_beff(polarization='hp', hmax=5, x=0)
+            Beff, B_peak, *_ = vpu.get_effective_field(polarization='hp', hmax=5, x=0)
             B_list.append(Beff)
    
         B_dict[block_width] = B_list

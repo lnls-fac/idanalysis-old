@@ -73,12 +73,11 @@ def calc_min_height(block_width, ID_length, prop_w):
         roff_list = []
         for block_height in blocks_height:
             vpu,_ = generate_model(gap=gap, width=block_width, height=block_height, prop_w=prop_w)
-            Beff, B_peak, By = vpu.get_beff(polarization='hp', hmax=5, x=0)
-            Beff_10, B_peak_10, By_10 = vpu.get_beff(polarization='hp', hmax=5,x=10)
+            Beff, B_peak, By = vpu.get_effective_field(polarization='hp', hmax=5, x=0)
+            Beff_10, B_peak_10, By_10 = vpu.get_effective_field(polarization='hp', hmax=5,x=10)
             Roll_off = 100*(B_peak - B_peak_10)/B_peak
             k,_ = vpu.calc_deflection_parameter(bx_amp = Beff, by_amp = Beff)
             k=k*k_correction
-            print(k)
             k_list.append(k)
             roff_list.append(Roll_off)
 

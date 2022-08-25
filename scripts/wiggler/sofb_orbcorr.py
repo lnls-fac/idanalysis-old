@@ -122,7 +122,7 @@ def plot_results(kicks, codrx, codpx, codry, codpy, spos, bbeatx, bbeaty, minsin
     plt.plot(1e6*vkicks, '.-', label=vlabel)
     plt.xlabel('Corrector index')
     plt.ylabel('Corrector strength [urad]')
-    plt.suptitle(str(minsingval))
+    plt.suptitle('minsingval ' + str(minsingval))
     plt.legend()
     plt.tight_layout()
     figname = 'sofb-corrkicks_minsingval_' + str(minsingval) + '.png'
@@ -140,7 +140,7 @@ def plot_results(kicks, codrx, codpx, codry, codpy, spos, bbeatx, bbeaty, minsin
     plt.plot(spos, 1e6*codry, label=vlabel)
     plt.xlabel('pos [m]')
     plt.ylabel('COD pos [um]')
-    plt.suptitle(str(minsingval))
+    plt.suptitle('minsingval ' + str(minsingval))
     plt.legend()
     plt.tight_layout()
     figname = 'sofb-codpos_minsingval_' + str(minsingval) + '.png'
@@ -179,7 +179,7 @@ def plot_results(kicks, codrx, codpx, codry, codpy, spos, bbeatx, bbeaty, minsin
     plt.xlabel('spos [m]')
     plt.ylabel('Beta Beat [%]')
     plt.title('Beta Beating from ID')
-    plt.suptitle(str(minsingval))
+    plt.suptitle('minsingval ' + str(minsingval))
     plt.legend()
     plt.grid()
     figname = 'beta_beating_minsingval' + str(minsingval) + '.png'

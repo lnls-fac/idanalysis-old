@@ -54,7 +54,7 @@ def run(block_width, block_height):
     for i,gap in enumerate(gaps):
         vpu,br = generate_model(width=block_width, height=block_height, p_width=pole_width,
                                  p_height=pole_height, period_length=period, gap=gap)
-        beff,b_peak = vpu.get_beff(polarization='hp', hmax=5, x=0)
+        beff,b_peak = vpu.get_effective_field(polarization='hp', hmax=5, x=0)
         print("beff: ",beff)
         print("b_peak: ",b_peak)
         print("gap/lamb: ",gap_over_period[i])

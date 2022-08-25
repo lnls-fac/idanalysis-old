@@ -29,6 +29,26 @@ def run():
     rx_final = rx[-1]*1e3
     ry_final = ry[-1]*1e3
 
+    rz1 = f.rz
+    by1 = f.by[f.ry_zero][f.rx_zero][:]
+
+    rz2 = -1*rz1[::-1]
+    by2 = -1*by1[::-1] 
+
+    by2_fit = np.interp(rz1, rz2, by2)
+    by_diff = by2_fit - by1
+
+    plt.figure(3)
+    plt.plot(rz1, by1, label='by')
+    plt.plot(rz2, by2, label='by_inv')
+    plt.plot(rz1, by_diff, label='diff')
+    plt.grid()
+    plt.xlabel("Z position [mm]")
+    plt.ylabel("By [T]")
+    plt.legend()
+    plt.savefig('vertical-field.png')
+    plt.show()
+
     plt.figure(1)
     plt.plot(rz, px, label=f'px final = {px_final:.2f} [urad]')
     plt.plot(rz, py, label=f'py final = {py_final:.2f} [urad]')
@@ -36,15 +56,17 @@ def run():
     plt.xlabel("Z position [mm]")
     plt.ylabel("p [rad]")
     plt.legend()
+    plt.savefig('rk-trajectory-ang.png')
     plt.show()
 
-    plt.figure(1)
+    plt.figure(2)
     plt.plot(rz, rx, label=f'x final = {rx_final:.2f} [um]')
     plt.plot(rz, ry, label=f'y final = {ry_final:.2f} [um]')
     plt.grid()
     plt.xlabel("Z position [mm]")
-    plt.ylabel("Transverse positions [m]")
+    plt.ylabel("Transverse positions [mm]")
     plt.legend()
+    plt.savefig('rk-trajectory-pos.png')
     plt.show()
 
 if __name__ == "__main__":
