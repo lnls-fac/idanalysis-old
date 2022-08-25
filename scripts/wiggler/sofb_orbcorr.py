@@ -1,35 +1,166 @@
 #!/usr/bin/env python-sirius
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 import pyaccel
 import pyaccel.optics
 import pymodels
 
+from siriuspy.search import PSSearch
 from idanalysis import orbcorr as orbcorr
 
 import utils
 
-# bare lattice
-model0 = pymodels.si.create_accelerator()
-twiss0, *_ = pyaccel.optics.calc_twiss(model0, indices='closed')
-print('length : {:.4f} m'.format(model0.length))
-print('tunex  : {:.6f}'.format(twiss0.mux[-1]/2/np.pi))
-print('tuney  : {:.6f}'.format(twiss0.muy[-1]/2/np.pi))
 
-# lattice with IDs
-ids = utils.create_ids(rescale_kicks=0)
-ring1 = pymodels.si.create_accelerator(ids=ids)
-twiss1, *_ = pyaccel.optics.calc_twiss(ring1, indices='closed')
-print('length : {:.4f} m'.format(ring1.length))
-print('tunex  : {:.6f}'.format(twiss1.mux[-1]/2/np.pi))
-print('tuney  : {:.6f}'.format(twiss1.muy[-1]/2/np.pi))
-
-inds = pyaccel.lattice.find_indices(ring1, 'fam_name', 'WIG180')
-print(inds)
+def create_model_bare():
+    """."""
+    print('--- model bare ---')
+    model = pymodels.si.create_accelerator()
+    twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
+    print('length : {:.4f} m'.format(model.length))
+    print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/np.pi))
+    print('tuney  : {:.6f}'.format(twiss.muy[-1]/2/np.pi))
+    return model, twiss
 
 
-# kicks, *_ = orbcorr.correct_orbit_sofb(model0, model1)
-# codx, cody = utils.get_orb4d(ring1)
+def create_model_ids():
+    """."""
+    print('--- model with kick-model wiggler ---')
+    ids = utils.create_ids(rescale_kicks=0)
+    model = pymodels.si.create_accelerator(ids=ids)
+    twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
+    print('length : {:.4f} m'.format(model.length))
+    print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/np.pi))
+    print('tuney  : {:.6f}'.format(twiss.muy[-1]/2/np.pi))
+    return model, twiss, ids
+
+
+def configure_id_correctors(
+        model, spos, id_hkick, id_hdisp, id_vkick, id_vdisp):
+    """Simulate ID beam deflection and displacement with ID correctors."""
+    inds_wig = pyaccel.lattice.find_indices(model, 'fam_name', 'WIG180')
+    # get close-by id correctors indices
+    inds_idc = np.array(pyaccel.lattice.find_indices(model, 'fam_name', 'IDC'))
+    sel = [
+        np.argmin(np.abs(inds_idc - inds_wig[0])),
+        np.argmin(np.abs(inds_idc - inds_wig[1]))]
+    inds_idc = inds_idc[sel]
+    idc_distance = spos[inds_idc[1]] - spos[inds_idc[0]]
+
+    hkick1 = id_hdisp / idc_distance
+    hkick2 = id_hkick - hkick1
+    vkick1 = id_vdisp / idc_distance
+    vkick2 = id_vkick - vkick1
+    print('idc_separation : {:.3f} mm'.format(idc_distance * 1000))
+    print('idc1 hkick     : {:+.3f} urad'.format(hkick1 * 1e6))
+    print('idc2 hkick     : {:+.3f} urad'.format(hkick2 * 1e6))
+    print('idc1 vkick     : {:+.3f} urad'.format(vkick1 * 1e6))
+    print('idc2 vkick     : {:+.3f} urad'.format(vkick2 * 1e6))
+
+    model[inds_idc[0]].hkick_polynom = hkick1
+    model[inds_idc[1]].hkick_polynom = hkick2
+    model[inds_idc[0]].vkick_polynom = vkick1
+    model[inds_idc[1]].vkick_polynom = vkick2
+
+
+def ramp_id_field_orbit_correct(
+        model0, model1, twiss1, id_hkick, id_hdisp, id_vkick, id_vdisp, nrpts):
+    """."""
+    ramp = np.linspace(0, 1, nrpts+1)
+    for factor in ramp[1:]:
+        print('factor: {}'.format(factor))
+        configure_id_correctors(model1, twiss1,
+            factor * id_hkick, factor * id_hdisp,
+            factor * id_vkick, factor * id_vdisp)
+        kicks, *_ = orbcorr.correct_orbit_sofb(model0, model1)
+        print()
+    return kicks
+    
+
+def sofb_correct(id_hkick, id_hdisp, id_vkick, id_vdisp, ramp_nrpts):
+    """."""
+    model0, twiss0 = create_model_bare()
+    model1, twiss1, ids = create_model_ids()
+    print()
+    kicks = ramp_id_field_orbit_correct(
+        model0, model1, twiss1.spos,
+        id_hkick, id_hdisp, id_vkick, id_vdisp, ramp_nrpts)
+    codrx, codpx, codry, codpy = utils.get_orb4d(model1)
+
+    return kicks, codrx, codpx, codry, codpy, twiss1.spos
+
+
+def plot_results(kicks, codrx, codpx, codry, codpy, spos):
+    """."""
+    # kicks
+    nr_chs = len(PSSearch.get_psnames(dict(sec='SI', dev='CH')))
+    nr_cvs = len(PSSearch.get_psnames(dict(sec='SI', dev='CV')))
+    hkicks = kicks[:nr_chs]
+    vkicks = kicks[nr_chs:(nr_chs+nr_cvs)]
+    hmax, hstd = np.max(np.abs(hkicks)), np.std(hkicks)
+    vmax, vstd = np.max(np.abs(vkicks)), np.std(vkicks)
+    hlabel = 'CH: (maxabs:{:.1f}, std:{:.1f}) um'.format(1e6*hmax, 1e6*hstd)
+    vlabel = 'CV: (maxabs:{:.1f}, std:{:.1f}) um'.format(1e6*vmax, 1e6*vstd)
+    plt.title
+    plt.plot(1e6*hkicks, '.-', label=hlabel)
+    plt.plot(1e6*vkicks, '.-', label=vlabel)
+    plt.xlabel('Corrector index')
+    plt.ylabel('Corrector strength [urad]')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig('sofb-corrkicks.png')
+    plt.show()
+
+    # cod pos
+    hmax, hstd = np.max(np.abs(codrx)), np.std(codrx)
+    vmax, vstd = np.max(np.abs(codry)), np.std(codry)
+    hlabel = 'X: (maxabs:{:.1f}, std:{:.1f}) um'.format(1e6*hmax, 1e6*hstd)
+    vlabel = 'Y: (maxabs:{:.1f}, std:{:.1f}) um'.format(1e6*vmax, 1e6*vstd)
+    plt.plot(spos, 1e6*codrx, label=hlabel)
+    plt.plot(spos, 1e6*codry, label=vlabel)
+    plt.xlabel('pos [m]')
+    plt.ylabel('COD pos [um]')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig('sofb-codpos.png')
+    plt.show()
+
+    # cod ang
+    hmax, hstd = np.max(np.abs(codpx)), np.std(codpx)
+    vmax, vstd = np.max(np.abs(codpy)), np.std(codpy)
+    hlabel = 'X: (maxabs:{:.1f}, std:{:.1f}) urad'.format(1e6*hmax, 1e6*hstd)
+    vlabel = 'Y: (maxabs:{:.1f}, std:{:.1f}) urad'.format(1e6*vmax, 1e6*vstd)
+    plt.plot(spos, 1e6*codpx, label=hlabel)
+    plt.plot(spos, 1e6*codpy, label=vlabel)
+    plt.xlabel('pos [m]')
+    plt.ylabel('COD ang [urad]')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig('sofb-codang.png')
+    plt.show()
+
+
+if __name__ == "__main__":
+    """."""
+    # deflection and displacements from runge-kutta calculations
+    id_hkick = 2.65 / 1e6  # [rad]
+    id_hdisp = -800 / 1e6  # [m]
+    id_vkick = 26.9 / 1e6  # [rad]
+    id_vdisp = 30 / 1e6  # [m]
+
+    ramp_nrpts = 6
+    kicks, codrx, codpx, codry, codpy, spos = sofb_correct(
+        id_hkick, id_hdisp, id_vkick, id_vdisp, ramp_nrpts)
+    plot_results(kicks, codrx, codpx, codry, codpy, spos)
+
+    
+
+
+
+
+
+
+
 
 

@@ -29,16 +29,17 @@ def create_ids(nr_steps=None, rescale_kicks=None, rescale_length=None):
 
 def get_orb4d(model):
 
-    cavity_old_state = model.cavity_on
-    radiation_old_state = model.radiation_on
+    state_cavity = model.cavity_on
+    state_radiation = model.radiation_on
     model.cavity_on = False
-    model.radiation_on = False
+    # model.radiation_on = pyaccel.accelerator.RadiationStates.off
 
     # orbit
-    closed_orbit = pyaccel.tracking.find_orbit4(model)
-    codx, cody = closed_orbit[0], closed_orbit[2]
+    closed_orbit = pyaccel.tracking.find_orbit4(model, indices='closed')
+    codrx, codpx, codry, codpy = \
+        closed_orbit[0], closed_orbit[1], closed_orbit[2], closed_orbit[3]
 
-    model.cavity_on = cavity_old_state
-    model.radiation_on = radiation_old_state
+    model.cavity_on = state_cavity
+    model.radiation_on = state_radiation
 
-    return codx, cody
+    return codrx, codpx, codry, codpy
