@@ -23,9 +23,9 @@ def gap_min(half_length):
     return gap_min
 
 
-def generate_model(width=None, height=None, period_length=29, gap=10.9, w=None):
+def generate_model(width=None, height=None, period_length=29, gap=10.9, prop_w=None):
     
-    p_width = w
+    p_width = prop_w*width
     p_height= 1*height
 
     block_shape = [
@@ -50,7 +50,7 @@ def generate_model(width=None, height=None, period_length=29, gap=10.9, w=None):
     return vpu,br
 
 
-def calc_min_height(block_width, ID_length, w):
+def calc_min_height(block_width, ID_length, prop_w):
     """."""
     
     period = 29
@@ -72,9 +72,9 @@ def calc_min_height(block_width, ID_length, w):
         k_list = []
         roff_list = []
         for block_height in blocks_height:
-            vpu,_ = generate_model(gap=gap, width=block_width, height=block_height, w=w)
+            vpu,_ = generate_model(gap=gap, width=block_width, height=block_height, prop_w=prop_w)
             Beff, B_peak, By = vpu.get_beff(polarization='hp', hmax=5, x=0)
-            Beff_10, B_peak_10, By_10 = vpu.get_beff(polarization='hp', hmax=5,x=0)
+            Beff_10, B_peak_10, By_10 = vpu.get_beff(polarization='hp', hmax=5,x=10)
             Roll_off = 100*(B_peak - B_peak_10)/B_peak
             k,_ = vpu.calc_deflection_parameter(bx_amp = Beff, by_amp = Beff)
             k=k*k_correction
@@ -114,7 +114,7 @@ def generate_file(lengths_list, height_list, widths_list, roll_off_list, filenam
     my_file.close()
 
 
-def run(w):
+def run(prop_w):
    
     widths_list = [20,25,30,35]   
     lengths_list = []
@@ -123,18 +123,19 @@ def run(w):
     ID_length = _np.linspace(0.4, 3, 20)
     
     for width in widths_list:
-        lengths,heights,roll_offs = calc_min_height(ID_length= ID_length, block_width=width, w=w)
+        lengths,heights,roll_offs = calc_min_height(ID_length= ID_length, block_width=width, prop_w=prop_w)
         height_list.append(heights)
         roll_off_list.append(roll_offs)
         lengths_list.append(lengths)
     
-    filename = "IDs_length" + str(int(w)) + "mm.txt"
+    filename = "IDs_length" + str(int(100*prop_w)) + "%.txt"
     generate_file(lengths_list, height_list, widths_list, roll_off_list, filename)
     
     
 if __name__ == "__main__":
     
-    run(w=25)
+    run(prop_w=0.7)
+    run(prop_w=0.4)
     
     
     

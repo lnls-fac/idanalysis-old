@@ -29,10 +29,10 @@ def calc_idkmap_kicks(indep_var='x', plane_idx=0, plot_flag=False, idkmap=None):
     pxf = idkmap.kickx[plane_idx, :] / idkmap.brho**2
     pyf = idkmap.kicky[plane_idx, :] / idkmap.brho**2
     if plot_flag:
-      plt.plot(1e3*rx0, 1e6*pxf, label = 'Kick X')
-      plt.plot(1e3*rx0, 1e6*pyf, label = 'Kick Y')
+      plt.plot(1e3*rx0, 1e6*pxf, label = 'X')
+      #plt.plot(1e3*rx0, 1e6*pxf, label = 'Kick X')
       plt.xlabel('init rx [mm]')
-      plt.ylabel('final p [urad]')
+      plt.ylabel('final rx [mm]')
       plt.title('Kicks')
       plt.legend()
       plt.grid()
@@ -57,4 +57,7 @@ if __name__ == '__main__':
    
   wiggler_kickmap = IDKickMap("wiggler-kickmap-ID3969.txt")
   rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(idkmap = wiggler_kickmap, indep_var='x', plane_idx=0, plot_flag=True)
-
+  print(rxf[0][15])
+  print(pxf[15])
+  print(ryf[0][15])
+  print(pyf[15])

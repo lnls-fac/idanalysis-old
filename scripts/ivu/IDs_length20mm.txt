@@ -1,8 +1,0 @@
-Blocks width = 20
-ID length[m]	Blocks height[mm]	Field Roll-off[%]
-Blocks width = 25
-ID length[m]	Blocks height[mm]	Field Roll-off[%]
-Blocks width = 30
-ID length[m]	Blocks height[mm]	Field Roll-off[%]
-Blocks width = 35
-ID length[m]	Blocks height[mm]	Field Roll-off[%]
