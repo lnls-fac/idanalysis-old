@@ -12,7 +12,7 @@ import fieldmaptrack as _fmaptrack
 class IDKickMap:
     """."""
 
-    DEFAULT_AUTHOR = '# Author: FAC fieldmaptrack.IDKickMap'
+    DEFAULT_AUTHOR = '# Author: FAC idanalysis.IDKickMap'
 
     def __init__(self, fname=None, author=None):
         """."""
@@ -29,6 +29,7 @@ class IDKickMap:
         # load
         if fname:
             self.load(fname)
+
 
     def load(self, fname):
         """."""
@@ -569,5 +570,4 @@ class IDKickMap:
         return config
 
 
-#if __name__ == '__main__':
 

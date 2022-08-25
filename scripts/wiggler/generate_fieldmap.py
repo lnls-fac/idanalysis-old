@@ -1,10 +1,10 @@
 #!/usr/bin/env python-sirius
 
 import numpy as np
-import matplotlib.pyplot as plt
 
-FOLDER_BASE = '/home/gabriel/repos-dev/wiggler-2T-STI/original-measurements/'
-# FOLDER_BASE = '/home/ximenes/repos-dev/wiggler-2T-STI/original-measurements/'
+
+from utils import FOLDER_BASE
+
 
 def readfield(file_name, init):
     
@@ -12,8 +12,6 @@ def readfield(file_name, init):
     with open(file_name, encoding='utf-8', errors='ignore') as my_file:
         data_col1 = []
         data_col2 = []
-        col1_values = []
-        col2_values = []
         for i,line in enumerate(my_file):
             if i >= init:
                 list_data = line.split('\t') #returns a list
@@ -32,9 +30,12 @@ def readfield(file_name, init):
     B = np.array(data_col2)
     return z,B
 
+
 def readfile_axis(x):
     
-    folder = FOLDER_BASE + 'gap 059.60 mm/ponta hall/mapeamento/'
+    DATA_PATH = 'wiggler-2T-STI/original-measurements/'
+
+    folder = FOLDER_BASE + DATA_PATH + 'gap 059.60 mm/ponta hall/mapeamento/'
     fieldname = "Map2701_X=" + str(x) + ".dat"
     filename = folder + fieldname
     rz_file,By_file = readfield(filename,24)#24 14669
@@ -47,6 +48,7 @@ def readfile_axis(x):
         By.append(By_file[index])
         
     return By,fieldname
+
 
 def run(xvalues,ymax,ystep):
     
@@ -80,8 +82,9 @@ def run(xvalues,ymax,ystep):
         my_file.write("{:.1f}\t{:.1f}\t{:.1f}\t{:.5e}\t{:.5e}\t{:.5e}\n".format(x_col1[i],y_col2[i],z_col3[i],b_col5[i],b_col4[i],b_col5[i]))
     my_file.close()
 
+
 if __name__ == "__main__":
-    
+    """."""
     zmin = -419
     zmax = 3678
     zvalues = np.arange(zmin,zmax+1,1)

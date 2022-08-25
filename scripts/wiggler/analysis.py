@@ -14,8 +14,8 @@ from idanalysis import model as model
 from idanalysis import optics as optics
 
 
-# FOLDER_BASE = '/home/ximenes/repos-dev/'
-FOLDER_BASE = '/home/gabriel/repos-dev/'
+from utils import FOLDER_BASE
+
 
 def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, plot_flag=True):
   if plot_flag:
@@ -88,6 +88,7 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, plot_flag=True):
     plt.grid()
     plt.show()
 
+
 def calc_dtune_betabeat(twiss0, twiss1):
     dtunex = (twiss1.mux[-1] - twiss0.mux[-1]) / 2 / np.pi
     dtuney = (twiss1.muy[-1] - twiss0.muy[-1]) / 2 / np.pi
@@ -100,6 +101,7 @@ def calc_dtune_betabeat(twiss0, twiss1):
     return (
       dtunex, dtuney, bbeatx, bbeaty,
       bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax)
+
 
 def analysis_uncorrected_perturbation(
     model, twiss0=None, plot_flag=True, straight_nr=14):
@@ -140,12 +142,14 @@ def analysis_uncorrected_perturbation(
 
     return twiss
 
+
 def run():
     """."""
     # create IDs nad its location
     straight_nr = 14
     rescale_length = 2.8 / 3.3
-    fname = FOLDER_BASE + 'idanalysis/scripts/wiggler/wiggler-kickmap-ID3969.txt'
+    fname = FOLDER_BASE + \
+      'idanalysis/scripts/wiggler/results/kickmap-ID3969.txt'
     IDModel = pymodels.si.IDModel
     wig180 = IDModel(
         subsec = IDModel.SUBSECTIONS.ID14SB,
@@ -209,5 +213,7 @@ def run():
 
     plot_beta_beating(twiss0, twiss1, twiss2, twiss3, plot_flag=True)
 
+
 if __name__ == '__main__':
+    """."""
     run()

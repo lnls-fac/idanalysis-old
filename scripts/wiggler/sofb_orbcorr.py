@@ -91,12 +91,14 @@ def sofb_correct(id_hkick, id_hdisp, id_vkick, id_vdisp, ramp_nrpts, minsingval)
 
     return kicks, codrx, codpx, codry, codpy, twiss1.spos, twiss0, twiss1
 
+
 def calc_betabeat(twiss0, twiss1):
     
     bbeatx = 100 * (twiss1.betax - twiss0.betax) / twiss0.betax
     bbeaty = 100 * (twiss1.betay - twiss0.betay) / twiss0.betay
     return  bbeatx, bbeaty
-      
+
+
 def run(minsingval):
     ramp_nrpts = 6
     kicks, codrx, codpx, codry, codpy, spos, twiss0, twiss1 = sofb_correct(
@@ -104,6 +106,7 @@ def run(minsingval):
 
     bbeatx, bbeaty = calc_betabeat(twiss0, twiss1)
     plot_results(kicks, codrx, codpx, codry, codpy, spos, bbeatx, bbeaty, minsingval)
+
 
 def plot_results(kicks, codrx, codpx, codry, codpy, spos, bbeatx, bbeaty, minsingval):
     """."""
@@ -125,7 +128,7 @@ def plot_results(kicks, codrx, codpx, codry, codpy, spos, bbeatx, bbeaty, minsin
     plt.suptitle('minsingval ' + str(minsingval))
     plt.legend()
     plt.tight_layout()
-    figname = 'sofb-corrkicks_minsingval_' + str(minsingval) + '.png'
+    figname = './results/sofb-corrkicks_minsingval_' + str(minsingval) + '.png'
     plt.savefig(figname)
     plt.figure(1).clear()
     #plt.show()
@@ -143,7 +146,7 @@ def plot_results(kicks, codrx, codpx, codry, codpy, spos, bbeatx, bbeaty, minsin
     plt.suptitle('minsingval ' + str(minsingval))
     plt.legend()
     plt.tight_layout()
-    figname = 'sofb-codpos_minsingval_' + str(minsingval) + '.png'
+    figname = './results/sofb-codpos-minsingval-' + str(minsingval) + '.png'
     plt.savefig(figname)
     plt.figure(2).clear()
     #plt.show()
@@ -161,7 +164,7 @@ def plot_results(kicks, codrx, codpx, codry, codpy, spos, bbeatx, bbeaty, minsin
     plt.suptitle('minsingval ' + str(minsingval))
     plt.legend()
     plt.tight_layout()
-    figname = 'sofb-codang_minsingval_' + str(minsingval) + '.png'
+    figname = './results/sofb-codang-minsingval-' + str(minsingval) + '.png'
     plt.savefig(figname)
     plt.figure(3).clear()
     #plt.show()
@@ -182,10 +185,11 @@ def plot_results(kicks, codrx, codpx, codry, codpy, spos, bbeatx, bbeaty, minsin
     plt.suptitle('minsingval ' + str(minsingval))
     plt.legend()
     plt.grid()
-    figname = 'beta_beating_minsingval' + str(minsingval) + '.png'
+    figname = './results/beta-beating-minsingval-' + str(minsingval) + '.png'
     plt.savefig(figname)
     plt.figure(4).clear()
     #plt.show()
+
 
 if __name__ == "__main__":
     """."""

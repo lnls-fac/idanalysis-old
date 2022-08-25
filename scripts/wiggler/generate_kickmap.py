@@ -5,8 +5,7 @@ import matplotlib.pyplot as plt
 
 from idanalysis import IDKickMap
 
-# FOLDER_BASE = '/home/gabriel/repos-dev/'
-FOLDER_BASE = '/home/ximenes/repos-dev/'
+from utils import FOLDER_BASE
 
 
 def run():
@@ -16,6 +15,7 @@ def run():
         '2022-08-22_Wiggler_STI_59_60mm_'
         'Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3969.dat')
 
+
     _, meas_id =  MEAS_FILE.split('ID=')
     meas_id = meas_id.replace('.dat', '')
     idkickmap = IDKickMap()
@@ -23,7 +23,7 @@ def run():
     posx = np.linspace(-15, +15, 31) / 1000  # [m]
     posy = np.linspace(-12, +12, 3) / 1000  # [m]
     idkickmap.fmap_calc_kickmap(fmap_fname=fmap_fname, posx = posx, posy = posy)
-    fname = 'wiggler-kickmap-ID{}.txt'.format(meas_id)
+    fname = './results/kickmap-ID{}.txt'.format(meas_id)
     idkickmap.generate_kickmap_file(kickmap_filename=fname)
 
 

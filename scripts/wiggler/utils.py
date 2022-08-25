@@ -5,7 +5,8 @@ import pyaccel
 import pymodels
 
 
-FOLDER_BASE = '/home/gabriel/repos-dev/'
+# FOLDER_BASE = '/home/gabriel/repos-dev/'
+FOLDER_BASE = '/home/ximenes/repos-dev/'
 
 
 def create_ids(nr_steps=None, rescale_kicks=None, rescale_length=None):
@@ -15,7 +16,7 @@ def create_ids(nr_steps=None, rescale_kicks=None, rescale_length=None):
     rescale_length = \
         rescale_length if rescale_length is not None else 2.8 / 3.3
     fname = FOLDER_BASE + \
-        'idanalysis/scripts/wiggler/wiggler-kickmap-ID3969.txt'
+        'idanalysis/scripts/wiggler/results/kickmap-ID3969.txt'
 
     IDModel = pymodels.si.IDModel
     wig180 = IDModel(
@@ -43,3 +44,10 @@ def get_orb4d(model):
     model.radiation_on = state_radiation
 
     return codrx, codpx, codry, codpy
+
+
+def get_data_ID(fname):
+    """."""
+    _, idn =  fname.split('ID=')
+    idn = idn.replace('.dat', '')
+    return idn

@@ -1,19 +1,23 @@
 #!/usr/bin/env python-sirius
 
+from ctypes import util
 import numpy as np
 import matplotlib.pyplot as plt
 
 from fieldmaptrack import FieldMap, Beam, Trajectory
 
-FOLDER_BASE = '/home/gabriel/repos-dev/'
+import utils
+from utils import FOLDER_BASE
+
 
 def run():
     
-    DATA_PATH = 'ids-data/wiggler-2T-STI/measurement/magnetic/hallprobe/'
+    DATA_PATH = 'wiggler-2T-STI/measurement/magnetic/hallprobe/'
     MEAS_FILE = (
         '2022-08-22_Wiggler_STI_59_60mm_'
         'Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3969.dat')
     
+    idn = utils.get_data_ID(MEAS_FILE)
     f = FieldMap(FOLDER_BASE + DATA_PATH + MEAS_FILE)
     b = Beam(3.0)
     t = Trajectory(beam=b, fieldmap=f, not_raise_range_exceptions=True)
@@ -32,21 +36,20 @@ def run():
     rz1 = f.rz
     by1 = f.by[f.ry_zero][f.rx_zero][:]
 
-    rz2 = -1*rz1[::-1]
-    by2 = -1*by1[::-1] 
-
-    by2_fit = np.interp(rz1, rz2, by2)
-    by_diff = by2_fit - by1
+    # rz2 = -1*rz1[::-1]
+    # by2 = -1*by1[::-1] 
+    # by2_fit = np.interp(rz1, rz2, by2)
+    # by_diff = by2_fit - by1
 
     plt.figure(3)
     plt.plot(rz1, by1, label='by')
-    plt.plot(rz2, by2, label='by_inv')
-    plt.plot(rz1, by_diff, label='diff')
+    # plt.plot(rz2, by2, label='by_inv')
+    # plt.plot(rz1, by_diff, label='diff')
     plt.grid()
     plt.xlabel("Z position [mm]")
     plt.ylabel("By [T]")
     plt.legend()
-    plt.savefig('vertical-field.png')
+    plt.savefig('./results/field-by-ID{}.png'.format(idn))
     plt.show()
 
     plt.figure(1)
@@ -56,7 +59,7 @@ def run():
     plt.xlabel("Z position [mm]")
     plt.ylabel("p [rad]")
     plt.legend()
-    plt.savefig('rk-trajectory-ang.png')
+    plt.savefig('./results/rk-trajectory-ang-ID{}.png'.format(idn))
     plt.show()
 
     plt.figure(2)
@@ -66,7 +69,7 @@ def run():
     plt.xlabel("Z position [mm]")
     plt.ylabel("Transverse positions [mm]")
     plt.legend()
-    plt.savefig('rk-trajectory-pos.png')
+    plt.savefig('./results/rk-trajectory-pos-ID{}.png'.format(idn))
     plt.show()
 
 if __name__ == "__main__":

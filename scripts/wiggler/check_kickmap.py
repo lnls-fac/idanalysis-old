@@ -2,21 +2,10 @@
 
 """Script to check kickmap through model tracking."""
 
-import numpy as np
 import matplotlib.pyplot as plt
 
-from pyaccel import lattice as pyacc_lat
-from pyaccel import tracking as pyacc_track
 
-import idanalysis
-#idanalysis.FOLDER_BASE = '/home/ximenes/repos-dev/'
-idanalysis.FOLDER_BASE = '/home/gabriel/repos-dev/'
-
-from idanalysis import FOLDER_BASE
-from idanalysis.model import create_model, get_id_epu_list
 from idanalysis import IDKickMap
-
-
 
 
 def calc_idkmap_kicks(indep_var='x', plane_idx=0, plot_flag=False, idkmap=None):
@@ -54,9 +43,10 @@ def calc_idkmap_kicks(indep_var='x', plane_idx=0, plot_flag=False, idkmap=None):
 
 
 if __name__ == '__main__':
-   
-  wiggler_kickmap = IDKickMap("wiggler-kickmap-ID3969.txt")
-  rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(idkmap = wiggler_kickmap, indep_var='x', plane_idx=0, plot_flag=True)
+  fname = "./results/kickmap-ID3969.txt"
+  wiggler_kickmap = IDKickMap(fname)
+  rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(
+    idkmap=wiggler_kickmap, indep_var='x', plane_idx=0, plot_flag=True)
   print(rxf[0][15])
   print(pxf[15])
   print(ryf[0][15])
