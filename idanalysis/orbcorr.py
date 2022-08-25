@@ -8,7 +8,7 @@ from pymodels import si
 from apsuite.orbcorr import OrbitCorr, CorrParams
 
 
-def correct_orbit_sofb(model0, model1):
+def correct_orbit_sofb(model0, model1, minsingval=None):
 
     # calculate structures
     famdata = si.get_family_data(model1)
@@ -17,15 +17,16 @@ def correct_orbit_sofb(model0, model1):
 
     # create orbit corrector
     cparams = CorrParams()
+    cparams.minsingval = minsingval
     cparams.tolerance = 1e-8  # [m]
     cparams.maxnriters = 20
 
     # get unperturbed orbit
-    ocorr = OrbitCorr(model0, 'SI')
+    ocorr = OrbitCorr(model0, 'SI', params=cparams)
     orb0 = ocorr.get_orbit()
 
     # get perturbed orbit
-    ocorr = OrbitCorr(model1, 'SI')
+    ocorr = OrbitCorr(model1, 'SI',params=cparams)
     orb1 = ocorr.get_orbit()
 
     # calc closed orbit distortions (cod) before correction

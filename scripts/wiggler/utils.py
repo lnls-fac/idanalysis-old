@@ -5,7 +5,7 @@ import pyaccel
 import pymodels
 
 
-FOLDER_BASE = '/home/ximenes/repos-dev/'
+FOLDER_BASE = '/home/gabriel/repos-dev/'
 
 
 def create_ids(nr_steps=None, rescale_kicks=None, rescale_length=None):
