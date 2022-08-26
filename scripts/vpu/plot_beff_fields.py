@@ -54,7 +54,7 @@ def plot_k(heights_list, beff_list, nr_data, width_list,period,poles_proportion)
     for i,width in enumerate(width_list):
         label = label_base + str(width) + ' mm'
         beff = _np.array(beff_list[i])
-        k = utils.undulator_b_to_k(b=beff, period=period*1e-3)
+        k = utils.calc_deflection_parameter(b_amp=beff, period_length=period*1e-3)
         plt.plot(heights_list[i], k, label=label)
     plt.grid()
     plt.legend()
