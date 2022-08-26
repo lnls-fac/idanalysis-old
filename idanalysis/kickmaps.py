@@ -5,18 +5,20 @@
 import numpy as _np
 import matplotlib.pyplot as _plt
 
-from idanalysis.utils import create_deltadata as _create_deltadata
-
 import fieldmaptrack as _fmaptrack
 
-class IDKickMap:
-    """."""
+from . import utils as _utils
 
+
+class IDKickMap:
+    """IDKickMap."""
     DEFAULT_AUTHOR = '# Author: FAC idanalysis.IDKickMap'
 
-    def __init__(self, fname=None, author=None):
+    def __init__(self, kmap_fname=None, author=None):
         """."""
-        self.id_length = None  # [m]
+        self.kmap_fname = kmap_fname
+        self.fmap_ideln = None  # [m]
+        self.kmap_idlen = None  # [m]
         self.posx = None  # [m]
         self.posy = None  # [m]
         self.kickx = None  # [T².m²]
@@ -26,26 +28,28 @@ class IDKickMap:
         self.fmap_config = None
         self.author = author or IDKickMap.DEFAULT_AUTHOR
         self.brho, *_ = _fmaptrack.Beam.calc_brho(energy=3.0)
+        self.kickx_upstream = None
+        self.kicky_upstream = None
+        self.kickx_downstream = None
+        self.kicky_downstream = None
         # load
-        if fname:
-            self.load(fname)
-
-
-    def load(self, fname):
+        if self.kmap_fname:
+            self.load()
+    
+    def load(self):
         """."""
-        self.fname = fname
-        info = IDKickMap._load(self.fname)
-        self.id_length = info['id_length']
+        info = IDKickMap._load(self.kmap_fname)
+        self.fmap_ideln = info['id_length']
         self.posx, self.posy = info['posx'], info['posy']
         self.kickx, self.kicky = info['kickx'], info['kicky']
         self.fposx, self.fposy = info['fposx'], info['fposy']
 
     def get_deltakickmap(self, idx):
         """."""
-        configs = _create_deltadata()
-        fname = configs.get_kickmap_filename(configs[idx])
-        self.fname = fname
-        self.load(fname)
+        configs = _utils.create_deltadata()
+        kmap_fname = configs.get_kickmap_filename(configs[idx])
+        self.kmap_fname = kmap_fname
+        self.load()
 
     def fmap_calc_kickmap(
             self, fmap_fname, posx, posy, beam_energy=3.0, rk_s_step=0.2):
@@ -57,7 +61,7 @@ class IDKickMap:
 
         brho = self.fmap_config.beam.brho
         idlen = self.fmap_config.fmap.rz[-1] - self.fmap_config.fmap.rz[0]
-        self.id_length = idlen/1e3
+        self.fmap_ideln = idlen/1e3
         self.kickx = _np.full((len(self.posy), len(self.posx)), _np.inf)
         self.kicky = _np.full((len(self.posy), len(self.posx)), _np.inf)
         self.fposx = _np.full((len(self.posy), len(self.posx)), _np.inf)
@@ -104,11 +108,14 @@ class IDKickMap:
         rst += self.author
         rst += '\n# '
         rst += '\n# Total Length of Longitudinal Interval [m]'
-        rst += '\n{}'.format(self.id_length)
+        rst += '\n{}'.format(self.kmap_idlen)
         rst += '\n# Number of Horizontal Points'
         rst += '\n{}'.format(len(self.posx))
         rst += '\n# Number of Vertical Points'
         rst += '\n{}'.format(len(self.posy))
+
+        kickx_end = (self.kickx_upstream or 0) + (self.kickx_downstream or 0)
+        kicky_end = (self.kicky_upstream or 0) + (self.kicky_downstream or 0)
 
         rst += '\n# Total Horizontal 2nd Order Kick [T2m2]'
         rst += '\nSTART'
@@ -120,7 +127,7 @@ class IDKickMap:
         for i, ryi in enumerate(self.posy[::-1]):
             rst += '\n{:+011.5f} '.format(ryi)
             for j, rxi in enumerate(self.posx):
-                rst += '{:+11.4e} '.format(self.kickx[-i-1, j])
+                rst += '{:+11.4e} '.format(self.kickx[-i-1, j] - kickx_end)
 
         rst += '\n# Total Vertical 2nd Order Kick [T2m2]'
         rst += '\nSTART'
@@ -132,7 +139,7 @@ class IDKickMap:
         for i, ryi in enumerate(self.posy[::-1]):
             rst += '\n{:+011.5f} '.format(ryi)
             for j, rxi in enumerate(self.posx):
-                rst += '{:+11.4e} '.format(self.kicky[-i-1, j])
+                rst += '{:+11.4e} '.format(self.kicky[-i-1, j] - kicky_end)
 
         rst += '\n# Horizontal Final Position [m]'
         rst += '\nSTART'
@@ -218,6 +225,22 @@ class IDKickMap:
             ksl_ = self.calc_KsL_kicky_at_y(iy, False)
             ksl.append(ksl_)
         return posy, _np.array(ksl)
+
+    def fmap_rz_field_center(self):
+        """Return rz pos of field center."""
+        fmap = self.fmap_config.fmap
+        rz = fmap.rz
+        bx = fmap.bx[fmap.ry_zero][fmap.rx_zero][:]
+        by = fmap.by[fmap.ry_zero][fmap.rx_zero][:]
+        bz = fmap.bz[fmap.ry_zero][fmap.rx_zero][:]
+        rz_center = _utils.calc_rz_of_field_center(rz, bx, by, bz)
+        return rz_center
+
+    def calc_id_termination_kicks(self, kmap_idlen=None):
+        """."""
+        kmap_idlen = kmap_idlen or self.kmap_idlen
+        self.kmap_idlen = kmap_idlen
+        rz_center = self.fmap_rz_field_center()
 
     def plot_kickx_vs_posy(self, indx, title=''):
         """."""
@@ -324,9 +347,9 @@ class IDKickMap:
         self.calc_KsL_kicky_at_y(iy=8, plot=True)
 
     @staticmethod
-    def _load(fname):
+    def _load(kmap_fname):
         """."""
-        with open(fname) as fp:
+        with open(kmap_fname) as fp:
             lines = fp.readlines()
 
         tables = []

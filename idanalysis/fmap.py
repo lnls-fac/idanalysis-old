@@ -7,6 +7,7 @@ from fieldmaptrack import Beam as _Beam
 from fieldmaptrack import Trajectory as _Trajectory
 from scipy import integrate as _integrate
 
+from . import utils as _utils
 
 class EPUOnAxisFieldMap(_FieldMap):
     """."""
@@ -113,12 +114,8 @@ class EPUOnAxisFieldMap(_FieldMap):
 
     def create_fieldmap_content(self, rz, bx, by, bz):
         """."""
-
         if self._centralize:
-            # center map
-            b2 = bx**2 + by**2 + bz**2
-            sum_field2 = _np.sum(b2)
-            self._rz_avg = _np.sum(rz*b2/sum_field2)
+            self._rz_avg = _utils.calc_rz_of_field_center(rz, bx, by, bz)
             rz -= self._rz_avg
 
         # create date vectors
