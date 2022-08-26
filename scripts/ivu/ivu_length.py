@@ -133,7 +133,7 @@ def run(prop_w):
     
 if __name__ == "__main__":
     
-    run(prop_w=0.7)
+
     run(prop_w=0.4)
     
     
