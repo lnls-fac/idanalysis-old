@@ -1,7 +1,7 @@
-# Author: FAC fieldmaptrack.IDKickMap
+# Author: FAC idanalysis.IDKickMap
 # 
 # Total Length of Longitudinal Interval [m]
-3.3
+None
 # Number of Horizontal Points
 31
 # Number of Vertical Points

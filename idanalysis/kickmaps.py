@@ -234,6 +234,7 @@ class IDKickMap:
         period_len = period_len or self.period_len
         self.period_len = period_len
         self.fmap_config = self.fmap_calc_trajectory(fmap_fname, init_rx = 0, init_ry=0)
+        brho = self.fmap_config.beam.brho
         rz_center = self.fmap_rz_field_center()
         rz = self.fmap_config.traj.rz
         px = self.fmap_config.traj.px
@@ -247,17 +248,21 @@ class IDKickMap:
             rz_sample = rz[idx_begin:idx_end]
             p_sample = p[idx_begin:idx_end]
             opt = self.find_fit(rz_sample,p_sample)
-            idx_begin_ID = self._find_value_idx(rz,-kmap_idlen/2)
-            idx_end_ID = self._find_value_idx(rz, kmap_idlen/2)
+            idx_begin_ID = self._find_value_idx(rz,-kmap_idlen*1e3/2)
+            idx_end_ID = self._find_value_idx(rz, kmap_idlen*1e3/2)
             linefit = self._linear_function(rz,opt[2],opt[3])
-            kick_begin = p[0] - linefit[idx_begin_ID]
+            kick_begin = linefit[idx_begin_ID] - p[0]
             kick_end = p[-1] - linefit[idx_end_ID]
             if i == 0:
-                self.kickx_upstream = kick_begin
-                self.kickx_downstream = kick_end
+                self.kickx_upstream = kick_begin * brho * brho
+                self.kickx_downstream = kick_end * brho * brho
+                print("kickx_upstream: {:11.4e}  T2m2".format(self.kickx_upstream))
+                print("kickx_downstream: {:11.4e}  T2m2".format(self.kickx_downstream))
             elif i == 1:
-                self.kicky_upstream = kick_begin
-                self.kicky_downstream = kick_end
+                self.kicky_upstream = kick_begin * brho * brho
+                self.kicky_downstream = kick_end * brho * brho
+                print("kicky_upstream: {:11.4e}  T2m2".format(self.kicky_upstream))
+                print("kicky_downstream: {:11.4e}  T2m2".format(self.kicky_downstream))
 
     def plot_kickx_vs_posy(self, indx, title=''):
         """."""
@@ -362,8 +367,6 @@ class IDKickMap:
         self.get_deltakickmap(idx=0)
         self.calc_KsL_kickx_at_x(ix=14, plot=True)
         self.calc_KsL_kicky_at_y(iy=8, plot=True)
-
-
 
     def fit_function(self,x,amp,phi,a,b):
         return amp*_np.sin(2*_np.pi/self.period_len * x + phi) + a*x + b
