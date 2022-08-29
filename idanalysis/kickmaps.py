@@ -227,7 +227,7 @@ class IDKickMap:
         rz_center = _utils.calc_rz_of_field_center(rz, bx, by, bz)
         return rz_center
 
-    def calc_id_termination_kicks(self, fmap_fname, field_component=None, period_len=None, kmap_idlen=None):
+    def calc_id_termination_kicks(self, fmap_fname, period_len=None, kmap_idlen=None):
         """."""
         kmap_idlen = kmap_idlen or self.kmap_idlen
         self.kmap_idlen = kmap_idlen
