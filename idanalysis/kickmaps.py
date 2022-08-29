@@ -4,6 +4,7 @@
 
 import numpy as _np
 import matplotlib.pyplot as _plt
+from scipy.optimize import curve_fit as _curve_fit
 
 import fieldmaptrack as _fmaptrack
 
@@ -25,6 +26,7 @@ class IDKickMap:
         self.kicky = None  # [T².m²]
         self.fposx = None  # [m]
         self.fposy = None  # [m]
+        self.period_len = None # [mm]
         self.fmap_config = None
         self.author = author or IDKickMap.DEFAULT_AUTHOR
         self.brho, *_ = _fmaptrack.Beam.calc_brho(energy=3.0)
@@ -83,17 +85,6 @@ class IDKickMap:
                 self.kicky[i, j] = pyf * brho * brho
                 self.fposx[i, j] = rxf / 1e3
                 self.fposy[i, j] = ryf / 1e3
-
-    @staticmethod
-    def fmap_calc_trajectory(
-            fmap_fname, init_rx, init_ry, init_px=0, init_py=0,
-            beam_energy=3.0, rk_s_step=0.2):
-        """."""
-        fmap_config = IDKickMap._create_fmap_config(
-                fmap_fname, beam_energy=beam_energy, rk_s_step=rk_s_step)
-        fmap_config = IDKickMap._calc_trajectory(
-            fmap_config, init_rx, init_ry, init_px, init_py)
-        return fmap_config
 
     def generate_kickmap_file(self, kickmap_filename):
         rst = self.__str__()
@@ -236,11 +227,37 @@ class IDKickMap:
         rz_center = _utils.calc_rz_of_field_center(rz, bx, by, bz)
         return rz_center
 
-    def calc_id_termination_kicks(self, kmap_idlen=None):
+    def calc_id_termination_kicks(self, fmap_fname, field_component=None, period_len=None, kmap_idlen=None):
         """."""
         kmap_idlen = kmap_idlen or self.kmap_idlen
         self.kmap_idlen = kmap_idlen
+        period_len = period_len or self.period_len
+        self.period_len = period_len
+        self.fmap_config = self.fmap_calc_trajectory(fmap_fname, init_rx = 0, init_ry=0)
         rz_center = self.fmap_rz_field_center()
+        rz = self.fmap_config.traj.rz
+        px = self.fmap_config.traj.px
+        py = self.fmap_config.traj.py
+        idx_zero = self._find_value_idx(rz, 1*rz_center)
+        idx_one_period = self._find_value_idx(rz,period_len + 1*rz_center)
+        idx_diff = idx_one_period - idx_zero
+        idx_begin = idx_zero -5*idx_diff
+        idx_end = idx_zero +5*idx_diff
+        for i,p in enumerate([px,py]):
+            rz_sample = rz[idx_begin:idx_end]
+            p_sample = p[idx_begin:idx_end]
+            opt = self.find_fit(rz_sample,p_sample)
+            idx_begin_ID = self._find_value_idx(rz,-kmap_idlen/2)
+            idx_end_ID = self._find_value_idx(rz, kmap_idlen/2)
+            linefit = self._linear_function(rz,opt[2],opt[3])
+            kick_begin = p[0] - linefit[idx_begin_ID]
+            kick_end = p[-1] - linefit[idx_end_ID]
+            if i == 0:
+                self.kickx_upstream = kick_begin
+                self.kickx_downstream = kick_end
+            elif i == 1:
+                self.kicky_upstream = kick_begin
+                self.kicky_downstream = kick_end
 
     def plot_kickx_vs_posy(self, indx, title=''):
         """."""
@@ -346,6 +363,36 @@ class IDKickMap:
         self.calc_KsL_kickx_at_x(ix=14, plot=True)
         self.calc_KsL_kicky_at_y(iy=8, plot=True)
 
+
+
+    def fit_function(self,x,amp,phi,a,b):
+        return amp*_np.sin(2*_np.pi/self.period_len * x + phi) + a*x + b
+
+    def find_fit(self,rz,kicks):
+        opt = _curve_fit(self.fit_function, rz, kicks)[0]
+        return opt
+
+    @staticmethod
+    def _linear_function(x,a,b):
+        return a*x + b
+
+    @staticmethod
+    def _find_value_idx(data, value):
+        diff_array = _np.absolute(data-value)
+        index = diff_array.argmin()
+        return index
+    
+    @staticmethod
+    def fmap_calc_trajectory(
+            fmap_fname, init_rx, init_ry, init_px=0, init_py=0,
+            beam_energy=3.0, rk_s_step=0.2):
+        """."""
+        fmap_config = IDKickMap._create_fmap_config(
+                fmap_fname, beam_energy=beam_energy, rk_s_step=rk_s_step)
+        fmap_config = IDKickMap._calc_trajectory(
+            fmap_config, init_rx, init_ry, init_px, init_py)
+        return fmap_config
+    
     @staticmethod
     def _load(kmap_fname):
         """."""
