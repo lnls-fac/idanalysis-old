@@ -125,7 +125,7 @@ def run(filename):
     plot_length_roff(lengths_list, roll_off_list, width_list)
 if __name__ == "__main__":
     
-    run("IDs_length70%.txt")
+    run("IDs_length35mm.txt")
     
     
     
