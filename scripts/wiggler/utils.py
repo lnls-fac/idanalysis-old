@@ -4,6 +4,7 @@ import numpy as np
 import pyaccel
 import pymodels
 
+from idanalysis import IDKickMap
 
 FOLDER_BASE = '/home/gabriel/repos-dev/'
 #FOLDER_BASE = '/home/ximenes/repos-dev/'
@@ -18,12 +19,20 @@ def create_ids(nr_steps=None, rescale_kicks=None, rescale_length=None):
     fname = FOLDER_BASE + \
         'idanalysis/scripts/wiggler/results/kickmap-ID4017.txt'
 
+    idkmap = IDKickMap(kmap_fname=fname)
+    idkmap.load()
+    kickx_up = idkmap.kickx_upstream  # [T².m²]
+    kicky_up = idkmap.kicky_upstream  # [T².m²]
+    kickx_down = idkmap.kickx_downstream  # [T².m²]
+    kicky_down = idkmap.kicky_downstream  # [T².m²]
+    termination_kicks = [kickx_up, kicky_up, kickx_down, kicky_down] 
     IDModel = pymodels.si.IDModel
     wig180 = IDModel(
         subsec = IDModel.SUBSECTIONS.ID14SB,
         file_name=fname,
         fam_name='WIG180', nr_steps=nr_steps,
-        rescale_kicks=rescale_kicks, rescale_length=rescale_length)
+        rescale_kicks=rescale_kicks, rescale_length=rescale_length,
+        termination_kicks=termination_kicks)
     ids = [wig180, ]
     return ids
 

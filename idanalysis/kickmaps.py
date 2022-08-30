@@ -45,6 +45,10 @@ class IDKickMap:
         self.posx, self.posy = info['posx'], info['posy']
         self.kickx, self.kicky = info['kickx'], info['kicky']
         self.fposx, self.fposy = info['fposx'], info['fposy']
+        self.kickx_upstream =  info['kickx_upstream']
+        self.kicky_upstream =  info['kicky_upstream']
+        self.kickx_downstream =  info['kickx_downstream']
+        self.kicky_downstream =  info['kicky_downstream']
 
     def get_deltakickmap(self, idx):
         """."""
@@ -413,7 +417,14 @@ class IDKickMap:
             if line.startswith('START'):
                 pass
             elif line.startswith('#'):
-                pass
+                if "Termination_kicks" in line:
+                    line_data = line.split(' ')
+                    kickx_up = float(line_data[3])
+                    kicky_up = float(line_data[4])
+                    kickx_down = float(line_data[5])
+                    kicky_down = float(line_data[6])
+                else:
+                    pass
             else:
                 data = [float(val) for val in line.split()]
                 if len(data) == 1:
@@ -446,6 +457,10 @@ class IDKickMap:
         info['posx'], info['posy'] = posx, posy
         info['kickx'], info['kicky'] = kickx, kicky
         info['fposx'], info['fposy'] = fposx, fposy
+        info['kickx_upstream'] = kickx_up
+        info['kicky_upstream'] = kicky_up
+        info['kickx_downstream'] = kickx_down
+        info['kicky_downstream'] = kicky_down
         return info
 
     @staticmethod
