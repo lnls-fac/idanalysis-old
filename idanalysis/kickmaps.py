@@ -97,7 +97,11 @@ class IDKickMap:
         rst = ''
         # header
         rst += self.author
-        rst += '\n# '
+        if self.kickx_upstream is not None:
+            rst += '\n# Termination_kicks [T2m2]: {:+11.4e} {:+11.4e} {:+11.4e} {:+11.4e} '.format(
+                self.kickx_upstream, self.kicky_upstream, self.kickx_downstream, self.kicky_downstream)
+        else:
+            rst += '\n# '
         rst += '\n# Total Length of Longitudinal Interval [m]'
         rst += '\n{}'.format(self.kmap_idlen)
         rst += '\n# Number of Horizontal Points'
