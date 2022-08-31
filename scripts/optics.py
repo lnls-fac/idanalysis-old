@@ -45,7 +45,8 @@ def correct_optics(ring, straight_nr, goal_tunes, goal_beta, goal_alpha, weight=
     tw, *_ = pyaccel.optics.calc_twiss(ring)
 
     print('--- correct cod')
-    cod = optics.correct_orbit(ring, False)
+    id_famname = None  # NOTE: set!
+    cod = optics.correct_orbit(ring, id_famname, False)
     print('kicks [urad]: {}'.format(1e6*cod[0]))
     ring1 = ring[:]
     print()
