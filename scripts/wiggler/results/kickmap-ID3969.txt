@@ -1,7 +1,7 @@
 # Author: FAC idanalysis.IDKickMap
 # 
 # Total Length of Longitudinal Interval [m]
-None
+2.8
 # Number of Horizontal Points
 31
 # Number of Vertical Points

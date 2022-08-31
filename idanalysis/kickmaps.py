@@ -407,6 +407,12 @@ class IDKickMap:
     @staticmethod
     def _load(kmap_fname):
         """."""
+
+        kickx_up = 0
+        kicky_up = 0
+        kickx_down = 0
+        kicky_down = 0
+
         with open(kmap_fname) as fp:
             lines = fp.readlines()
 
@@ -417,14 +423,13 @@ class IDKickMap:
             if line.startswith('START'):
                 pass
             elif line.startswith('#'):
-                if "Termination_kicks" in line:
-                    line_data = line.split(' ')
-                    kickx_up = float(line_data[3])
-                    kicky_up = float(line_data[4])
-                    kickx_down = float(line_data[5])
-                    kicky_down = float(line_data[6])
-                else:
-                    pass
+                if 'Termination_kicks' in line:
+                    *_, kicks = line.split('Termination_kicks')
+                    _, k1, k2, k3, k4 = kicks.strip().split(' ')
+                    kickx_up = float(k1)
+                    kicky_up = float(k2)
+                    kickx_down = float(k3)
+                    kicky_down = float(k4)
             else:
                 data = [float(val) for val in line.split()]
                 if len(data) == 1:
