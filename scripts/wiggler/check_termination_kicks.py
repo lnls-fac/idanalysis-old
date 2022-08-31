@@ -35,8 +35,14 @@ print(coord_fin[1,idx_end]*1e6)
 print(coord_fin[2,idx_end]*1e3)
 print(coord_fin[3,idx_end]*1e6)
 
+# expected values:
+# rx = -0.01637281788525343
+# px = -0.1922564030330328
+# ry = 0.012511740877633003
+# py = 15.019890684030447
+
+
 print(ring1[4205].t_in)
 print(ring1[4205].t_out)
 print(ring1[4207].t_in)
 print(ring1[4207].t_out)
-print(ring1.brho**2)
