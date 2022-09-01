@@ -9,16 +9,22 @@ from idanalysis import IDKickMap
 FOLDER_BASE = '/home/gabriel/repos-dev/'
 #FOLDER_BASE = '/home/ximenes/repos-dev/'
 
+WIGGLER_CONFIGS = (
+    'ID3969',   #Wiggler without correctors
+    'ID3979',   #Wiggler with correctors
+    'ID4017'    #Wiggler with correctors and best current for gap=59.6mm
+    )
 
-def create_ids(nr_steps=None, rescale_kicks=None, rescale_length=None):
+def create_ids(nr_steps=None, rescale_kicks=None, rescale_length=None, config=1):
     # create IDs
     nr_steps = nr_steps or 40
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
     rescale_length = \
         rescale_length if rescale_length is not None else 1
     fname = FOLDER_BASE + \
-        'idanalysis/scripts/wiggler/results/kickmap-ID3979.txt'
-
+        'idanalysis/scripts/wiggler/results/'
+    fname += 'kickmap-' + WIGGLER_CONFIGS[config] + '.txt'
+    print(fname)
     idkmap = IDKickMap(kmap_fname=fname)
     idkmap.load()
     kickx_up = idkmap.kickx_upstream  # [T².m²]

@@ -62,6 +62,7 @@ def correct_orbit_local(model, id_famname, plot=True):
 
     # calc dk
     cod0 = pyaccel.tracking.find_orbit4(model, indices='open')
+    cod0_ang = cod0[[1, 3], :]
     cod0 = cod0[[0, 2], :]
     dk = np.dot(invmat, cod0[:, bpms].flatten())
 
@@ -70,6 +71,7 @@ def correct_orbit_local(model, id_famname, plot=True):
         model[cors[i]].hkick_polynom += dk[i]
         model[cors[i]].vkick_polynom += dk[nrcors + i]
     cod1 = pyaccel.tracking.find_orbit4(model, indices='open')
+    cod1_ang = cod1[[1, 3], :]
     cod1 = cod1[[0, 2], :]
 
     idx_x = np.argmax(np.abs(cod1[0, (cors[0]+1):cors[-1]]))
@@ -111,6 +113,19 @@ def correct_orbit_local(model, id_famname, plot=True):
         plt.ylabel('COD [um]')
         plt.show()
 
+        plt.plot(spos, 1e6*cod0_ang[0, :], '-', color='C0')
+        plt.plot(spos[bpms], 1e6*cod0_ang[0, bpms], '.', color='C0', label='uncorrected: max={:.2f}urad rms: @ring={:.2f}urad @bpms={:.2f}urad'.format(
+            np.max(np.abs(cod0_ang[0,:]))*1e6, np.std(cod0_ang[0,:])*1e6, np.std(cod0_ang[0,bpms])*1e6))
+        plt.plot(spos, 1e6*cod1_ang[0, :], '-', color='C1')
+        plt.plot(spos[bpms], 1e6*cod1_ang[0, bpms], '.', color='C1', label='corrected: max={:.2f}urad rms: @ring={:.2f}urad @bpms={:.2f}urad'.format(
+            np.max(np.abs(cod1_ang[0,:]))*1e6, np.std(cod1_ang[0,:])*1e6, np.std(cod1_ang[0,bpms])*1e6))
+        plt.plot(spos[cors[0]:cors[-1]+1], 1e6*cod1_ang[0, cors[0]:cors[-1]+1], '.-', color='C2', label='@idstraight')
+        plt.legend()
+        plt.title('Horizontal COD angle')
+        plt.xlabel('spos [m]')
+        plt.ylabel('COD angle [urad]')
+        plt.show()
+        
         plt.plot(spos, 1e6*cod0[1, :], '-', color='C0')
         plt.plot(spos[bpms], 1e6*cod0[1, bpms], '.', color='C0', label='uncorrected: max={:.2f}um rms: @ring={:.2f}um @bpms={:.2f}um'.format(
             maxcody0,rmsy0_ring,rmsy0_bpms))
@@ -124,10 +139,23 @@ def correct_orbit_local(model, id_famname, plot=True):
         plt.ylabel('COD [um]')
         plt.show()
 
+        plt.plot(spos, 1e6*cod0_ang[1, :], '-', color='C0')
+        plt.plot(spos[bpms], 1e6*cod0_ang[1, bpms], '.', color='C0', label='uncorrected: max={:.2f}urad rms: @ring={:.2f}urad @bpms={:.2f}urad'.format(
+            np.max(np.abs(cod0_ang[1,:]))*1e6, np.std(cod0_ang[1,:])*1e6, np.std(cod0_ang[1,bpms])*1e6))
+        plt.plot(spos, 1e6*cod1_ang[1, :], '-', color='C1')
+        plt.plot(spos[bpms], 1e6*cod1_ang[1, bpms], '.', color='C1', label='corrected: max={:.2f}urad rms: @ring={:.2f}urad @bpms={:.2f}urad'.format(
+            np.max(np.abs(cod1_ang[1,:]))*1e6, np.std(cod1_ang[1,:])*1e6, np.std(cod1_ang[1,bpms])*1e6))
+        plt.plot(spos[cors[0]:cors[-1]+1], 1e6*cod1_ang[1, cors[0]:cors[-1]+1], '.-', color='C2', label='@idstraight')
+        plt.legend()
+        plt.title('Vertical COD angle')
+        plt.xlabel('spos [m]')
+        plt.ylabel('COD angle [urad]')
+        plt.show()
+
     return ret
 
 
-def correct_orbit_sofb(model0, model1, minsingval=None):
+def correct_orbit_sofb(model0, model1, minsingval=0.2):
 
     # calculate structures
     famdata = si.get_family_data(model1)

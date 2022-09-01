@@ -9,13 +9,9 @@ from utils import FOLDER_BASE
 from idanalysis import fmap
 
 def run():
-    # DATA_PATH = 'ids-data/wiggler-2T-STI-to-be-deleted/measurement/magnetic/hallprobe/'
-    # MEAS_FILE = (
-    #     '2022-08-22_Wiggler_STI_59_60mm_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3969.dat')
-    DATA_PATH = 'ids-data/Wiggler/new_meas/'
+    DATA_PATH = 'ids-data/wiggler-2T-STI-main/measurement/hallprobe/gap 059.60mm/'
     MEAS_FILE = (
-        '2022-08-26_WigglerSTI_059.60mm_U+1.00_D-0.90_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4017.dat')
-
+        '2022-08-25_WigglerSTI_059.60mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3979.dat')
 
     _, meas_id =  MEAS_FILE.split('ID=')
     meas_id = meas_id.replace('.dat', '')
