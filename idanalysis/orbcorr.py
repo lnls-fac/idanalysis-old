@@ -69,39 +69,61 @@ def correct_orbit_local(model, id_famname, plot=True):
     for i in range(nrcors):
         model[cors[i]].hkick_polynom += dk[i]
         model[cors[i]].vkick_polynom += dk[nrcors + i]
-
     cod1 = pyaccel.tracking.find_orbit4(model, indices='open')
     cod1 = cod1[[0, 2], :]
 
+    idx_x = np.argmax(np.abs(cod1[0, (cors[0]+1):cors[-1]]))
+    idx_y = np.argmax(np.abs(cod1[1, (cors[0]+1):cors[-1]]))
+    rmsx0_ring = np.std(cod0[0,:])*1e6
+    rmsy0_ring = np.std(cod0[1,:])*1e6
+    rmsx0_bpms = np.std(cod0[0,bpms])*1e6
+    rmsy0_bpms = np.std(cod0[1,bpms])*1e6
+    rmsx1_ring = np.std(cod1[0,:])*1e6
+    rmsy1_ring = np.std(cod1[1,:])*1e6
+    rmsx1_bpms = np.std(cod1[0,bpms])*1e6
+    rmsy1_bpms = np.std(cod1[1,bpms])*1e6
+    maxcodx0 = np.max(np.abs(cod0[0,:]))*1e6
+    maxcody0 = np.max(np.abs(cod0[1,:]))*1e6
+    maxcodx1 = np.max(np.abs(cod1[0,:]))*1e6
+    maxcody1 = np.max(np.abs(cod1[1,:]))*1e6
+    ret = (dk,
+        cod1[0, idx_x], cod1[1, idx_y],
+        rmsx0_ring, rmsy0_ring,
+        rmsx0_bpms, rmsy0_bpms,
+        rmsx1_ring, rmsy1_ring,
+        rmsx1_bpms, rmsy1_bpms,
+        maxcodx0, maxcody0,
+        maxcodx1, maxcody1,
+    )
+
     if plot:
         spos = pyaccel.lattice.find_spos(model)
-        plt.plot(spos[bpms], 1e6*cod0[0, bpms], 'o-', color='C0', label='uncorrected')
-        plt.plot(spos[bpms], 1e6*cod1[0, bpms], 'o-', color='C1', label='corrected')
-        plt.plot(spos[cors[0]:cors[-1]+1], 1e6*cod1[0, cors[0]:cors[-1]+1], 'o-', color='C2', label='@idstraight')
+        plt.plot(spos, 1e6*cod0[0, :], '-', color='C0')
+        plt.plot(spos[bpms], 1e6*cod0[0, bpms], '.', color='C0', label='uncorrected: max={:.2f}um rms: @ring={:.2f}um @bpms={:.2f}um'.format(
+            maxcodx0,rmsx0_ring,rmsx0_bpms))
+        plt.plot(spos, 1e6*cod1[0, :], '-', color='C1')
+        plt.plot(spos[bpms], 1e6*cod1[0, bpms], '.', color='C1', label='corrected: max={:.2f}um rms: @ring={:.2f}um @bpms={:.2f}um'.format(
+            maxcodx1,rmsx1_ring,rmsx1_bpms))
+        plt.plot(spos[cors[0]:cors[-1]+1], 1e6*cod1[0, cors[0]:cors[-1]+1], '.-', color='C2', label='@idstraight')
         plt.legend()
         plt.title('Horizontal COD')
         plt.xlabel('spos [m]')
         plt.ylabel('COD [um]')
         plt.show()
 
-        plt.plot(spos, 1e6*cod0[1, :], 'o-', color='C0', label='uncorrected')
-        plt.plot(spos, 1e6*cod1[1,:], 'o-', color='C1', label='corrected')
-        plt.plot(spos[cors[0]:cors[-1]+1], 1e6*cod1[1, cors[0]:cors[-1]+1], 'o-', color='C2', label='@idstraight')
+        plt.plot(spos, 1e6*cod0[1, :], '-', color='C0')
+        plt.plot(spos[bpms], 1e6*cod0[1, bpms], '.', color='C0', label='uncorrected: max={:.2f}um rms: @ring={:.2f}um @bpms={:.2f}um'.format(
+            maxcody0,rmsy0_ring,rmsy0_bpms))
+        plt.plot(spos, 1e6*cod1[1,:], '-', color='C1')
+        plt.plot(spos[bpms], 1e6*cod1[1,bpms], '.', color='C1', label='corrected: max={:.2f}um rms: @ring={:.2f}um @bpms={:.2f}um'.format(
+            maxcody1,rmsy1_ring,rmsy1_bpms))
+        plt.plot(spos[cors[0]:cors[-1]+1], 1e6*cod1[1, cors[0]:cors[-1]+1], '.-', color='C2', label='@idstraight')
         plt.legend()
         plt.title('Vertical COD')
         plt.xlabel('spos [m]')
         plt.ylabel('COD [um]')
         plt.show()
 
-    idx_x = np.argmax(np.abs(cod1[0, (cors[0]+1):cors[-1]]))
-    idx_y = np.argmax(np.abs(cod1[1, (cors[0]+1):cors[-1]]))
-    ret = (dk,
-        cod1[0, idx_x], cod1[1, idx_y],
-        np.std(cod0[0,:]), np.std(cod0[1,:]),
-        np.std(cod1[0,:]), np.std(cod1[1,:]),
-        np.max(np.abs(cod0[0,:])), np.max(np.abs(cod0[1,:])),
-        np.max(np.abs(cod1[0,:])), np.max(np.abs(cod1[1,:]))
-    )
     return ret
 
 
