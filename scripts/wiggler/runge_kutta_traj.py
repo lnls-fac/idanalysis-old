@@ -12,16 +12,15 @@ from utils import FOLDER_BASE
 
 def run():
     
-    DATA_PATH = 'wiggler-2T-STI/measurement/magnetic/hallprobe/'
+    DATA_PATH = 'ids-data/Wiggler/new_meas/'
     MEAS_FILE = (
-        '2022-08-22_Wiggler_STI_59_60mm_'
-        'Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3969.dat')
+        '2022-08-26_WigglerSTI_059.60mm_U+1.00_D-0.90_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4017.dat')
     
     idn = utils.get_data_ID(MEAS_FILE)
     f = FieldMap(FOLDER_BASE + DATA_PATH + MEAS_FILE)
     b = Beam(3.0)
     t = Trajectory(beam=b, fieldmap=f, not_raise_range_exceptions=True)
-    t.calc_trajectory(init_rz=-1600, s_step=0.5, min_rz=1600)
+    t.calc_trajectory(init_rz=-1600, s_step=0.2, min_rz=1600)
     rz = t.rz.copy()
     rx = t.rx.copy()
     px = t.px.copy()

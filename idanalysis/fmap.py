@@ -354,9 +354,9 @@ class FieldmapOnAxisAnalysis:
         idx_x0 = int((len(field.rx)-1)/2)
         idx_y0 = int((len(field.ry)-1)/2)
         self.rz = field.rz
-        self.Bx = field.bx[idx_x0,idx_y0, :]
-        self.By = field.by[idx_x0,idx_y0, :]
-        self.Bz = field.bz[idx_x0,idx_y0, :]
+        self.Bx = field.bx[idx_y0][idx_x0][:]
+        self.By = field.by[idx_y0][idx_x0][:]
+        self.Bz = field.bz[idx_y0][idx_x0][:]
 
 
     def run(self):

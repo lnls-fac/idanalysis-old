@@ -17,7 +17,7 @@ def create_ids(nr_steps=None, rescale_kicks=None, rescale_length=None):
     rescale_length = \
         rescale_length if rescale_length is not None else 1
     fname = FOLDER_BASE + \
-        'idanalysis/scripts/wiggler/results/kickmap-ID4017.txt'
+        'idanalysis/scripts/wiggler/results/kickmap-ID3979.txt'
 
     idkmap = IDKickMap(kmap_fname=fname)
     idkmap.load()

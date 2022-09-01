@@ -261,6 +261,10 @@ class IDKickMap:
             linefit = self._linear_function(rz,opt[2],opt[3])
             kick_begin = linefit[idx_begin_ID] - p[0]
             kick_end = p[-1] - linefit[idx_end_ID]
+            # p_calc = self.fit_function(rz,opt[0],opt[1],opt[2],opt[3])
+            # _plt.plot(rz,p)
+            # _plt.plot(rz,linefit)
+            # _plt.show()
             if i == 0:
                 self.kickx_upstream = kick_begin * brho * brho
                 self.kickx_downstream = kick_end * brho * brho
@@ -376,8 +380,10 @@ class IDKickMap:
         self.calc_KsL_kickx_at_x(ix=14, plot=True)
         self.calc_KsL_kicky_at_y(iy=8, plot=True)
 
-    def fit_function(self,x,amp,phi,a,b):
-        return amp*_np.sin(2*_np.pi/self.period_len * x + phi) + a*x + b
+    def fit_function(self,x,amp1,phi1,a,b):
+        f = amp1*_np.sin(2*_np.pi/self.period_len * x + phi1)
+        f += a*x + b
+        return f
 
     def find_fit(self,rz,kicks):
         opt = _curve_fit(self.fit_function, rz, kicks)[0]

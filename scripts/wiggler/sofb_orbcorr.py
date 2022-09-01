@@ -200,10 +200,10 @@ if __name__ == "__main__":
     id_vdisp = 30 / 1e6  # [m]
 
     run(0.2)
-    run(1)
-    run(2)
-    run(5)
-    run(10)
+    # run(1)
+    # run(2)
+    # run(5)
+    # run(10)
 
     
 

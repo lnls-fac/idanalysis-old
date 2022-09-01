@@ -25,6 +25,10 @@ idx_end = ind[-1] + 1
 
 x0 = 0
 y0 = 0
+test_factor = ring1.brho**2/100
+
+ring1[ind[0]].t_in = ring1[ind[0]].t_in
+ring1[ind[-1]].t_out = ring1[ind[-1]].t_out
 
 coord_ini = np.array([x0, 0, y0, 0, 0, 0])
 coord_fin, *_ = pyaccel.tracking.line_pass(ring1, coord_ini, indices='open')
@@ -41,8 +45,3 @@ print(coord_fin[3,idx_end]*1e6)
 # ry = 0.012511740877633003
 # py = 15.019890684030447
 
-
-print(ring1[4205].t_in)
-print(ring1[4205].t_out)
-print(ring1[4207].t_in)
-print(ring1[4207].t_out)

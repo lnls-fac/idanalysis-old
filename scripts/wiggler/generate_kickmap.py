@@ -6,10 +6,12 @@ import matplotlib.pyplot as plt
 from idanalysis import IDKickMap
 
 from utils import FOLDER_BASE
-
+from idanalysis import fmap
 
 def run():
-    
+    # DATA_PATH = 'ids-data/wiggler-2T-STI-to-be-deleted/measurement/magnetic/hallprobe/'
+    # MEAS_FILE = (
+    #     '2022-08-22_Wiggler_STI_59_60mm_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3969.dat')
     DATA_PATH = 'ids-data/Wiggler/new_meas/'
     MEAS_FILE = (
         '2022-08-26_WigglerSTI_059.60mm_U+1.00_D-0.90_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4017.dat')
