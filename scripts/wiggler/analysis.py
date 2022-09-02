@@ -141,7 +141,7 @@ def run(wiggler_config):
     goal_alpha = np.array([twiss0.alphax[locs_beta], twiss0.alphay[locs_beta]])
    
     # correct orbit
-    ret = orbcorr.correct_orbit_local(model=ring1, id_famname='WIG180', plot=True)
+    ret = orbcorr.correct_orbit_local(model1=ring1, id_famname='WIG180', plot=True)
     print("correctors dk :")
     print("horizontal:")
     print(ret[0][0]*1e6,'urad')
@@ -149,7 +149,7 @@ def run(wiggler_config):
     print("vertical:")
     print(ret[0][2]*1e6,'urad')
     print(ret[0][3]*1e6,'urad')
-    orbcorr.correct_orbit_sofb(model0=ring0, model1=ring1, id_famname='WIG180')
+    orbcorr.correct_orbit_sofb(model0=ring0, model1=ring1, id_famname='WIG180', nr_steps=5)
 
     # symmetrize optics (local quad fam knobs)
     dk_tot = np.zeros(len(knobs))

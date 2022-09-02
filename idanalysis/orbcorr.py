@@ -8,69 +8,73 @@ from pymodels import si
 from apsuite.orbcorr import OrbitCorr, CorrParams
 
 
-def correct_orbit_local(model, id_famname, plot=True):
+def correct_orbit_local(model1, id_famname, correction_plane='x', plot=True):
     """."""
 
     delta_kick = 1e-6  # [rad]
 
     # find idc1 and idc2 indices for local correctors
-    idinds = pyaccel.lattice.find_indices(model, 'fam_name', id_famname)
+    idinds = pyaccel.lattice.find_indices(model1, 'fam_name', id_famname)
     idc1, idc2 = idinds[0], idinds[-1]
-    while idc1 >= 0 and model[idc1].fam_name != 'IDC':
+    while idc1 >= 0 and model1[idc1].fam_name != 'IDC':
         idc1 -= 1
-    while idc2 < len(model) and model[idc2].fam_name != 'IDC':
+    while idc2 < len(model1) and model1[idc2].fam_name != 'IDC':
         idc2 += 1
-    if idc1 < 0 or idc2 >= len(model):
+    if idc1 < 0 or idc2 >= len(model1):
         raise ValueError('Could not find ID correctors!')
     cors = [idc1, idc2]
 
     # get indices
-    bpms = pyaccel.lattice.find_indices(model, 'fam_name', 'BPM')
+    bpms = pyaccel.lattice.find_indices(model1, 'fam_name', 'BPM')
     nrcors = len(cors)
     nrbpms = len(bpms)
 
     # calc respm
-    respm = np.zeros((2*nrbpms, 2*len(cors)))
-    for i in range(nrcors):
-        kick0 = model[cors[i]].hkick_polynom
-        model[cors[i]].hkick_polynom = kick0 + delta_kick/2
-        cod1 = pyaccel.tracking.find_orbit4(model, indices='open')
-        model[cors[i]].hkick_polynom = kick0 - delta_kick/2
-        cod2 = pyaccel.tracking.find_orbit4(model, indices='open')
-        cod_delta = (cod1 - cod2) / delta_kick
-        cod_delta = cod_delta[[0, 2], :]
-        cod_delta = cod_delta[:, bpms]  # select cod in BPMs
-        respm[:, i] = cod_delta.flatten()
-        model[cors[i]].hkick_polynom = kick0
-    for i in range(nrcors):
-        kick0 = model[cors[i]].vkick_polynom
-        model[cors[i]].vkick_polynom = kick0 + delta_kick/2
-        cod1 = pyaccel.tracking.find_orbit4(model, indices='open')
-        model[cors[i]].vkick_polynom = kick0 - delta_kick/2
-        cod2 = pyaccel.tracking.find_orbit4(model, indices='open')
-        cod_delta = (cod1 - cod2) / delta_kick
-        cod_delta = cod_delta[[0, 2], :]
-        cod_delta = cod_delta[:, bpms]  # select cod in BPMs
-        respm[:, nrcors + i] = cod_delta.flatten()
-        model[cors[i]].vkick_polynom = kick0
+    if correction_plane=='both':
+        respm = np.zeros((2*nrbpms, 2*len(cors)))
+        for i in range(nrcors):
+            kick0 = model1[cors[i]].hkick_polynom
+            model1[cors[i]].hkick_polynom = kick0 + delta_kick/2
+            cod1 = pyaccel.tracking.find_orbit4(model1, indices='open')
+            model1[cors[i]].hkick_polynom = kick0 - delta_kick/2
+            cod2 = pyaccel.tracking.find_orbit4(model1, indices='open')
+            cod_delta = (cod1 - cod2) / delta_kick
+            cod_delta = cod_delta[[0, 2], :]
+            cod_delta = cod_delta[:, bpms]  # select cod in BPMs
+            respm[:, i] = cod_delta.flatten()
+            model1[cors[i]].hkick_polynom = kick0
+        for i in range(nrcors):
+            kick0 = model1[cors[i]].vkick_polynom
+            model1[cors[i]].vkick_polynom = kick0 + delta_kick/2
+            cod1 = pyaccel.tracking.find_orbit4(model1, indices='open')
+            model1[cors[i]].vkick_polynom = kick0 - delta_kick/2
+            cod2 = pyaccel.tracking.find_orbit4(model1, indices='open')
+            cod_delta = (cod1 - cod2) / delta_kick
+            cod_delta = cod_delta[[0, 2], :]
+            cod_delta = cod_delta[:, bpms]  # select cod in BPMs
+            respm[:, nrcors + i] = cod_delta.flatten()
+            model1[cors[i]].vkick_polynom = kick0
+  
+     
 
     # inverse matrix
     umat, smat, vmat = np.linalg.svd(respm, full_matrices=False)
+    print(smat)
     ismat = 1/smat
     ismat = np.diag(ismat)
     invmat = -1 * np.dot(np.dot(vmat.T, ismat), umat.T)
 
     # calc dk
-    cod0 = pyaccel.tracking.find_orbit4(model, indices='open')
+    cod0 = pyaccel.tracking.find_orbit4(model1, indices='open')
     cod0_ang = cod0[[1, 3], :]
     cod0 = cod0[[0, 2], :]
     dk = np.dot(invmat, cod0[:, bpms].flatten())
 
     # apply correction
     for i in range(nrcors):
-        model[cors[i]].hkick_polynom += dk[i]
-        model[cors[i]].vkick_polynom += dk[nrcors + i]
-    cod1 = pyaccel.tracking.find_orbit4(model, indices='open')
+        model1[cors[i]].hkick_polynom += dk[i]
+        model1[cors[i]].vkick_polynom += dk[nrcors + i]
+    cod1 = pyaccel.tracking.find_orbit4(model1, indices='open')
     cod1_ang = cod1[[1, 3], :]
     cod1 = cod1[[0, 2], :]
 
@@ -99,7 +103,7 @@ def correct_orbit_local(model, id_famname, plot=True):
     )
 
     if plot:
-        spos = pyaccel.lattice.find_spos(model)
+        spos = pyaccel.lattice.find_spos(model1)
         plt.plot(spos, 1e6*cod0[0, :], '-', color='C0')
         plt.plot(spos[bpms], 1e6*cod0[0, bpms], '.', color='C0', label='uncorrected: max={:.2f}um rms: @ring={:.2f}um @bpms={:.2f}um'.format(
             maxcodx0,rmsx0_ring,rmsx0_bpms))
@@ -155,12 +159,13 @@ def correct_orbit_local(model, id_famname, plot=True):
     return ret
 
 
-def correct_orbit_sofb(model0, model1, minsingval=0.2):
+def correct_orbit_sofb(model0, model1, id_famname, minsingval=0.2, nr_steps=1):
 
     # calculate structures
     famdata = si.get_family_data(model1)
     bpms = famdata['BPM']['index']
     spos_bpms = pyaccel.lattice.find_spos(model1, indices=bpms)
+    inds_id = pyaccel.lattice.find_indices(model1, 'fam_name', id_famname)
 
     # create orbit corrector
     cparams = CorrParams()
@@ -172,85 +177,42 @@ def correct_orbit_sofb(model0, model1, minsingval=0.2):
     ocorr = OrbitCorr(model0, 'SI', params=cparams)
     orb0 = ocorr.get_orbit()
 
-    # get perturbed orbit
-    ocorr = OrbitCorr(model1, 'SI',params=cparams)
-    orb1 = ocorr.get_orbit()
+    kick_step = model1[inds_id[0]].rescale_kicks/nr_steps
+    t_in_step = model1[inds_id[0]].t_in/nr_steps
+    t_out_step = model1[inds_id[-1]].t_out/nr_steps
 
-    # calc closed orbit distortions (cod) before correction
-    cod_u = orb1 - orb0
-    codx_u = cod_u[:len(bpms)]
-    cody_u = cod_u[len(bpms):]
+    model1[inds_id[0]].rescale_kicks *= 0
+    model1[inds_id[-1]].rescale_kicks *= 0
+    model1[inds_id[0]].t_in *= 0
+    model1[inds_id[-1]].t_out *=  0
 
-    # calc response matrix and correct orbit
-    respm = ocorr.get_jacobian_matrix()
-    if not ocorr.correct_orbit(jacobian_matrix=respm, goal_orbit=orb0):
-        print('Could not correct orbit!')
+    for i in np.arange(nr_steps):
+       
+        model1[inds_id[0]].rescale_kicks += kick_step
+        model1[inds_id[-1]].rescale_kicks += kick_step
+        model1[inds_id[0]].t_in += t_in_step
+        model1[inds_id[-1]].t_out += t_out_step
+        # get perturbed orbit
+        ocorr = OrbitCorr(model1, 'SI',params=cparams)
+        orb1 = ocorr.get_orbit()
+
+        # calc closed orbit distortions (cod) before correction
+        cod_u = orb1 - orb0
+        codx_u = cod_u[:len(bpms)]
+        cody_u = cod_u[len(bpms):]
+
+        # calc response matrix and correct orbit
+        respm = ocorr.get_jacobian_matrix()
+        if not ocorr.correct_orbit(jacobian_matrix=respm, goal_orbit=orb0):
+            print('Could not correct orbit!')
 
         # get corrected orbit
-    orb2 = ocorr.get_orbit()
-    kicks = ocorr.get_kicks()
+        orb2 = ocorr.get_orbit()
+        kicks = ocorr.get_kicks()
 
-    # calc closed orbit distortions (cod) after correction
-    cod_c = orb2 - orb0
-    codx_c = cod_c[:len(bpms)]
-    cody_c = cod_c[len(bpms):]
+        # calc closed orbit distortions (cod) after correction
+        cod_c = orb2 - orb0
+        codx_c = cod_c[:len(bpms)]
+        cody_c = cod_c[len(bpms):]
 
     return kicks, spos_bpms, codx_c, cody_c, codx_u, cody_u
-
-
-def run():
-
-    from idanalysis.model import create_model, get_id_epu_list
-    import utils
-    #utils.FOLDER_BASE = '/home/ximenes/repos-dev/'
-    utils.FOLDER_BASE = '/home/gabriel/repos-sirius/'
-
-    def plot_cod():
-        plt.plot(spos_bpms, 1e6*cod_u, color=color_u, label=label_u)
-        plt.plot(spos_bpms, 1e6*cod_c, color=color_c, label=label_c)
-        plt.xlabel('spos [m]')
-        plt.ylabel('COD [um]')
-        plt.title(title_pre + ' Closed-Orbit Distortion')
-        plt.legend()
-        plt.show()
-
-    model0 = create_model(ids=None)
-
-    # select ID config
-    # configs = utils.create_epudata()
-    # configname = configs[0]
-    # fname = configs.get_kickmap_filename(configname)
-    fname = utils.FOLDER_BASE + 'idanalysis/scripts/testmap.txt'
-    # print(fname)
-
-    # create list with IDs
-    ids = get_id_epu_list(fname, nr_steps=40)
-
-    # insert ID in the model
-    model1 = create_model(ids=ids)
-
-    _, spos_bpms, codx_c, cody_c, codx_u, cody_u = \
-        correct_orbit_sofb(model0, model1)
-
-    codx_u_rms, cody_u_rms = np.std(codx_u), np.std(cody_u)
-    codx_c_rms, cody_c_rms = np.std(codx_c), np.std(cody_c)
-
-    # plot horizontal COD
-    title_pre = 'Horizontal'
-    label_u = f'Perturbed ({1e6*codx_u_rms:0.1f} um rms)'
-    label_c = f'Corrected ({1e6*codx_c_rms:0.1f} um rms)'
-    color_u, color_c = (0.5, 0.5, 1), (0, 0, 1)
-    cod_u, cod_c = codx_u, codx_c
-    plot_cod()
-
-    # plot vertical COD
-    title_pre = 'Vertical'
-    label_u = f'Perturbed ({1e6*cody_u_rms:0.1f} um rms)'
-    label_c = f'Corrected ({1e6*cody_c_rms:0.1f} um rms)'
-    color_u, color_c = (1.0, 0.5, 0.5), (1, 0, 0)
-    cod_u, cod_c = cody_u, cody_c
-    plot_cod()
-
-
-if __name__ == '__main__':
-    run()
