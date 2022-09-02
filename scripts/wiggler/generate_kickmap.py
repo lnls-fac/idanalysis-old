@@ -1,17 +1,17 @@
 #!/usr/bin/env python-sirius
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 from idanalysis import IDKickMap
 
 from utils import FOLDER_BASE
+from utils import DATA_PATH
+from utils import WIGGLER_CONFIGS   
 from idanalysis import fmap
 
-def run():
-    DATA_PATH = 'ids-data/wiggler-2T-STI-main/measurement/hallprobe/gap 059.60mm/'
-    MEAS_FILE = (
-        '2022-08-25_WigglerSTI_059.60mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3979.dat')
+def run(idconfig):
+    
+    MEAS_FILE = WIGGLER_CONFIGS[idconfig]
 
     _, meas_id =  MEAS_FILE.split('ID=')
     meas_id = meas_id.replace('.dat', '')
@@ -27,5 +27,5 @@ def run():
 
 if __name__ == "__main__":
     """."""
-    run()
+    run('ID3979')
 

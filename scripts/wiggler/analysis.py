@@ -15,7 +15,6 @@ from idanalysis import optics as optics
 import utils
 
 
-
 def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, plot_flag=True):
   if plot_flag:
     #Compare optics between nominal value and uncorrect optics due ID insertion
@@ -113,7 +112,7 @@ def create_model_bare():
     return model, twiss
 
 
-def create_model_ids(config=1):
+def create_model_ids(config='ID3979'):
     """."""
     print('--- model with kick-model wiggler ---')
     ids = utils.create_ids(rescale_kicks=1, config=config)
@@ -150,7 +149,7 @@ def run(wiggler_config):
     print("vertical:")
     print(ret[0][2]*1e6,'urad')
     print(ret[0][3]*1e6,'urad')
-    orbcorr.correct_orbit_sofb(model0=ring0, model1=ring1)
+    orbcorr.correct_orbit_sofb(model0=ring0, model1=ring1, id_famname='WIG180')
 
     # symmetrize optics (local quad fam knobs)
     dk_tot = np.zeros(len(knobs))
@@ -180,4 +179,4 @@ def run(wiggler_config):
 
 if __name__ == '__main__':
     """."""
-    run(wiggler_config=1)
+    run(wiggler_config='ID3979')
