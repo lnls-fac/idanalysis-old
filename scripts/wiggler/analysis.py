@@ -112,10 +112,10 @@ def create_model_bare():
     return model, twiss
 
 
-def create_model_ids(config='ID3979'):
+def create_model_ids(idconfig):
     """."""
     print('--- model with kick-model wiggler ---')
-    ids = utils.create_ids(rescale_kicks=1, config=config)
+    ids = utils.create_ids(rescale_kicks=1, idconfig=idconfig)
     model = pymodels.si.create_accelerator(ids=ids)
     twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
     print('length : {:.4f} m'.format(model.length))
@@ -124,24 +124,26 @@ def create_model_ids(config='ID3979'):
     return model, twiss, ids
 
 
-def run(wiggler_config):
+def run(idconfig):
     """."""
     # bare lattice
     ring0, twiss0 = create_model_bare()
 
     # lattice with IDs
-    ring1, twiss1, ids = create_model_ids(config=wiggler_config)
+    ring1, twiss1, ids = create_model_ids(idconfig=idconfig)
     subsec = str(ids[0].subsec)[2:4]
     straight_nr = int(subsec)
-
     _, knobs, _ = optics.symm_get_knobs(ring0, straight_nr)  # get knobs and beta locations
     locs_beta = optics.symm_get_locs_beta(knobs)
+
+    # goal parameters (bare lattice)
     goal_tunes = np.array([twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
     goal_beta = np.array([twiss0.betax[locs_beta], twiss0.betay[locs_beta]])
     goal_alpha = np.array([twiss0.alphax[locs_beta], twiss0.alphay[locs_beta]])
    
     # correct orbit
-    ret = orbcorr.correct_orbit_local(model1=ring1, id_famname='WIG180', correction_plane='x', plot=True)
+    ret = orbcorr.correct_orbit_local(
+        model1=ring1, id_famname='WIG180', correction_plane='x', plot=True)
     print("correctors dk :")
     print("horizontal:")
     print(ret[0][0]*1e6,'urad')
@@ -179,4 +181,4 @@ def run(wiggler_config):
 
 if __name__ == '__main__':
     """."""
-    run(wiggler_config='ID3979')
+    run(idconfig='ID3979')

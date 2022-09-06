@@ -9,8 +9,9 @@ from idanalysis import IDKickMap
 
 ID_PERIOD = 180.0  # [mm]
 
-FOLDER_BASE = '/home/gabriel/repos-dev/'
-# FOLDER_BASE = '/home/ximenes/repos-dev/'
+# FOLDER_BASE = '/home/gabriel/repos-dev/'
+FOLDER_BASE = '/home/ximenes/repos-dev/'
+
 DATA_PATH = '/wiggler-2T-STI/measurement/magnetic/hallprobe/'
 
 
@@ -82,22 +83,56 @@ WIGGLER_CONFIGS = {
     }
 
 
-def create_ids(nr_steps=None, rescale_kicks=None, rescale_length=None, config='ID3979'):
+EXCDATA = {
+
+    '45.00' : {
+        'FILE':
+            ('# https://github.com/lnls-ima/wiggler-2T-STI/blob/main/'
+             'measurement/magnetic/hallprobe/gap%20045.00mm/current_test/'
+             'gap45.00mm_curent_test.xlsx'),
+        'I_UP' : np.array([
+            0.0, -0.5, -1.0, -2.0, 0.0, 0.0, 0.0, 0.0, ]),
+        'I_DOWN': np.array([
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 2.0, ]),
+        'IBY': np.array([
+            103.63, -29.59, -187.09, -583.29, 107.54, 236.31, 389.82, 744.03,])
+            },
+    '59.60' : {
+        'FILE':
+            ('# https://github.com/lnls-ima/wiggler-2T-STI/blob/main/'
+             'measurement/magnetic/hallprobe/gap%20059.60mm/current_test/'
+             'gap59.60mm_curent_test.xlsx'),
+        'I_UP' : np.array([
+            0, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1]),
+        'I_DOWN': np.array([
+            0, 0, 1, -1, -2, -1.25,
+            -1.15, -1.15, -1.1, -1, -0.9, -0.9]),
+        'IBY': np.array([
+            103.93, 455.53, 743.42, 82, -289.7, -90.2,
+            -63.68, -65.43, -50.8, -21.88, 8.12, 3.35])
+            },
+    }
+
+
+def create_ids(
+        nr_steps=None, rescale_kicks=None,
+        rescale_length=None, idconfig='ID3979'):
     # create IDs
     nr_steps = nr_steps or 40
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
     rescale_length = \
         rescale_length if rescale_length is not None else 1
     fname = FOLDER_BASE + \
-        'idanalysis/scripts/wiggler/results/'
-    fname += 'kickmap-' + config + '.txt'
+        'idanalysis/scripts/wiggler/results/{}/'.format(idconfig)
+    fname += 'kickmap-' + idconfig + '.txt'
     print(fname)
     idkmap = IDKickMap(kmap_fname=fname)
     idkmap.load()
-    kickx_up = idkmap.kickx_upstream  # [T².m²]
-    kicky_up = idkmap.kicky_upstream  # [T².m²]
-    kickx_down = idkmap.kickx_downstream  # [T².m²]
-    kicky_down = idkmap.kicky_downstream  # [T².m²]
+    kickx_up = rescale_kicks * idkmap.kickx_upstream  # [T².m²]
+    kicky_up = rescale_kicks * idkmap.kicky_upstream  # [T².m²]
+    kickx_down = rescale_kicks * idkmap.kickx_downstream  # [T².m²]
+    kicky_down = rescale_kicks * idkmap.kicky_downstream  # [T².m²]
     termination_kicks = [kickx_up, kicky_up, kickx_down, kicky_down] 
     IDModel = pymodels.si.IDModel
     wig180 = IDModel(

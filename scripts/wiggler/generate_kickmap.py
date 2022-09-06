@@ -6,10 +6,10 @@ from idanalysis import IDKickMap
 
 from utils import FOLDER_BASE
 from utils import DATA_PATH
-from utils import WIGGLER_CONFIGS   
+from utils import WIGGLER_CONFIGS
 
 
-def run(idconfig):
+def run(idconfig, posx, posy):
     
     MEAS_FILE = WIGGLER_CONFIGS[idconfig]
 
@@ -17,15 +17,15 @@ def run(idconfig):
     meas_id = meas_id.replace('.dat', '')
     idkickmap = IDKickMap()
     fmap_fname = FOLDER_BASE + DATA_PATH + MEAS_FILE
-    posx = np.linspace(-15, +15, 31) / 1000  # [m]
-    posy = np.linspace(-12, +12, 3) / 1000  # [m]
     idkickmap.calc_id_termination_kicks(fmap_fname=fmap_fname, period_len=180, kmap_idlen=2.8)
     idkickmap.fmap_calc_kickmap(fmap_fname=fmap_fname, posx = posx, posy = posy)
-    fname = './results/kickmap-ID{}.txt'.format(meas_id)
+    fname = './results/{}kickmap-ID{}.txt'.format(idconfig, meas_id)
     idkickmap.generate_kickmap_file(kickmap_filename=fname)
 
 
 if __name__ == "__main__":
     """."""
-    run('ID3979')
+    posx = np.linspace(-15, +15, 31) / 1000  # [m]
+    posy = np.linspace(-12, +12, 3) / 1000  # [m]
+    run('ID3979', posx, posy)
 

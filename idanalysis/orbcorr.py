@@ -8,7 +8,8 @@ from pymodels import si
 from apsuite.orbcorr import OrbitCorr, CorrParams
 
 
-def correct_orbit_local(model1, id_famname, correction_plane='both', plot=True):
+def correct_orbit_local(
+        model1, id_famname, correction_plane='both', plot=True):
     """."""
 
     delta_kick = 1e-6  # [rad]
@@ -32,8 +33,8 @@ def correct_orbit_local(model1, id_famname, correction_plane='both', plot=True):
     nrcors = len(cors)
     nrbpms = len(bpms)
 
-    t_in_original = model1[idinds[0]].t_in.copy()
-    t_out_original = model1[idinds[-1]].t_out.copy()
+    # t_in_original = model1[idinds[0]].t_in.copy()
+    # t_out_original = model1[idinds[-1]].t_out.copy()
     # model1[idinds[0]].rescale_kicks *= 0
     # model1[idinds[-1]].rescale_kicks *= 0
     # model1[idinds[0]].t_in *= 0
@@ -65,20 +66,20 @@ def correct_orbit_local(model1, id_famname, correction_plane='both', plot=True):
         model1[cors[i]].vkick_polynom = kick0
     if correction_plane == 'x':
         for i in range(nrcors):
-            respm[:,nrcors+i] *= 0
+            respm[:, 1*nrcors+i] *= 0
     elif correction_plane == 'y':
         for i in range(nrcors):
-            respm[:,i] *= 0 
+            respm[:, 0*nrcors+i] *= 0
   
-    model1[idinds[0]].rescale_kicks = 0.5
-    model1[idinds[-1]].rescale_kicks = 0.5
-    model1[idinds[0]].t_in = t_in_original
-    model1[idinds[-1]].t_out = t_out_original
+    # model1[idinds[0]].rescale_kicks = 0.5
+    # model1[idinds[-1]].rescale_kicks = 0.5
+    # model1[idinds[0]].t_in = t_in_original
+    # model1[idinds[-1]].t_out = t_out_original
 
     # inverse matrix
     umat, smat, vmat = np.linalg.svd(respm, full_matrices=False)
     ismat = 1/smat
-    invalid_idx = np.where(abs(ismat)>=1e5)
+    invalid_idx = np.where(abs(smat)<=1e-5)
     for i in np.arange(len(invalid_idx[0])):
         ismat[invalid_idx[0][i]] = 0 
     ismat = np.diag(ismat)
