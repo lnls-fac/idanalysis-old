@@ -24,10 +24,10 @@ def create_model_bare():
     return model, twiss
 
 
-def create_model_ids():
+def create_model_ids(idconfig):
     """."""
     print('--- model with kick-model wiggler ---')
-    ids = utils.create_ids(rescale_kicks=0)
+    ids = utils.create_ids(idconfig, rescale_kicks=0)
     model = pymodels.si.create_accelerator(ids=ids)
     twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
     print('length : {:.4f} m'.format(model.length))
@@ -78,10 +78,10 @@ def ramp_id_field_orbit_correct(
     return kicks
     
 
-def sofb_correct(id_hkick, id_hdisp, id_vkick, id_vdisp, ramp_nrpts, minsingval):
+def sofb_correct(idconfig, id_hkick, id_hdisp, id_vkick, id_vdisp, ramp_nrpts, minsingval):
     """."""
     model0, twiss0 = create_model_bare()
-    model1, twiss1, ids = create_model_ids()
+    model1, twiss1, ids = create_model_ids(idconfig)
     print()
     kicks = ramp_id_field_orbit_correct(
         model0, model1, twiss1.spos,
@@ -99,9 +99,10 @@ def calc_betabeat(twiss0, twiss1):
     return  bbeatx, bbeaty
 
 
-def run(minsingval):
+def run(idconfig, minsingval):
     ramp_nrpts = 6
     kicks, codrx, codpx, codry, codpy, spos, twiss0, twiss1 = sofb_correct(
+        idconfig,
         id_hkick, id_hdisp, id_vkick, id_vdisp, ramp_nrpts, minsingval)
 
     bbeatx, bbeaty = calc_betabeat(twiss0, twiss1)
@@ -193,13 +194,15 @@ def plot_results(kicks, codrx, codpx, codry, codpy, spos, bbeatx, bbeaty, minsin
 
 if __name__ == "__main__":
     """."""
+
+    idconfig = 'ID3979'
     # deflection and displacements from runge-kutta calculations
     id_hkick = 2.65 / 1e6  # [rad]
     id_hdisp = -800 / 1e6  # [m]
     id_vkick = 26.9 / 1e6  # [rad]
     id_vdisp = 30 / 1e6  # [m]
 
-    run(0.2)
+    run(idconfig, 0.2)
     # run(1)
     # run(2)
     # run(5)

@@ -115,7 +115,7 @@ def create_model_bare():
 def create_model_ids(idconfig):
     """."""
     print('--- model with kick-model wiggler ---')
-    ids = utils.create_ids(rescale_kicks=1, idconfig=idconfig)
+    ids = utils.create_ids(idconfig=idconfig, rescale_kicks=1)
     model = pymodels.si.create_accelerator(ids=ids)
     twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
     print('length : {:.4f} m'.format(model.length))

@@ -116,8 +116,8 @@ EXCDATA = {
 
 
 def create_ids(
-        nr_steps=None, rescale_kicks=None,
-        rescale_length=None, idconfig='ID3979'):
+        idconfig, nr_steps=None, rescale_kicks=None,
+        rescale_length=None):
     # create IDs
     nr_steps = nr_steps or 40
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
