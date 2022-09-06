@@ -8,7 +8,7 @@ from pymodels import si
 from apsuite.orbcorr import OrbitCorr, CorrParams
 
 
-def correct_orbit_local(model1, id_famname, correction_plane='x', plot=True):
+def correct_orbit_local(model1, id_famname, correction_plane='both', plot=True):
     """."""
 
     delta_kick = 1e-6  # [rad]
@@ -29,54 +29,73 @@ def correct_orbit_local(model1, id_famname, correction_plane='x', plot=True):
     nrcors = len(cors)
     nrbpms = len(bpms)
 
+    t_in_original = model1[idinds[0]].t_in
+    t_out_original = model1[idinds[-1]].t_out
+    model1[idinds[0]].rescale_kicks *= 0
+    model1[idinds[-1]].rescale_kicks *= 0
+    model1[idinds[0]].t_in *= 0
+    model1[idinds[-1]].t_out *= 0
     # calc respm
-    if correction_plane=='both':
-        respm = np.zeros((2*nrbpms, 2*len(cors)))
+    respm = np.zeros((2*nrbpms, 2*len(cors)))
+    for i in range(nrcors):
+        kick0 = model1[cors[i]].hkick_polynom
+        model1[cors[i]].hkick_polynom = kick0 + delta_kick/2
+        cod1 = pyaccel.tracking.find_orbit4(model1, indices='open')
+        model1[cors[i]].hkick_polynom = kick0 - delta_kick/2
+        cod2 = pyaccel.tracking.find_orbit4(model1, indices='open')
+        cod_delta = (cod1 - cod2) / delta_kick
+        cod_delta = cod_delta[[0, 2], :]
+        cod_delta = cod_delta[:, bpms]  # select cod in BPMs
+        respm[:, i] = cod_delta.flatten()
+        model1[cors[i]].hkick_polynom = kick0
+    for i in range(nrcors):
+        kick0 = model1[cors[i]].vkick_polynom
+        model1[cors[i]].vkick_polynom = kick0 + delta_kick/2
+        cod1 = pyaccel.tracking.find_orbit4(model1, indices='open')
+        model1[cors[i]].vkick_polynom = kick0 - delta_kick/2
+        cod2 = pyaccel.tracking.find_orbit4(model1, indices='open')
+        cod_delta = (cod1 - cod2) / delta_kick
+        cod_delta = cod_delta[[0, 2], :]
+        cod_delta = cod_delta[:, bpms]  # select cod in BPMs
+        respm[:, nrcors + i] = cod_delta.flatten()
+        model1[cors[i]].vkick_polynom = kick0
+    if correction_plane == 'x':
         for i in range(nrcors):
-            kick0 = model1[cors[i]].hkick_polynom
-            model1[cors[i]].hkick_polynom = kick0 + delta_kick/2
-            cod1 = pyaccel.tracking.find_orbit4(model1, indices='open')
-            model1[cors[i]].hkick_polynom = kick0 - delta_kick/2
-            cod2 = pyaccel.tracking.find_orbit4(model1, indices='open')
-            cod_delta = (cod1 - cod2) / delta_kick
-            cod_delta = cod_delta[[0, 2], :]
-            cod_delta = cod_delta[:, bpms]  # select cod in BPMs
-            respm[:, i] = cod_delta.flatten()
-            model1[cors[i]].hkick_polynom = kick0
+            respm[:,nrcors+i] *= 0
+    elif correction_plane == 'y':
         for i in range(nrcors):
-            kick0 = model1[cors[i]].vkick_polynom
-            model1[cors[i]].vkick_polynom = kick0 + delta_kick/2
-            cod1 = pyaccel.tracking.find_orbit4(model1, indices='open')
-            model1[cors[i]].vkick_polynom = kick0 - delta_kick/2
-            cod2 = pyaccel.tracking.find_orbit4(model1, indices='open')
-            cod_delta = (cod1 - cod2) / delta_kick
-            cod_delta = cod_delta[[0, 2], :]
-            cod_delta = cod_delta[:, bpms]  # select cod in BPMs
-            respm[:, nrcors + i] = cod_delta.flatten()
-            model1[cors[i]].vkick_polynom = kick0
+            respm[:,i] *= 0 
   
-     
+    model1[idinds[0]].rescale_kicks = 1
+    model1[idinds[-1]].rescale_kicks = 1
+    model1[idinds[0]].t_in = t_in_original
+    model1[idinds[-1]].t_out = t_out_original
 
     # inverse matrix
     umat, smat, vmat = np.linalg.svd(respm, full_matrices=False)
-    print(smat)
     ismat = 1/smat
+    invalid_idx = np.where(abs(ismat)>=1e5)
+    for i in np.arange(len(invalid_idx[0])):
+        ismat[invalid_idx[0][i]] = 0 
     ismat = np.diag(ismat)
     invmat = -1 * np.dot(np.dot(vmat.T, ismat), umat.T)
+    
+    dk_total = np.zeros(2*nrcors)
+    for j in np.arange(15):
+        # calc dk
+        cod0 = pyaccel.tracking.find_orbit4(model1, indices='open')
+        cod0_ang = cod0[[1, 3], :]
+        cod0 = cod0[[0, 2], :]
+        dk = np.dot(invmat, cod0[:, bpms].flatten())
+        dk_total += dk
 
-    # calc dk
-    cod0 = pyaccel.tracking.find_orbit4(model1, indices='open')
-    cod0_ang = cod0[[1, 3], :]
-    cod0 = cod0[[0, 2], :]
-    dk = np.dot(invmat, cod0[:, bpms].flatten())
-
-    # apply correction
-    for i in range(nrcors):
-        model1[cors[i]].hkick_polynom += dk[i]
-        model1[cors[i]].vkick_polynom += dk[nrcors + i]
-    cod1 = pyaccel.tracking.find_orbit4(model1, indices='open')
-    cod1_ang = cod1[[1, 3], :]
-    cod1 = cod1[[0, 2], :]
+        # apply correction
+        for i in range(nrcors):
+            model1[cors[i]].hkick_polynom += dk[i]
+            model1[cors[i]].vkick_polynom += dk[nrcors + i]
+        cod1 = pyaccel.tracking.find_orbit4(model1, indices='open')
+        cod1_ang = cod1[[1, 3], :]
+        cod1 = cod1[[0, 2], :]
 
     idx_x = np.argmax(np.abs(cod1[0, (cors[0]+1):cors[-1]]))
     idx_y = np.argmax(np.abs(cod1[1, (cors[0]+1):cors[-1]]))
@@ -92,7 +111,7 @@ def correct_orbit_local(model1, id_famname, correction_plane='x', plot=True):
     maxcody0 = np.max(np.abs(cod0[1,:]))*1e6
     maxcodx1 = np.max(np.abs(cod1[0,:]))*1e6
     maxcody1 = np.max(np.abs(cod1[1,:]))*1e6
-    ret = (dk,
+    ret = (dk_total,
         cod1[0, idx_x], cod1[1, idx_y],
         rmsx0_ring, rmsy0_ring,
         rmsx0_bpms, rmsy0_bpms,
