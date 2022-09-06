@@ -24,17 +24,21 @@ def correct_orbit_local(model1, id_famname, correction_plane='both', plot=True):
         raise ValueError('Could not find ID correctors!')
     cors = [idc1, idc2]
 
+    # model1[cors[0]].hkick_polynom = 3.81*1e-6
+    # model1[cors[-1]].hkick_polynom = -2.27*1e-6
+
     # get indices
     bpms = pyaccel.lattice.find_indices(model1, 'fam_name', 'BPM')
     nrcors = len(cors)
     nrbpms = len(bpms)
 
-    t_in_original = model1[idinds[0]].t_in
-    t_out_original = model1[idinds[-1]].t_out
-    model1[idinds[0]].rescale_kicks *= 0
-    model1[idinds[-1]].rescale_kicks *= 0
-    model1[idinds[0]].t_in *= 0
-    model1[idinds[-1]].t_out *= 0
+    t_in_original = model1[idinds[0]].t_in.copy()
+    t_out_original = model1[idinds[-1]].t_out.copy()
+    # model1[idinds[0]].rescale_kicks *= 0
+    # model1[idinds[-1]].rescale_kicks *= 0
+    # model1[idinds[0]].t_in *= 0
+    # model1[idinds[-1]].t_out *= 0
+    
     # calc respm
     respm = np.zeros((2*nrbpms, 2*len(cors)))
     for i in range(nrcors):
@@ -66,8 +70,8 @@ def correct_orbit_local(model1, id_famname, correction_plane='both', plot=True):
         for i in range(nrcors):
             respm[:,i] *= 0 
   
-    model1[idinds[0]].rescale_kicks = 1
-    model1[idinds[-1]].rescale_kicks = 1
+    model1[idinds[0]].rescale_kicks = 0.5
+    model1[idinds[-1]].rescale_kicks = 0.5
     model1[idinds[0]].t_in = t_in_original
     model1[idinds[-1]].t_out = t_out_original
 
@@ -81,12 +85,14 @@ def correct_orbit_local(model1, id_famname, correction_plane='both', plot=True):
     invmat = -1 * np.dot(np.dot(vmat.T, ismat), umat.T)
     
     dk_total = np.zeros(2*nrcors)
-    for j in np.arange(15):
+    cod0 = pyaccel.tracking.find_orbit4(model1, indices='open')
+    cod0_ang = cod0[[1, 3], :]
+    cod0 = cod0[[0, 2], :]
+    for j in np.arange(10):
         # calc dk
-        cod0 = pyaccel.tracking.find_orbit4(model1, indices='open')
-        cod0_ang = cod0[[1, 3], :]
-        cod0 = cod0[[0, 2], :]
-        dk = np.dot(invmat, cod0[:, bpms].flatten())
+        cod0_corr = pyaccel.tracking.find_orbit4(model1, indices='open')
+        cod0_corr = cod0_corr[[0, 2], :]
+        dk = np.dot(invmat, cod0_corr[:, bpms].flatten())
         dk_total += dk
 
         # apply correction
