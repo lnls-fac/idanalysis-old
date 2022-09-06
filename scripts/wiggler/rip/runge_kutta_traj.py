@@ -10,11 +10,25 @@ import utils
 from utils import FOLDER_BASE
 
 
-def run():
+def run(plot,idx):
     
-    DATA_PATH = 'ids-data/Wiggler/new_meas/'
-    MEAS_FILE = (
-        '2022-08-26_WigglerSTI_059.60mm_U+1.00_D-0.90_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4017.dat')
+    MEAS_FILE_LIST = [
+        '2022-08-26_WigglerSTI_059.60mm_U+0.00_D+0.00_Fieldmap_Z=-1650_1650mm_ID=4005.dat',
+        '2022-08-26_WigglerSTI_059.60mm_U+1.00_D+0.00_Fieldmap_Z=-1650_1650mm_ID=4006.dat',
+        '2022-08-26_WigglerSTI_059.60mm_U+1.00_D+1.00_Fieldmap_Z=-1650_1650mm_ID=4007.dat',
+        '2022-08-26_WigglerSTI_059.60mm_U+1.00_D-1.00_Fieldmap_Z=-1650_1650mm_ID=4008.dat',
+        '2022-08-26_WigglerSTI_059.60mm_U+1.00_D-2.00_Fieldmap_Z=-1650_1650mm_ID=4009.dat',
+        '2022-08-26_WigglerSTI_059.60mm_U+1.00_D-1.25_Fieldmap_Z=-1650_1650mm_ID=4010.dat',
+        '2022-08-26_WigglerSTI_059.60mm_U+1.00_D-1.15_Fieldmap_Z=-1650_1650mm_ID=4011.dat',
+        '2022-08-26_WigglerSTI_059.60mm_U+1.00_D-1.15_Fieldmap_Z=-1650_1650mm_ID=4012.dat',
+        '2022-08-26_WigglerSTI_059.60mm_U+1.00_D-1.10_Fieldmap_Z=-1650_1650mm_ID=4013.dat',
+        '2022-08-26_WigglerSTI_059.60mm_U+1.00_D-1.00_Fieldmap_Z=-1650_1650mm_ID=4014.dat',
+        '2022-08-26_WigglerSTI_059.60mm_U+1.00_D-0.90_Fieldmap_Z=-1650_1650mm_ID=4015.dat',
+        '2022-08-26_WigglerSTI_059.60mm_U+1.00_D-0.90_Fieldmap_Z=-1650_1650mm_ID=4016.dat'
+    ]
+
+    DATA_PATH = 'ids-data/wiggler-2T-STI-main/measurement/magnetic/hallprobe/gap 059.60mm/correctors_current_test/'
+    MEAS_FILE = MEAS_FILE_LIST[idx]
     
     idn = utils.get_data_ID(MEAS_FILE)
     f = FieldMap(FOLDER_BASE + DATA_PATH + MEAS_FILE)
@@ -35,43 +49,41 @@ def run():
     rz1 = f.rz
     by1 = f.by[f.ry_zero][f.rx_zero][:]
 
-    # rz2 = -1*rz1[::-1]
-    # by2 = -1*by1[::-1] 
-    # by2_fit = np.interp(rz1, rz2, by2)
-    # by_diff = by2_fit - by1
+    Iy = px[-1]*b.brho*1e8
+    print(Iy)
 
-    plt.figure(3)
-    plt.plot(rz1, by1, label='by')
-    # plt.plot(rz2, by2, label='by_inv')
-    # plt.plot(rz1, by_diff, label='diff')
-    plt.grid()
-    plt.xlabel("Z position [mm]")
-    plt.ylabel("By [T]")
-    plt.legend()
-    plt.savefig('./results/field-by-ID{}.png'.format(idn))
-    plt.show()
+    if plot:
+        plt.figure(3)
+        plt.plot(rz1, by1, label='by')
+        plt.grid()
+        plt.xlabel("Z position [mm]")
+        plt.ylabel("By [T]")
+        plt.legend()
+        plt.savefig('./results/field-by-ID{}.png'.format(idn))
+        plt.show()
 
-    plt.figure(1)
-    plt.plot(rz, px, label=f'px final = {px_final:.2f} [urad]')
-    plt.plot(rz, py, label=f'py final = {py_final:.2f} [urad]')
-    plt.grid()
-    plt.xlabel("Z position [mm]")
-    plt.ylabel("p [rad]")
-    plt.legend()
-    plt.savefig('./results/rk-trajectory-ang-ID{}.png'.format(idn))
-    plt.show()
+        plt.figure(1)
+        plt.plot(rz, px, label=f'px final = {px_final:.2f} [urad]')
+        plt.plot(rz, py, label=f'py final = {py_final:.2f} [urad]')
+        plt.grid()
+        plt.xlabel("Z position [mm]")
+        plt.ylabel("p [rad]")
+        plt.legend()
+        plt.savefig('./results/rk-trajectory-ang-ID{}.png'.format(idn))
+        plt.show()
 
-    plt.figure(2)
-    plt.plot(rz, rx, label=f'x final = {rx_final:.2f} [um]')
-    plt.plot(rz, ry, label=f'y final = {ry_final:.2f} [um]')
-    plt.grid()
-    plt.xlabel("Z position [mm]")
-    plt.ylabel("Transverse positions [mm]")
-    plt.legend()
-    plt.savefig('./results/rk-trajectory-pos-ID{}.png'.format(idn))
-    plt.show()
+        plt.figure(2)
+        plt.plot(rz, rx, label=f'x final = {rx_final:.2f} [um]')
+        plt.plot(rz, ry, label=f'y final = {ry_final:.2f} [um]')
+        plt.grid()
+        plt.xlabel("Z position [mm]")
+        plt.ylabel("Transverse positions [mm]")
+        plt.legend()
+        plt.savefig('./results/rk-trajectory-pos-ID{}.png'.format(idn))
+        plt.show()
 
 if __name__ == "__main__":
     """."""
-    run()
+   
+    run(plot=False,idx=0)
 
