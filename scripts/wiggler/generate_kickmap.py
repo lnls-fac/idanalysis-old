@@ -7,7 +7,7 @@ from idanalysis import IDKickMap
 from utils import FOLDER_BASE
 from utils import DATA_PATH
 from utils import WIGGLER_CONFIGS   
-from idanalysis import fmap
+
 
 def run(idconfig):
     

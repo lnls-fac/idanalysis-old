@@ -10,7 +10,7 @@ from idanalysis import IDKickMap
 ID_PERIOD = 180.0  # [mm]
 
 FOLDER_BASE = '/home/gabriel/repos-dev/'
-#FOLDER_BASE = '/home/ximenes/repos-dev/'
+# FOLDER_BASE = '/home/ximenes/repos-dev/'
 DATA_PATH = '/wiggler-2T-STI/measurement/magnetic/hallprobe/'
 
 
@@ -53,9 +53,9 @@ WIGGLER_CONFIGS = {
     'ID3998': 'gap 051.65mm/2022-08-26_WigglerSTI_051.65mm_U-0.32_D+0.00_Fieldmap_Z=-1650_1650mm_ID=3998.dat',
     # wiggler with correctors - gap 059.60mm
     'ID3979': 'gap 059.60mm/2022-08-25_WigglerSTI_059.60mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3979.dat',
-    'ID3984': 'gap 059.60mm/2022-08-25_WigglerSTI_059.60mm_U+0.64_D+0.87_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3984.dat',
     'ID3980': 'gap 059.60mm/2022-08-25_WigglerSTI_059.60mm_U+0.75_D-1.13_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3980.dat',
     'ID3981': 'gap 059.60mm/2022-08-25_WigglerSTI_059.60mm_U+5.00_D+5.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3981.dat',
+    'ID3984': 'gap 059.60mm/2022-08-25_WigglerSTI_059.60mm_U+0.64_D+0.87_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3984.dat',
     # wiggler with correctors - gap 099.50mm
     'ID3992': 'gap 099.50mm/2022-08-26_WigglerSTI_099.50mm_U+0.00_D+0.00_Fieldmap_Z=-1650_1650mm_ID=3992.dat',
     'ID3997': 'gap 099.50mm/2022-08-26_WigglerSTI_099.50mm_U+0.37_D-0.64_Fieldmap_Z=-1650_1650mm_ID=3997.dat',
