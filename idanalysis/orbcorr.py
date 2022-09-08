@@ -86,12 +86,12 @@ def correct_orbit_local(
     invmat = -1 * np.dot(np.dot(vmat.T, ismat), umat.T)
     
     dk_total = np.zeros(2*nrcors)
-    cod0 = pyaccel.tracking.find_orbit4(model1, indices='open')
-    cod0_ang = cod0[[1, 3], :]
-    cod0 = cod0[[0, 2], :]
     for j in np.arange(10):
         # calc dk
         cod0_corr = pyaccel.tracking.find_orbit4(model1, indices='open')
+        if j == 0:
+            cod0_ang = cod0_corr[[1, 3], :]
+            cod0 = cod0_corr[[0, 2], :]
         cod0_corr = cod0_corr[[0, 2], :]
         dk = np.dot(invmat, cod0_corr[:, bpms].flatten())
         dk_total += dk
