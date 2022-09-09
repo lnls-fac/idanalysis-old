@@ -128,6 +128,7 @@ def run(idconfig):
     """."""
     # bare lattice
     ring0, twiss0 = create_model_bare()
+    print()
 
     # lattice with IDs
     ring1, twiss1, ids = create_model_ids(idconfig=idconfig)
@@ -135,23 +136,25 @@ def run(idconfig):
     straight_nr = int(subsec)
     _, knobs, _ = optics.symm_get_knobs(ring0, straight_nr)  # get knobs and beta locations
     locs_beta = optics.symm_get_locs_beta(knobs)
+    print()
 
     # goal parameters (bare lattice)
     goal_tunes = np.array([twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
     goal_beta = np.array([twiss0.betax[locs_beta], twiss0.betay[locs_beta]])
     goal_alpha = np.array([twiss0.alphax[locs_beta], twiss0.alphay[locs_beta]])
    
-    # correct orbit
+    # correct orbit locally with ID correctors
+    print('--- local orbit correction ---')
     ret = orbcorr.correct_orbit_local(
         model1=ring1, id_famname='WIG180', correction_plane='x', plot=True)
-    print("correctors dk :")
-    print("horizontal:")
-    print(ret[0][0]*1e6,'urad')
-    print(ret[0][1]*1e6,'urad')
-    print("vertical:")
-    print(ret[0][2]*1e6,'urad')
-    print(ret[0][3]*1e6,'urad')
-    orbcorr.correct_orbit_sofb(model0=ring0, model1=ring1, id_famname='WIG180', nr_steps=5)
+    dkickx1, dkickx2, dkicky1, dkicky2 =  ret[0]
+    fmts = 'correctors dk {:<10s} : {:+06.1f} {:+06.1f} urad'
+    print(fmts.format('horizontal', dkickx1*1e6, dkickx2*1e6))
+    print(fmts.format('vertical', dkicky1*1e6, dkicky2*1e6))
+
+    # correct orbit residual globally with SOFB
+    orbcorr.correct_orbit_sofb(
+        model0=ring0, model1=ring1, id_famname='WIG180', nr_steps=5)
 
     # symmetrize optics (local quad fam knobs)
     dk_tot = np.zeros(len(knobs))
@@ -181,4 +184,4 @@ def run(idconfig):
 
 if __name__ == '__main__':
     """."""
-    run(idconfig='ID3979')
+    run(idconfig='ID3979')  # correctors with zero current
