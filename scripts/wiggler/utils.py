@@ -9,8 +9,8 @@ from idanalysis import IDKickMap
 
 ID_PERIOD = 180.0  # [mm]
 
-# FOLDER_BASE = '/home/gabriel/repos-dev/'
-FOLDER_BASE = '/home/ximenes/repos-dev/'
+FOLDER_BASE = '/home/gabriel/repos-dev/'
+# FOLDER_BASE = '/home/ximenes/repos-dev/'
 
 DATA_PATH = '/wiggler-2T-STI/measurement/magnetic/hallprobe/'
 
@@ -49,6 +49,19 @@ WIGGLER_CONFIGS = {
     # wiggler with correctors - gap 042.70mm
     'ID3990': 'gap 042.70mm/2022-08-26_WigglerSTI_042.70mm_U+0.00_D+0.00_Fieldmap_Z=-1650_1650mm_ID=3990.dat',
     'ID3999': 'gap 042.70mm/2022-08-26_WigglerSTI_042.70mm_U-1.66_D+1.34_Fieldmap_Z=-1650_1650mm_ID=3999.dat',
+    # wiggler with correctors - gap 045.00mm
+    'ID4020': 'gap 045.00mm/2022-09-01_WigglerSTI_45mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4020.dat',
+    # wiggler with correctors current tests- gap 045.00mm
+    'ID4021': 'gap 045.00mm/current_test/2022-09-02_WigglerSTI_45mm_U+0.00_D+0.00_Fieldmap_Z=-1650_1650mm_ID=4021.dat',
+    'ID4022': 'gap 045.00mm/current_test/2022-09-02_WigglerSTI_45mm_U-0.50_D+0.00_Fieldmap_Z=-1650_1650mm_ID=4022.dat',
+    'ID4023': 'gap 045.00mm/current_test/2022-09-02_WigglerSTI_45mm_U-1.00_D+0.00_Fieldmap_Z=-1650_1650mm_ID=4023.dat',
+    'ID4024': 'gap 045.00mm/current_test/2022-09-02_WigglerSTI_45mm_U-2.00_D+0.00_Fieldmap_Z=-1650_1650mm_ID=4024.dat',
+    'ID4025': 'gap 045.00mm/current_test/2022-09-02_WigglerSTI_45mm_U+0.00_D+0.00_Fieldmap_Z=-1650_1650mm_ID=4025.dat',
+    'ID4026': 'gap 045.00mm/current_test/2022-09-02_WigglerSTI_45mm_U+0.00_D+0.50_Fieldmap_Z=-1650_1650mm_ID=4026.dat',
+    'ID4027': 'gap 045.00mm/current_test/2022-09-02_WigglerSTI_45mm_U+0.00_D+1.00_Fieldmap_Z=-1650_1650mm_ID=4027.dat',
+    'ID4028': 'gap 045.00mm/current_test/2022-09-02_WigglerSTI_45mm_U+0.00_D+2.00_Fieldmap_Z=-1650_1650mm_ID=4028.dat',
+    # wiggler with correctors - gap 049.73mm
+    'ID4019': 'gap 049.73mm/2022-09-01_WigglerSTI_49.73mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4019.dat',
     # wiggler with correctors - gap 051.65mm
     'ID3991': 'gap 051.65mm/2022-08-26_WigglerSTI_051.65mm_U+0.00_D+0.00_Fieldmap_Z=-1650_1650mm_ID=3991.dat',
     'ID3998': 'gap 051.65mm/2022-08-26_WigglerSTI_051.65mm_U-0.32_D+0.00_Fieldmap_Z=-1650_1650mm_ID=3998.dat',

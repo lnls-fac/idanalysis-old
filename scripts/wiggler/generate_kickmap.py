@@ -27,5 +27,5 @@ if __name__ == "__main__":
     """."""
     posx = np.linspace(-15, +15, 31) / 1000  # [m]
     posy = np.linspace(-12, +12, 3) / 1000  # [m]
-    run('ID3979', posx, posy)
+    run('ID4020', posx, posy)
 
