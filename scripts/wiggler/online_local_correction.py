@@ -154,10 +154,10 @@ def run():
         dcurr = [dcurr_up, dcurr_down]
 
         # apply correction
-        for idx, dev in enumerate(corrs):
-            new_current = dev.current + dcurr[idx]
-            dev.current = new_current
-            wait_dev(dev, 'Current-RB', new_current, DEF_TIMEOUT)
+        for idx, corr in enumerate(corrs):
+            new_current = corr.current + dcurr[idx]
+            corr.current = new_current
+            wait_dev(corr, 'Current-RB', new_current, DEF_TIMEOUT)
 
 
 if __name__ == "__main__":

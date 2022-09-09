@@ -25,9 +25,6 @@ def correct_orbit_local(
         raise ValueError('Could not find ID correctors!')
     cors = [idc1, idc2]
 
-    # model1[cors[0]].hkick_polynom = 3.81*1e-6
-    # model1[cors[-1]].hkick_polynom = -2.27*1e-6
-
     # get indices
     bpms = pyaccel.lattice.find_indices(model1, 'fam_name', 'BPM')
     nrcors = len(cors)
