@@ -28,12 +28,12 @@ def run(idconfig, plot=True):
     deltarx = traj.rx[-1] - traj.rx[0]
     deltary = traj.ry[-1] - traj.ry[0]
     if plot:
-        labelx = 'rx, delta: {:+.1f} um'.format(1e3*deltarx)
-        labely = 'ry, delta: {:+.1f} um'.format(1e3*deltary)
+        labelx = 'rx, delta: {:+.1f} mm'.format(deltarx)
+        labely = 'ry, delta: {:+.1f} mm'.format(deltary)
         plt.plot(traj.rz, 1e3*traj.ry, label=labelx, color='C1')
         plt.plot(traj.rz, 1e3*traj.rx, label=labely, color='C0')
         plt.xlabel('rz [um]')
-        plt.ylabel('pos [um]')
+        plt.ylabel('pos [mm]')
         plt.legend()
         plt.grid()
         plt.title('Runge-Kutta Trajectory Pos for fmap {}'.format(idconfig))
