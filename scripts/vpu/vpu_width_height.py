@@ -23,7 +23,7 @@ def generate_model(width=None, height=None, p_width=None, p_height= None, period
         [-p_width/2, 0],
     ]
 
-    vpu = Hybrid(gap=gap,period_length=period_length, mr=1.32, nr_periods=15,
+    vpu = Hybrid(gap=gap,period_length=period_length, mr=1.32, nr_periods=5,
                  pole_length = 4.75, longitudinal_distance = 0.1,
                  block_shape=block_shape, pole_shape=pole_shape)
     vpu.solve()
@@ -31,13 +31,13 @@ def generate_model(width=None, height=None, p_width=None, p_height= None, period
     return vpu,br
 
 
-def generate_beff_file(block_height, B_dict, name):
+def generate_beff_file(block_height, b_dict, roff_dict, name):
     my_file = open(name,"w") #w=writing
-    for width in B_dict.keys():
+    for width in b_dict.keys():
         my_file.write('Block width = {:.0f}'.format(width))
-        my_file.write('\nBlock height[mm]\tBeff[T]\n')
-        for i in _np.arange(len(B_dict[width])):
-            my_file.write("{:.1f}\t{:.4f}\n".format(block_height[width][i],B_dict[width][i]))
+        my_file.write('\nBlock height[mm]\tBeff[T]\tField Roll-off[%]\n')
+        for i in _np.arange(len(b_dict[width])):
+            my_file.write("{:.1f}\t{:.4f}\t{:.4f}\n".format(block_height[width][i],b_dict[width][i],roff_dict[width][i]))
     my_file.close()
 
 
@@ -64,17 +64,6 @@ def generate_field_file(block_width, block_height, period, gap, filename):
 
     return
 
-
-def plot_FieldAmplitude_height(blocks_height, B_dict):
-    plt.figure(1)
-    plt.plot(blocks_height[60], B_dict[60], label='Block width = 60')
-    plt.xlabel('Block height [mm]')
-    plt.ylabel('Beff [T]')
-    plt.title('Effective Field')
-    plt.legend()
-    plt.grid()
-    plt.show()
-
     
 def run(prop_w):
     """."""
@@ -82,31 +71,39 @@ def run(prop_w):
     period = 29
     gap = 10.9
 
-    B_dict = dict()
+    b_dict = dict()
+    roff_dict = dict()
     blocks_dict = dict()
 
-    for block_width in _np.arange(60,80,5): 
+    b_correction = 1.0095 #1.0095 For five periods  
+    for block_width in _np.arange(40,75,5): 
         pole_width = prop_w*block_width
         print("block width: ",block_width)
         K_list = []
         B_list = []
-        block_height = _np.arange(40,75,5)  
+        roff_list = []
+        block_height = _np.arange(40,77,2)  
         for height in block_height:
             pole_height = 1*height
             vpu, br = generate_model(width=block_width, height=height, p_width=pole_width,
                                     p_height=pole_height, period_length=period, gap=gap)
             Beff, B_peak, *_ = vpu.get_effective_field(polarization='hp', hmax=5, x=0)
+            Beff_6, B_peak_6, *_ = vpu.get_effective_field(polarization='hp', hmax=5, x=6)
+            Roll_off = 100*(B_peak - B_peak_6)/B_peak
+            Beff *= b_correction
             B_list.append(Beff)
+            roff_list.append(Roll_off)
    
-        B_dict[block_width] = B_list
+        b_dict[block_width] = B_list
+        roff_dict[block_width] = roff_list
         blocks_dict[block_width] = block_height
     
-    generate_beff_file(block_height=blocks_dict, B_dict=B_dict, name=name)
+    generate_beff_file(block_height=blocks_dict, b_dict=b_dict, roff_dict=roff_dict, name=name)
     
     
 if __name__ == "__main__":
     
-    run(prop_w=0.4)
+    run(prop_w=0.7)
 
 
     

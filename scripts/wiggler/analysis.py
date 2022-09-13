@@ -36,7 +36,9 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, plot_flag=True):
     plt.xlabel('spos [m]')
     plt.ylabel('Beta Beat [%]')
     plt.title('Beta Beating from ID - ')
-    plt.suptitle('Not symmetrized optics')
+    plt.suptitle('Orbit with local correction + SOFB - not symmetrized optics')
+    # plt.suptitle('Orbit with local correction - not symmetrized optics')
+    # plt.suptitle('Orbit without correction - not symmetrized optics')
     plt.legend()
     plt.grid()
   
@@ -151,10 +153,10 @@ def run(idconfig):
     fmts = 'correctors dk {:<10s} : {:+06.1f} {:+06.1f} urad'
     print(fmts.format('horizontal', dkickx1*1e6, dkickx2*1e6))
     print(fmts.format('vertical', dkicky1*1e6, dkicky2*1e6))
-
     # correct orbit residual globally with SOFB
     orbcorr.correct_orbit_sofb(
         model0=ring0, model1=ring1, id_famname='WIG180', nr_steps=5)
+    twiss1, *_ = pyacc_opt.calc_twiss(ring1, indices='closed')
 
     # symmetrize optics (local quad fam knobs)
     dk_tot = np.zeros(len(knobs))
@@ -184,4 +186,4 @@ def run(idconfig):
 
 if __name__ == '__main__':
     """."""
-    run(idconfig='ID3979')  # correctors with zero current
+    run(idconfig='ID4020')  # correctors with zero current
