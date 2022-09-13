@@ -9,6 +9,7 @@ def readfile(file_name):
     my_file = open(file_name)
     data_col1 = []
     data_col2 = []
+    data_col3 = []
     begin_data = []
     width_list = []
     for i,line in enumerate(my_file):
@@ -37,16 +38,18 @@ def readfile(file_name):
             try:
                 data_col1.append(float(list_data[0]))
                 data_col2.append(float(list_data[1]))
+                data_col3.append(float(list_data[2]))
             except ValueError:
                 data_col1.append((list_data[0]))
                 data_col2.append((list_data[1]))
+                data_col3.append((list_data[2]))
     my_file.close()
 
-    return data_col1, data_col2, nr_data, width_list
+    return data_col1, data_col2, data_col3, nr_data, width_list
 
-def plot_k(heights_list, beff_list, nr_data, width_list,period,poles_proportion):
-    label_base = 'Block width = '
+def plot_k(heights_list, beff_list, roff_list, nr_data, width_list,period,poles_proportion):
     plt.figure(1)
+    label_base = 'Block width = '
     plt.xlabel('Block height [mm]')
     plt.ylabel('K')
     title = "Poles proportion = " + poles_proportion + "%"
@@ -58,27 +61,42 @@ def plot_k(heights_list, beff_list, nr_data, width_list,period,poles_proportion)
         plt.plot(heights_list[i], k, label=label)
     plt.grid()
     plt.legend()
+
+    plt.figure(2)
+    label_base = 'Block width = '
+    plt.xlabel('Block height [mm]')
+    plt.ylabel('Field roll-off [%]')
+    title = "Poles proportion = " + poles_proportion + "%"
+    plt.title(title)
+    for i,width in enumerate(width_list):
+        label = label_base + str(width) + ' mm'
+        roff = _np.array(roff_list[i])
+        plt.plot(heights_list[i], roff, label=label)
+    plt.grid()
     plt.show()
     
 def run(filename,period):
-    heights, beffs, nr_data, width_list = readfile(filename)
+    heights, beffs, roffs, nr_data, width_list = readfile(filename)
     heights_list = []
     beff_list = []
+    roff_list = []
     for i,nr in enumerate(nr_data):
         if i == 0:
             height = heights[0:nr]    
             heights_list.append(height)
             beff_list.append(beffs[0:nr])
+            roff_list.append(roffs[0:nr])
         else:
             nr_data_split = nr_data[0:i]
             begin = _np.sum(nr_data_split)
             height = heights[begin:begin+nr]
             heights_list.append(height)
             beff_list.append(beffs[begin:begin+nr])
+            roff_list.append(roffs[begin:begin+nr])
     
-    poles_proportion = filename[-3:-1]
-    plot_k(heights_list, beff_list, nr_data, width_list,period,poles_proportion)
+    poles_proportion = filename[5:9]
+    plot_k(heights_list, beff_list, roff_list, nr_data, width_list,period,poles_proportion)
 if __name__ == "__main__":
     
-    run("Beff_50%",29)
+    run("Beff_70.0%.txt",29)
 
