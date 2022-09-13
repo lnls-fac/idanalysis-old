@@ -1,8 +1,5 @@
 """IDs configurations."""
 
-import numpy as _np
-import matplotlib.pyplot as _plt
-
 import pyaccel
 from fieldmaptrack.fieldmap import FieldMap as _FieldMap
 
