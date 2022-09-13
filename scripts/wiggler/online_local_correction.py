@@ -25,14 +25,11 @@ def create_devices(timeout=DEF_TIMEOUT):
     ch2 = PowerSupply('SI-14SB:PS-CH-2')
     ch2.wait_for_connection(timeout=timeout)
     corrs = [ch1, ch2]
-    wigdevname = 'SI-14SB:ID-WIG180'
-    wig = [epics.PV(wigdevname + ':Gap-SP'), epics.PV(wigdevname + ':Gap-RB')] 
-    wig[0].wait_for_connection(timeout=timeout)
-    wig[1].wait_for_connection(timeout=timeout)
-    return sofb, corrs, wig
+    return sofb, corrs
 
 
 def set_corrs(gap, corrs):
+    """."""
     gap2curr = {
         'gap': [300, 59.6],  # [mm]
         'cur_up': [0, 1],  # [A]
@@ -44,14 +41,18 @@ def set_corrs(gap, corrs):
     corrs[1].current = cur_down_fit
 
 
-def wig_set_gap(gap, wig, corrs=None):
+def wig_set_gap(current_gap, desired_gap, corrs=None):
     """."""
-    gap_tol = 0.01  # [mm]
-    wig[0].value = gap
-    while abs(wig[1].value - gap) > gap_tol:
+    step_input = input("Enter the number of gap's steps:")
+    nr_step = int(step_input)
+    step_value = (desired_gap-current_gap)/nr_step
+    for gap in np.linspace(current_gap+step_value,desired_gap,nr_step):
+        print("It's necessary to set wiggler's gap to {:.2f} mm".format(gap))
+        input("Waiting for user adjustment, press enter when ready.")
         if corrs:
-            set_corrs(wig[1].value, corrs)
-        time.sleep(0.1)
+            set_corrs(gap, corrs)
+            
+        
     
 
 def initialize_devices(sofb, corrs, timeout=DEF_TIMEOUT): 
@@ -117,23 +118,23 @@ def run():
     
     nr_points = 50
 
-    sofb, corrs, wig = create_devices()
+    sofb, corrs = create_devices()
     initialize_devices(sofb, corrs)
     
     # open up maximum gap ans stores initial orbit
-    wig_set_gap(gap=300, corrs)
+    wig_set_gap(current_gap = 59.6, desired_gap=300, corrs)
     orb0 = sofb_orb_acquire(sofb, nr_points=nr_points)
 
     respm = None
 
     # close gap to operation value
-    wig_set_gap(gap=59.6, corrs)
+    wig_set_gap(current_gap = 300, desired_gap=59.6, corrs)
     
     # set delta currents to zero
     dcurr_up, dcurr_down = 0, 0
     for _ in range(3):
 
-        # measured residual orbir and calc distortion
+        # measured residual orbit and calc distortion
         orb1 = sofb_orb_acquire(sofb, nr_points=nr_points)
         dorb = orb1 - orb0
 

@@ -18,7 +18,7 @@ def run(idconfig, plot=True):
     
     fmap_fname = FOLDER_BASE + DATA_PATH + MEAS_FILE
     fmap = FieldMap(fmap_fname)
-    beam = Beam(ebergy=3.0)
+    beam = Beam(energy=3.0)
     traj = Trajectory(
         beam=beam, fieldmap=fmap, not_raise_range_exceptions=True)
     traj.calc_trajectory(init_rz=-1600, s_step=0.2, min_rz=1600)
