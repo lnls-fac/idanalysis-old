@@ -15,7 +15,7 @@ from idanalysis import optics as optics
 import utils
 
 
-def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, plot_flag=True):
+def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, idconfig, plot_flag=True):
   if plot_flag:
     #Compare optics between nominal value and uncorrect optics due ID insertion
     dtunex, dtuney, bbeatx, bbeaty, bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(twiss0,twiss1)
@@ -26,6 +26,7 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, plot_flag=True):
     print(f'bbetax: {bbeatx_rms:04.1f} % rms, {bbeatx_absmax:04.1f} % absmax')
     print(f'bbetay: {bbeaty_rms:04.1f} % rms, {bbeaty_absmax:04.1f} % absmax')
     print()
+    title = 'Beta Beating from ' + idconfig
 
     plt.figure(1)
     blue, red = (0.4,0.4,1), (1,0.4,0.4)
@@ -35,13 +36,13 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, plot_flag=True):
     plt.plot(twiss0.spos, bbeaty, color=red, alpha=0.8, label=labely)
     plt.xlabel('spos [m]')
     plt.ylabel('Beta Beat [%]')
-    plt.title('Beta Beating from ID - ')
+    plt.title(title)
     plt.suptitle('Orbit with local correction + SOFB - not symmetrized optics')
     # plt.suptitle('Orbit with local correction - not symmetrized optics')
     # plt.suptitle('Orbit without correction - not symmetrized optics')
     plt.legend()
     plt.grid()
-  
+    plt.savefig('results/' + idconfig + '/orb_SOFB_correction.png')
 
     #Compare optics between nominal value and symmetrized optics
     dtunex, dtuney, bbeatx, bbeaty, bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(twiss0,twiss2)
@@ -60,7 +61,7 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, plot_flag=True):
     plt.plot(twiss0.spos, bbeaty, color=red, alpha=0.8, label=labely)
     plt.xlabel('spos [m]')
     plt.ylabel('Beta Beat [%]')
-    plt.title('Beta Beating from ID - ')
+    plt.title(title)
     plt.suptitle('Symmetrized optics and uncorrect tunes')
     plt.legend()
     plt.grid()
@@ -82,12 +83,12 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, plot_flag=True):
     plt.plot(twiss0.spos, bbeaty, color=red, alpha=0.8, label=labely)
     plt.xlabel('spos [m]')
     plt.ylabel('Beta Beat [%]')
-    plt.title('Beta Beating from ID - ')
+    plt.title(title)
     plt.suptitle('Symmetrized optics and correct tunes')
     plt.legend()
     plt.grid()
+    plt.savefig('results/' + idconfig + '/full_correction.png')
     plt.show()
-
 
 def calc_dtune_betabeat(twiss0, twiss1):
     dtunex = (twiss1.mux[-1] - twiss0.mux[-1]) / 2 / np.pi
@@ -181,9 +182,12 @@ def run(idconfig):
     twiss3, *_ = pyacc_opt.calc_twiss(ring1, indices='closed')
     print()
 
-    plot_beta_beating(twiss0, twiss1, twiss2, twiss3, plot_flag=True)
+    plot_beta_beating(twiss0, twiss1, twiss2, twiss3, idconfig, plot_flag=True)
 
 
 if __name__ == '__main__':
     """."""
-    run(idconfig='ID4020')  # correctors with zero current
+    run(idconfig='ID3979')  # gap 59.6 mm, correctors with zero current
+    # run(idconfig = 'ID4017')  # gap 59.6 mm, correctors with best current
+    # run(idconfig = 'ID4020')  # gap 45.0 mm, correctors with zero current
+

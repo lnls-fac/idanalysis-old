@@ -7,7 +7,7 @@ from imaids.models import HybridPlanar as Hybrid
 from imaids.blocks import Block as Block
 
 
-def generate_model(width=None, height=None, p_width=None, p_height= None, period_length=17.7, gap=4.2):
+def generate_model(width=None, height=None, p_width=None, p_height= None, period_length=18.5, gap=4.2):
     
     block_shape = [
         [width/2, 0],
@@ -23,11 +23,11 @@ def generate_model(width=None, height=None, p_width=None, p_height= None, period
         [-p_width/2, 0],
     ]
 
-    ivu = Hybrid(gap=gap,period_length=period_length, mr=1.34, nr_periods=5,
+    ivu = Hybrid(gap=gap,period_length=period_length, mr=1.24, nr_periods=5,
                  pole_length = 'default', longitudinal_distance = 0.1,
                  block_shape=block_shape, pole_shape=pole_shape)
     ivu.solve()
-    br = 1.34
+    br = 1.24
     return ivu,br
 
 
@@ -67,7 +67,7 @@ def generate_field_file(block_width, block_height, period, gap, filename):
     
 def run(prop_w):
     """."""
-    name = 'Beff_' + str(prop_w*100) + '%.txt'
+    name = 'Beff_op3_' + str(prop_w*100) + '%.txt'
     period = 29
     gap = 10.9
 
