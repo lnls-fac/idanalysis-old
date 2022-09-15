@@ -27,7 +27,17 @@ def run(idconfig, plot=True):
 
     deltarx = traj.rx[-1] - traj.rx[0]
     deltary = traj.ry[-1] - traj.ry[0]
+    by = fmap.by[fmap.ry_zero][fmap.rx_zero][:]
+
     if plot:
+        plt.plot(fmap.rz, by, color='g')
+        plt.xlabel('z [mm]')
+        plt.ylabel('B [T]')
+        plt.grid()
+        plt.title('Vertical field given by {}'.format(idconfig))
+        plt.savefig('results/' + idconfig + '/field-by-' + idconfig + '.png')
+        plt.show()
+
         labelx = 'rx, delta: {:+.1f} um'.format(deltarx)
         labely = 'ry, delta: {:+.1f} um'.format(deltary)
         plt.plot(traj.rz, 1e3*traj.rx, label=labelx, color='C1')
@@ -60,5 +70,5 @@ def run(idconfig, plot=True):
 
 if __name__ == "__main__":
     """."""
-    deltarx, deltary, deltapx, deltapy = run('ID4020', plot=True)
+    deltarx, deltary, deltapx, deltapy = run('ID3979', plot=True)
 

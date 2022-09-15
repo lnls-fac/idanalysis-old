@@ -41,8 +41,8 @@ WIGGLER_CONFIGS = {
     'ID3987': 'gap 023.95mm/2022-08-26_WigglerSTI_023.95mm_U+0.00_D-0.00_Fieldmap_Z=-1650_1650mm_ID=3987.dat',
     'ID4002': 'gap 023.95mm/2022-08-26_WigglerSTI_023.95mm_U-4.15_D+4.29_Fieldmap_Z=-1650_1650mm_ID=4002.dat',
     # wiggler with correctors - gap 026.90mm
-    'ID3987': 'gap 026.90mm/2022-08-26_WigglerSTI_023.95mm_U+0.00_D-0.00_Fieldmap_Z=-1650_1650mm_ID=3987.dat',
-    'ID4002': 'gap 026.90mm/2022-08-26_WigglerSTI_023.95mm_U-4.15_D+4.29_Fieldmap_Z=-1650_1650mm_ID=4002.dat',
+    'ID3988': 'gap 026.90mm/2022-08-26_WigglerSTI_026.90mm_U+0.00_D-0.00_Fieldmap_Z=-1650_1650mm_ID=3988.dat',
+    'ID4001': 'gap 026.90mm/2022-08-26_WigglerSTI_026.90mm_U-3.94_D+3.49_Fieldmap_Z=-1650_1650mm_ID=4001.dat',
     # wiggler with correctors - gap 034.80mm
     'ID3989': 'gap 034.80mm/2022-08-26_WigglerSTI_034.80mm_U+0.00_D-0.00_Fieldmap_Z=-1650_1650mm_ID=3989.dat',
     'ID4000': 'gap 034.80mm/2022-08-26_WigglerSTI_034.80mm_U-2.73_D+2.35_Fieldmap_Z=-1650_1650mm_ID=4000.dat',

@@ -36,6 +36,7 @@ def generate_model(width=None, height=None, p_width=None, p_height= None, period
     ivu = Hybrid(gap=gap,period_length=period_length, mr=br, nr_periods=5,
                  pole_length = 'default', longitudinal_distance = 0.1,
                  block_shape=block_shape, pole_shape=pole_shape)
+    
     ivu.solve()
     return ivu,br
 
@@ -76,9 +77,9 @@ def generate_field_file(block_width, block_height, period, gap, filename):
     
 def run(prop_w,op=None):
     """."""
-    name = 'Beff1_'+ op + '_' + str(prop_w*100) + '%.txt'
-    period = 29
-    gap = 10.9
+    name = 'Beff_'+ op + '_' + str(prop_w*100) + '%.txt'
+    period = 17.7
+    gap = 4.2
 
     b_dict = dict()
     roff_dict = dict()
@@ -112,9 +113,12 @@ def run(prop_w,op=None):
     
 if __name__ == "__main__":
     
-    run(prop_w=0.7,op='op1')
-    run(prop_w=0.7,op='op2')
-    run(prop_w=0.7,op='op3')
+    run(prop_w=0.8,op='op1')
+    run(prop_w=0.8,op='op2')
+    run(prop_w=0.8,op='op3')
+    run(prop_w=0.9,op='op1')
+    run(prop_w=0.9,op='op2')
+    run(prop_w=0.9,op='op3')
 
 
     

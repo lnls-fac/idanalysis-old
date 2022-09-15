@@ -37,12 +37,14 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, idconfig, plot_flag=True):
     plt.xlabel('spos [m]')
     plt.ylabel('Beta Beat [%]')
     plt.title(title)
-    plt.suptitle('Orbit with local correction + SOFB - not symmetrized optics')
-    # plt.suptitle('Orbit with local correction - not symmetrized optics')
-    # plt.suptitle('Orbit without correction - not symmetrized optics')
+    suptitle = 'Orbit with local correction + SOFB - not symmetrized optics'
+    # suptitle = 'Orbit with local correction - not symmetrized optics'
+    # suptitle = 'Orbit without correction - not symmetrized optics'
+    plt.suptitle(suptitle)
+    plt.ylim(-15,15)
     plt.legend()
     plt.grid()
-    plt.savefig('results/' + idconfig + '/orb_SOFB_correction.png')
+    plt.savefig('results/' + idconfig + '/' + suptitle + '_' + idconfig + '.png',dpi=300)
 
     #Compare optics between nominal value and symmetrized optics
     dtunex, dtuney, bbeatx, bbeaty, bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(twiss0,twiss2)
@@ -85,9 +87,10 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, idconfig, plot_flag=True):
     plt.ylabel('Beta Beat [%]')
     plt.title(title)
     plt.suptitle('Symmetrized optics and correct tunes')
+    plt.ylim(-15,15)
     plt.legend()
     plt.grid()
-    plt.savefig('results/' + idconfig + '/full_correction.png')
+    plt.savefig('results/' + idconfig + '/full_correction.png', dpi=300)
     plt.show()
 
 def calc_dtune_betabeat(twiss0, twiss1):
@@ -149,7 +152,7 @@ def run(idconfig):
     # correct orbit locally with ID correctors
     print('--- local orbit correction ---')
     ret = orbcorr.correct_orbit_local(
-        model1=ring1, id_famname='WIG180', correction_plane='x', plot=True)
+        model1=ring1, id_famname='WIG180', correction_plane='x', plot=False)
     dkickx1, dkickx2, dkicky1, dkicky2 =  ret[0]
     fmts = 'correctors dk {:<10s} : {:+06.1f} {:+06.1f} urad'
     print(fmts.format('horizontal', dkickx1*1e6, dkickx2*1e6))
