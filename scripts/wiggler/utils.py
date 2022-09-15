@@ -17,17 +17,17 @@ DATA_PATH = '/wiggler-2T-STI/measurement/magnetic/hallprobe/'
 
 WIGGLER_CONFIGS = {
     # wiggler without correctors
-    'ID3962': 'wiggler_without_correctors/2022-08-22_Wiggler_STI_22_00mm_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3962.dat', 
-    'ID3963': 'wiggler_without_correctors/2022-08-22_Wiggler_STI_23_00mm_Fieldmap_Z=-1650_1650mm_ID=3963.dat', 
-    'ID3964': 'wiggler_without_correctors/2022-08-22_Wiggler_STI_23_95mm_Fieldmap_Z=-1650_1650mm_ID=3964.dat', 
-    'ID3965': 'wiggler_without_correctors/2022-08-22_Wiggler_STI_26_90mm_Fieldmap_Z=-1650_1650mm_ID=3965.dat', 
-    'ID3966': 'wiggler_without_correctors/2022-08-22_Wiggler_STI_34_80mm_Fieldmap_Z=-1650_1650mm_ID=3966.dat', 
-    'ID3967': 'wiggler_without_correctors/2022-08-22_Wiggler_STI_42_70mm_Fieldmap_Z=-1650_1650mm_ID=3967.dat', 
-    'ID3968': 'wiggler_without_correctors/2022-08-22_Wiggler_STI_51_65mm_Fieldmap_Z=-1650_1650mm_ID=3968.dat', 
-    'ID3969': 'wiggler_without_correctors/2022-08-22_Wiggler_STI_59_60mm_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3969.dat', 
-    'ID3970': 'wiggler_without_correctors/2022-08-22_Wiggler_STI_99_50mm_Fieldmap_Z=-1650_1650mm_ID=3970.dat', 
-    'ID3971': 'wiggler_without_correctors/2022-08-22_Wiggler_STI_199_50mm_Fieldmap_Z=-1650_1650mm_ID=3971.dat', 
-    'ID3972': 'wiggler_without_correctors/2022-08-22_Wiggler_STI_300_00mm_Fieldmap_Z=-1650_1650mm_ID=3972.dat', 
+    'ID3962': 'wiggler_without_correctors/2022-08-22_WigglerSTI_022.00mm_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3962.dat', 
+    'ID3963': 'wiggler_without_correctors/2022-08-22_WigglerSTI_023.00mm_Fieldmap_Z=-1650_1650mm_ID=3963.dat', 
+    'ID3964': 'wiggler_without_correctors/2022-08-22_WigglerSTI_023.95mm_Fieldmap_Z=-1650_1650mm_ID=3964.dat', 
+    'ID3965': 'wiggler_without_correctors/2022-08-22_WigglerSTI_026.90mm_Fieldmap_Z=-1650_1650mm_ID=3965.dat', 
+    'ID3966': 'wiggler_without_correctors/2022-08-22_WigglerSTI_034.80mm_Fieldmap_Z=-1650_1650mm_ID=3966.dat', 
+    'ID3967': 'wiggler_without_correctors/2022-08-22_WigglerSTI_042.70mm_Fieldmap_Z=-1650_1650mm_ID=3967.dat', 
+    'ID3968': 'wiggler_without_correctors/2022-08-22_WigglerSTI_051.65mm_Fieldmap_Z=-1650_1650mm_ID=3968.dat', 
+    'ID3969': 'wiggler_without_correctors/2022-08-22_WigglerSTI_059.60mm_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3969.dat', 
+    'ID3970': 'wiggler_without_correctors/2022-08-22_WigglerSTI_099.50mm_Fieldmap_Z=-1650_1650mm_ID=3970.dat', 
+    'ID3971': 'wiggler_without_correctors/2022-08-22_WigglerSTI_199.50mm_Fieldmap_Z=-1650_1650mm_ID=3971.dat', 
+    'ID3972': 'wiggler_without_correctors/2022-08-22_WigglerSTI_300.00mm_Fieldmap_Z=-1650_1650mm_ID=3972.dat', 
     
     
     # wiggler with correctors - gap 022.00mm

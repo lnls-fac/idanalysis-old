@@ -7,8 +7,13 @@ from imaids.models import HybridPlanar as Hybrid
 from imaids.blocks import Block as Block
 
 
-def generate_model(width=None, height=None, p_width=None, p_height= None, period_length=18.5, gap=4.2):
+def generate_model(width=None, height=None, p_width=None, p_height= None, period_length=17.7, gap=4.2, op=None):
     
+    opconfig = dict([
+        ('op1',[17.7,4.2,1.34]),
+        ('op2',[17.5,3.75,1.24]),
+        ('op3',[18.5,4.2,1.24])])
+
     block_shape = [
         [width/2, 0],
         [width/2, -height],
@@ -23,11 +28,15 @@ def generate_model(width=None, height=None, p_width=None, p_height= None, period
         [-p_width/2, 0],
     ]
 
-    ivu = Hybrid(gap=gap,period_length=period_length, mr=1.24, nr_periods=5,
+    if op is not None:
+        period_length = opconfig[op][0]
+        gap = opconfig[op][1]
+        br = opconfig[op][2]
+    
+    ivu = Hybrid(gap=gap,period_length=period_length, mr=br, nr_periods=5,
                  pole_length = 'default', longitudinal_distance = 0.1,
                  block_shape=block_shape, pole_shape=pole_shape)
     ivu.solve()
-    br = 1.24
     return ivu,br
 
 
@@ -65,9 +74,9 @@ def generate_field_file(block_width, block_height, period, gap, filename):
     return
 
     
-def run(prop_w):
+def run(prop_w,op=None):
     """."""
-    name = 'Beff_op3_' + str(prop_w*100) + '%.txt'
+    name = 'Beff1_'+ op + '_' + str(prop_w*100) + '%.txt'
     period = 29
     gap = 10.9
 
@@ -86,7 +95,7 @@ def run(prop_w):
         for height in block_height:
             pole_height = 1*height
             ivu, br = generate_model(width=block_width, height=height, p_width=pole_width,
-                                    p_height=pole_height, period_length=period, gap=gap)
+                                    p_height=pole_height, period_length=period, gap=gap, op=op)
             Beff, B_peak, *_ = ivu.get_effective_field(polarization='hp', hmax=5, x=0)
             Beff_6, B_peak_6, *_ = ivu.get_effective_field(polarization='hp', hmax=5, x=6)
             Roll_off = 100*(B_peak - B_peak_6)/B_peak
@@ -103,7 +112,9 @@ def run(prop_w):
     
 if __name__ == "__main__":
     
-    run(prop_w=0.7)
+    run(prop_w=0.7,op='op1')
+    run(prop_w=0.7,op='op2')
+    run(prop_w=0.7,op='op3')
 
 
     

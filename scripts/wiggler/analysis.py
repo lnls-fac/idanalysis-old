@@ -187,7 +187,7 @@ def run(idconfig):
 
 if __name__ == '__main__':
     """."""
-    run(idconfig='ID3979')  # gap 59.6 mm, correctors with zero current
+    # run(idconfig='ID3979')  # gap 59.6 mm, correctors with zero current
     # run(idconfig = 'ID4017')  # gap 59.6 mm, correctors with best current
-    # run(idconfig = 'ID4020')  # gap 45.0 mm, correctors with zero current
+    run(idconfig = 'ID4020')  # gap 45.0 mm, correctors with zero current
 
