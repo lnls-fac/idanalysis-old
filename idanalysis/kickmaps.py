@@ -261,10 +261,6 @@ class IDKickMap:
             linefit = self._linear_function(rz,opt[2],opt[3])
             kick_begin = linefit[idx_begin_ID] - p[0]
             kick_end = p[-1] - linefit[idx_end_ID]
-            # p_calc = self.fit_function(rz,opt[0],opt[1],opt[2],opt[3])
-            # _plt.plot(rz,p)
-            # _plt.plot(rz,linefit)
-            # _plt.show()
             if i == 0:
                 self.kickx_upstream = kick_begin * brho * brho
                 self.kickx_downstream = kick_end * brho * brho

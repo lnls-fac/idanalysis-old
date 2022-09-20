@@ -35,11 +35,11 @@ def run(idconfig, plot=True):
         plt.ylabel('B [T]')
         plt.grid()
         plt.title('Vertical field given by {}'.format(idconfig))
-        plt.savefig('results/' + idconfig + '/field-by-' + idconfig + '.png')
+        plt.savefig('results/' + idconfig + '/field-by-' + idconfig + '.png',dpi=300)
         plt.show()
 
-        labelx = 'rx, delta: {:+.1f} um'.format(deltarx)
-        labely = 'ry, delta: {:+.1f} um'.format(deltary)
+        labelx = 'rx, delta: {:+.2f} mm'.format(deltarx)
+        labely = 'ry, delta: {:+.2f} mm'.format(deltary)
         plt.plot(traj.rz, 1e3*traj.rx, label=labelx, color='C1')
         plt.plot(traj.rz, 1e3*traj.ry, label=labely, color='C0')
         plt.xlabel('rz [um]')
@@ -47,7 +47,7 @@ def run(idconfig, plot=True):
         plt.legend()
         plt.grid()
         plt.title('Runge-Kutta Trajectory Pos for fmap {}'.format(idconfig))
-        plt.savefig('results/' + idconfig + '/rk-trajectory-pos-' + idconfig + '.png')
+        plt.savefig('results/' + idconfig + '/rk-trajectory-pos-' + idconfig + '.png',dpi=300)
         plt.show()
 
     deltapx = traj.px[-1] - traj.px[0]
@@ -62,7 +62,7 @@ def run(idconfig, plot=True):
         plt.legend()
         plt.grid()
         plt.title('Runge-Kutta Trajectory Ang for fmap {}'.format(idconfig))
-        plt.savefig('results/' + idconfig + '/rk-trajectory-ang-' + idconfig + '.png')
+        plt.savefig('results/' + idconfig + '/rk-trajectory-ang-' + idconfig + '.png',dpi=300)
         plt.show()
 
     return deltarx, deltary, deltapx, deltapy
@@ -70,5 +70,5 @@ def run(idconfig, plot=True):
 
 if __name__ == "__main__":
     """."""
-    deltarx, deltary, deltapx, deltapy = run('ID3979', plot=True)
+    deltarx, deltary, deltapx, deltapy = run('ID4020', plot=True)
 
