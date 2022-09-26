@@ -280,10 +280,7 @@ class IDKickMap:
                 self.kicky_downstream = kick_end * brho * brho
                 print("kicky_upstream: {:11.4e}  T2m2".format(self.kicky_upstream))
                 print("kicky_downstream: {:11.4e}  T2m2".format(self.kicky_downstream))
-        
-        
-        
-
+             
     def plot_kickx_vs_posy(self, indx, title=''):
         """."""
         posx = self.posx
