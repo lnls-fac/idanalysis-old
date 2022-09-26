@@ -96,9 +96,9 @@ def run(filename,period):
             beff_list.append(beffs[begin:begin+nr])
             roff_list.append(roffs[begin:begin+nr])
     
-    poles_proportion = filename[9:13]
+    poles_proportion = filename[16:20]
     plot_k(heights_list, beff_list, roff_list, nr_data, width_list,period,poles_proportion)
 if __name__ == "__main__":
     
-    run("Beff_op2_90.0%.txt",17.7)
+    run("Beff_op1_height_90.0%.txt",17.7)
 

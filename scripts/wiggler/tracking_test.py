@@ -35,7 +35,7 @@ def run(idconfig):
     model,twiss, ids = create_model_ids(idconfig=idconfig)
     x0 = 0
     y0 = 0
-    # nturns = 100
+
     famdata = pymodels.si.get_family_data(model)
     idx = famdata['WIG180']['index']
     idx_end = idx[0][-1]

@@ -66,6 +66,7 @@ def run():
     config_list = ['ID3986','ID3987','ID3988','ID3989','ID3990',
         'ID4021','ID3991','ID4005','ID3992','ID3993','ID3994']
     
+    period = 180
     beff_list = []
     keff_list = []
     gap_list = []
@@ -79,24 +80,34 @@ def run():
         keff_list.append(keff)
         gap_list.append(gap)
     
-    curve_fit = fit_measurement(gap_list,beff_list)
+    gap_array = np.array(gap_list)
+    gap_array = gap_array/period
+    curve_fit = fit_measurement(gap_array,beff_list)
     a=curve_fit[0]
     b=curve_fit[1]
     c = curve_fit[2]
     gaps = np.arange(23,300,1)
-    fitted_curve = fit_function(np.array(gaps),a,b,c)
+    gaps = gaps/period
+    fitted_curve = fit_function(gaps,a,b,c)
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
     ax1.plot(gaps,fitted_curve, '--', color='C1', label='Fit')
-    ax1.plot(gap_list,beff_list, 'o', color='b', label='Measurement')
-    ax2.plot(gap_list,keff_list, 'o', color='b')
-    ax1.set_xlabel('gap [mm]')
+    ax1.plot(gap_array,beff_list, 'o', color='b', label='Measurement')
+    ax2.plot(gap_array,keff_list, 'o', color='b')
+    ax1.set_xlabel('gap/period')
     ax1.set_ylabel('Beff [T]')
     ax2.set_ylabel('Keff')
     ax1.legend()
     ax1.grid()
     plt.show()
+    gaps2 = np.linspace(23,300,1000)
+    beff = fit_function(gaps2/180,a,b,c)
+    for i, gap in enumerate(gaps2):
+        gap = format(gap, '03.2f')
+        beff[i] = format(beff[i], '03.2f')
+        print(gap,'&', beff[i])
     
+    # fig.savefig('results/b_vs_gap.png', dpi=300)
         
     
     
