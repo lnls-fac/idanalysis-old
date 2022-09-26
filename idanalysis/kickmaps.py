@@ -235,38 +235,47 @@ class IDKickMap:
         rz_center = _utils.calc_rz_of_field_center(rz, bx, by, bz)
         return rz_center
 
-    def calc_id_termination_kicks(self, fmap_fname, period_len=None, kmap_idlen=None):
+    def calc_id_termination_kicks(
+            self, fmap_fname, period_len=None, kmap_idlen=None):
         """."""
+        # set kickmap ID length a,d ID period length
         kmap_idlen = kmap_idlen or self.kmap_idlen
         self.kmap_idlen = kmap_idlen
         period_len = period_len or self.period_len
         self.period_len = period_len
+
+        # calc trajectory from nominal initial conditions
         self.fmap_config = self.fmap_calc_trajectory(fmap_fname, init_rx = 0, init_ry=0)
         brho = self.fmap_config.beam.brho
+
+        # get indices for central part of ID
         rz_center = self.fmap_rz_field_center()
         rz = self.fmap_config.traj.rz
         px = self.fmap_config.traj.px
         py = self.fmap_config.traj.py
-        idx_zero = self._find_value_idx(rz, 1*rz_center)
-        idx_one_period = self._find_value_idx(rz,period_len + 1*rz_center)
-        idx_diff = idx_one_period - idx_zero
-        idx_begin = idx_zero -5*idx_diff
-        idx_end = idx_zero +5*idx_diff
-        for i,p in enumerate([px,py]):
+        idx_begin = self._find_value_idx(rz, rz_center - 5 * period_len)
+        idx_end = self._find_value_idx(rz, rz_center + 5 * period_len)
+        # idx_center = self._find_value_idx(rz, rz_center)
+        # idx_one_period = self._find_value_idx(rz, rz_center + period_len)
+        # idx_diff = idx_one_period - idx_center
+        # idx_begin = idx_center - 5*idx_diff
+        # idx_end = idx_center + 5*idx_diff
+
+        for idx, pxy in enumerate([px, py]):
             rz_sample = rz[idx_begin:idx_end]
-            p_sample = p[idx_begin:idx_end]
-            opt = self.find_fit(rz_sample,p_sample)
-            idx_begin_ID = self._find_value_idx(rz,-kmap_idlen*1e3/2)
-            idx_end_ID = self._find_value_idx(rz, kmap_idlen*1e3/2)
+            p_sample = pxy[idx_begin:idx_end]
+            opt = self.find_fit(rz_sample, p_sample)
+            idx_begin_ID = self._find_value_idx(rz, -kmap_idlen * 1e3/2)
+            idx_end_ID = self._find_value_idx(rz, +kmap_idlen * 1e3/2)
             linefit = self._linear_function(rz,opt[2],opt[3])
-            kick_begin = linefit[idx_begin_ID] - p[0]
-            kick_end = p[-1] - linefit[idx_end_ID]
-            if i == 0:
+            kick_begin = linefit[idx_begin_ID] - pxy[0]
+            kick_end = pxy[-1] - linefit[idx_end_ID]
+            if idx == 0:
                 self.kickx_upstream = kick_begin * brho * brho
                 self.kickx_downstream = kick_end * brho * brho
                 print("kickx_upstream: {:11.4e}  T2m2".format(self.kickx_upstream))
                 print("kickx_downstream: {:11.4e}  T2m2".format(self.kickx_downstream))
-            elif i == 1:
+            elif idx == 1:
                 self.kicky_upstream = kick_begin * brho * brho
                 self.kicky_downstream = kick_end * brho * brho
                 print("kicky_upstream: {:11.4e}  T2m2".format(self.kicky_upstream))
@@ -376,13 +385,13 @@ class IDKickMap:
         self.calc_KsL_kickx_at_x(ix=14, plot=True)
         self.calc_KsL_kicky_at_y(iy=8, plot=True)
 
-    def fit_function(self,x,amp1,phi1,a,b):
-        f = amp1*_np.sin(2*_np.pi/self.period_len * x + phi1)
-        f += a*x + b
+    def fit_function(self, rz, amp1, phi1, a, b):
+        f = amp1 * _np.sin(2*_np.pi/self.period_len * rz + phi1)
+        f += a * rz + b
         return f
 
-    def find_fit(self,rz,kicks):
-        opt = _curve_fit(self.fit_function, rz, kicks)[0]
+    def find_fit(self, rz, pvec):
+        opt = _curve_fit(self.fit_function, rz, pvec)[0]
         return opt
 
     @staticmethod

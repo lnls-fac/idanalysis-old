@@ -16,6 +16,14 @@ DATA_PATH = '/wiggler-2T-STI/measurement/magnetic/hallprobe/'
 
 
 WIGGLER_CONFIGS = {
+
+    # wiggler with correctors - gap 045.00mm
+    'ID4020': 'gap 045.00mm/2022-09-01_WigglerSTI_45mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4020.dat',
+    # wiggler with correctors - gap 049.73mm
+    'ID4019': 'gap 049.73mm/2022-09-01_WigglerSTI_49.73mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4019.dat',
+    # wiggler with correctors - gap 059.60mm
+    'ID3979': 'gap 059.60mm/2022-08-25_WigglerSTI_059.60mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3979.dat',
+
     # wiggler without correctors
     'ID3962': 'wiggler_without_correctors/2022-08-22_WigglerSTI_022.00mm_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3962.dat', 
     'ID3963': 'wiggler_without_correctors/2022-08-22_WigglerSTI_023.00mm_Fieldmap_Z=-1650_1650mm_ID=3963.dat', 
@@ -28,7 +36,6 @@ WIGGLER_CONFIGS = {
     'ID3970': 'wiggler_without_correctors/2022-08-22_WigglerSTI_099.50mm_Fieldmap_Z=-1650_1650mm_ID=3970.dat', 
     'ID3971': 'wiggler_without_correctors/2022-08-22_WigglerSTI_199.50mm_Fieldmap_Z=-1650_1650mm_ID=3971.dat', 
     'ID3972': 'wiggler_without_correctors/2022-08-22_WigglerSTI_300.00mm_Fieldmap_Z=-1650_1650mm_ID=3972.dat', 
-    
     
     # wiggler with correctors - gap 022.00mm
     'ID3977': 'gap 022.00mm/2022-08-25_WigglerSTI_022.00mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3977.dat',
@@ -49,8 +56,6 @@ WIGGLER_CONFIGS = {
     # wiggler with correctors - gap 042.70mm
     'ID3990': 'gap 042.70mm/2022-08-26_WigglerSTI_042.70mm_U+0.00_D+0.00_Fieldmap_Z=-1650_1650mm_ID=3990.dat',
     'ID3999': 'gap 042.70mm/2022-08-26_WigglerSTI_042.70mm_U-1.66_D+1.34_Fieldmap_Z=-1650_1650mm_ID=3999.dat',
-    # wiggler with correctors - gap 045.00mm
-    'ID4020': 'gap 045.00mm/2022-09-01_WigglerSTI_45mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4020.dat',
     # wiggler with correctors current tests- gap 045.00mm
     'ID4021': 'gap 045.00mm/current_test/2022-09-02_WigglerSTI_45mm_U+0.00_D+0.00_Fieldmap_Z=-1650_1650mm_ID=4021.dat',
     'ID4022': 'gap 045.00mm/current_test/2022-09-02_WigglerSTI_45mm_U-0.50_D+0.00_Fieldmap_Z=-1650_1650mm_ID=4022.dat',
@@ -60,13 +65,10 @@ WIGGLER_CONFIGS = {
     'ID4026': 'gap 045.00mm/current_test/2022-09-02_WigglerSTI_45mm_U+0.00_D+0.50_Fieldmap_Z=-1650_1650mm_ID=4026.dat',
     'ID4027': 'gap 045.00mm/current_test/2022-09-02_WigglerSTI_45mm_U+0.00_D+1.00_Fieldmap_Z=-1650_1650mm_ID=4027.dat',
     'ID4028': 'gap 045.00mm/current_test/2022-09-02_WigglerSTI_45mm_U+0.00_D+2.00_Fieldmap_Z=-1650_1650mm_ID=4028.dat',
-    # wiggler with correctors - gap 049.73mm
-    'ID4019': 'gap 049.73mm/2022-09-01_WigglerSTI_49.73mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4019.dat',
     # wiggler with correctors - gap 051.65mm
     'ID3991': 'gap 051.65mm/2022-08-26_WigglerSTI_051.65mm_U+0.00_D+0.00_Fieldmap_Z=-1650_1650mm_ID=3991.dat',
     'ID3998': 'gap 051.65mm/2022-08-26_WigglerSTI_051.65mm_U-0.32_D+0.00_Fieldmap_Z=-1650_1650mm_ID=3998.dat',
     # wiggler with correctors - gap 059.60mm
-    'ID3979': 'gap 059.60mm/2022-08-25_WigglerSTI_059.60mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3979.dat',
     'ID3980': 'gap 059.60mm/2022-08-25_WigglerSTI_059.60mm_U+0.75_D-1.13_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3980.dat',
     'ID3981': 'gap 059.60mm/2022-08-25_WigglerSTI_059.60mm_U+5.00_D+5.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3981.dat',
     'ID3984': 'gap 059.60mm/2022-08-25_WigglerSTI_059.60mm_U+0.64_D+0.87_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3984.dat',

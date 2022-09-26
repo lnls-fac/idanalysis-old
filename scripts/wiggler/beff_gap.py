@@ -13,19 +13,23 @@ from utils import WIGGLER_CONFIGS
 
 from imaids import utils as ima_utils
 
+
 def calc_beff(z,B):
     freqs = 2*np.pi*np.array([1/180,3/180,5/180])
     amps, *_ = ima_utils.fit_fourier_components(B,freqs,z)
     return amps
 
+
 def fit_function(x, a, b, c):
         return a*np.exp(b*-1*x) + c
+
 
 def fit_measurement(gap,beff):
 
     a0, b0, c0 = 3, 0.5, 0.5
     return optimize.curve_fit(
         fit_function, gap, beff)[0]
+
 
 def readfield(idconfig, init):
     
@@ -42,13 +46,19 @@ def readfield(idconfig, init):
         gap = file_name[idx+4:idx+9]
         gap_value = float(gap)
         
+    print(file_name)
 
     with open(file_name, encoding='utf-8', errors='ignore') as my_file:
         data_col1 = []
         data_col2 = []
-        for i,line in enumerate(my_file):
+        for i, line in enumerate(my_file):
             if i >= init:
-                list_data = line.split('\t') #returns a list
+                line = line.strip()
+                for i in range(10):
+                    line = line.replace('  ', '')
+                    line = line.replace('\t\t', ' ')
+                line = line.replace('\t', ' ')
+                list_data = line.split() #returns a list
                 try:
                     data_col1.append(float(list_data[2]))
                     data_col2.append(float(list_data[4]))
@@ -59,7 +69,8 @@ def readfield(idconfig, init):
     my_file.close()
     z = np.array(data_col1)
     B = np.array(data_col2)
-    return z,B,gap_value
+    return z, B, gap_value
+
 
 def run():
     """."""
@@ -71,18 +82,18 @@ def run():
     keff_list = []
     gap_list = []
     for i,idconfig in enumerate(config_list):
-        z,B,gap = readfield(idconfig,2)
+        z,B,gap = readfield(idconfig, 2)
         fraction = int(len(z)/4)
         amps = calc_beff(z[fraction:3*fraction],B[fraction:3*fraction])
         beff = np.sqrt(amps[0]**2+amps[1]**2+amps[2]**2)
-        keff = ima_utils.calc_deflection_parameter(beff,0.18)
+        keff = ima_utils.calc_deflection_parameter(beff, 0.18)
         beff_list.append(beff)
         keff_list.append(keff)
         gap_list.append(gap)
     
     gap_array = np.array(gap_list)
     gap_array = gap_array/period
-    curve_fit = fit_measurement(gap_array,beff_list)
+    curve_fit = fit_measurement(gap_array, beff_list)
     a=curve_fit[0]
     b=curve_fit[1]
     c = curve_fit[2]
@@ -110,9 +121,18 @@ def run():
     # fig.savefig('results/b_vs_gap.png', dpi=300)
         
     
-    
+def plot_field(idconfig):
+    """."""
+    rz, B, gap = readfield(idconfig, 2)
+    plt.plot(rz, B, 'o')
+    plt.show()
         
 
 if __name__ == '__main__':
     """."""
-    run()
+    # run()
+    # idconfig = 'ID4020' # gap 045.00mm/2022-09-01_WigglerSTI_45mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4020.dat',
+    # idconfig = 'ID4019' # gap 049.73mm/2022-09-01_WigglerSTI_49.73mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4019.dat',
+    idconfig = 'ID3979' # gap 059.60mm/2022-08-25_WigglerSTI_059.60mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3979.dat',
+
+    plot_field(idconfig=idconfig)
