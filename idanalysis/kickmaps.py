@@ -243,6 +243,7 @@ class IDKickMap:
         self.kmap_idlen = kmap_idlen
         period_len = period_len or self.period_len
         self.period_len = period_len
+        nr_central_periods = int(kmap_idlen*1e3/period_len) - 4
 
         # calc trajectory from nominal initial conditions
         self.fmap_config = self.fmap_calc_trajectory(fmap_fname, init_rx = 0, init_ry=0)
@@ -253,23 +254,22 @@ class IDKickMap:
         rz = self.fmap_config.traj.rz
         px = self.fmap_config.traj.px
         py = self.fmap_config.traj.py
-        idx_begin = self._find_value_idx(rz, rz_center - 5 * period_len)
-        idx_end = self._find_value_idx(rz, rz_center + 5 * period_len)
-        # idx_center = self._find_value_idx(rz, rz_center)
-        # idx_one_period = self._find_value_idx(rz, rz_center + period_len)
-        # idx_diff = idx_one_period - idx_center
-        # idx_begin = idx_center - 5*idx_diff
-        # idx_end = idx_center + 5*idx_diff
+        idx_begin_fit = self._find_value_idx(rz, rz_center - period_len*nr_central_periods/2)
+        idx_end_fit = self._find_value_idx(rz, rz_center + period_len*nr_central_periods/2)
 
         for idx, pxy in enumerate([px, py]):
-            rz_sample = rz[idx_begin:idx_end]
-            p_sample = pxy[idx_begin:idx_end]
+            rz_sample = rz[idx_begin_fit:idx_end_fit]
+            p_sample = pxy[idx_begin_fit:idx_end_fit]
             opt = self.find_fit(rz_sample, p_sample)
             idx_begin_ID = self._find_value_idx(rz, -kmap_idlen * 1e3/2)
             idx_end_ID = self._find_value_idx(rz, +kmap_idlen * 1e3/2)
             linefit = self._linear_function(rz,opt[2],opt[3])
             kick_begin = linefit[idx_begin_ID] - pxy[0]
             kick_end = pxy[-1] - linefit[idx_end_ID]
+            _plt.plot(rz,pxy)
+            _plt.plot(rz_sample,p_sample,'.')
+            _plt.plot(rz,linefit)
+            _plt.show()
             if idx == 0:
                 self.kickx_upstream = kick_begin * brho * brho
                 self.kickx_downstream = kick_end * brho * brho
@@ -280,6 +280,9 @@ class IDKickMap:
                 self.kicky_downstream = kick_end * brho * brho
                 print("kicky_upstream: {:11.4e}  T2m2".format(self.kicky_upstream))
                 print("kicky_downstream: {:11.4e}  T2m2".format(self.kicky_downstream))
+        
+        
+        
 
     def plot_kickx_vs_posy(self, indx, title=''):
         """."""
