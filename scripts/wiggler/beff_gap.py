@@ -6,7 +6,6 @@ from scipy import optimize as optimize
 
 from idanalysis.fmap import FieldmapOnAxisAnalysis
 from fieldmaptrack import FieldMap
-from idanalysis import IDKickMap
 
 from utils import FOLDER_BASE
 from utils import DATA_PATH
@@ -49,9 +48,34 @@ def readfield(idconfig, init):
         
     print(file_name)
     
-    fmap = FieldMap(file_name)
-    z = fmap.rz
-    B = fmap.by[fmap.ry_zero][fmap.rx_zero][:]
+    with open(file_name, encoding='utf-8', errors='ignore') as my_file:
+        data_col1 = []
+        data_col2 = []
+        for i, line in enumerate(my_file):
+            if i >= init:
+                line = line.strip()
+                for i in range(10):
+                    line = line.replace('  ', '')
+                    line = line.replace('\t\t', ' ')
+                line = line.replace('\t', ' ')
+                list_data = line.split() #returns a list
+                try:
+                    xvalue = float(list_data[0])
+                except ValueError:
+                    xvalue = ((list_data[0]))
+                
+                if xvalue == 0:
+                    try:
+                        data_col1.append(float(list_data[2]))
+                        data_col2.append(float(list_data[4]))
+                    except ValueError:
+                        data_col1.append((list_data[2]))
+                        data_col2.append((list_data[4]))
+                    
+                    
+    my_file.close()
+    z = np.array(data_col1)
+    B = np.array(data_col2)
     return z, B, gap_value
 
 
