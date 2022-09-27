@@ -273,6 +273,7 @@ class IDKickMap:
             if idx == 0:
                 self.kickx_upstream = kick_begin * brho * brho
                 self.kickx_downstream = kick_end * brho * brho
+                print('ID length: {:.3f} m'.format(kmap_idlen))
                 print("kickx_upstream: {:11.4e}  T2m2".format(self.kickx_upstream))
                 print("kickx_downstream: {:11.4e}  T2m2".format(self.kickx_downstream))
             elif idx == 1:
