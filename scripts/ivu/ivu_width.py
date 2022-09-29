@@ -87,13 +87,13 @@ def run(prop_w,op=None):
     blocks_dict = dict()
 
     b_correction = 1.0095 #1.0095 For five periods  
-    for block_height in _np.arange(30,90,10): 
+    for block_height in _np.arange(10,70,10): 
         pole_height = 1*block_height
         print("block height: ",block_height)
         K_list = []
         B_list = []
         roff_list = []
-        block_width = _np.arange(30,90,10)  
+        block_width = _np.arange(20,70,10)  
         for width in block_width:
             pole_width = prop_w*width
             ivu, br = generate_model(height=block_height, width=width, p_height=pole_height,
@@ -114,9 +114,10 @@ def run(prop_w,op=None):
     
 if __name__ == "__main__":
 
-    run(prop_w=0.7,op='op1')
-    run(prop_w=0.7,op='op2')
-    run(prop_w=0.7,op='op3')
+    run(prop_w=0.6,op='op1')
+    run(prop_w=0.6,op='op2')
+    run(prop_w=0.6,op='op3')
+
  
 
 

@@ -10,7 +10,7 @@ from imaids.blocks import Block as Block
 def generate_model(height=None, width=None, p_height=None, p_width= None, period_length=17.7, gap=4.2, op=None):
     
     opconfig = dict([
-        ('op1',[29.0,9.7,1.24])])
+        ('op1',[29.0,9.7,1.32])])
 
     block_shape = [
         [width/2, 0],
@@ -75,8 +75,8 @@ def generate_field_file(block_height, block_width, period, gap, filename):
     
 def run(prop_w,op=None):
     """."""
-    folder = op + '_width_' + str(prop_w*100) + '/'
-    name = folder + 'Beff_'+ op + '_width_' + str(prop_w*100) + '%.txt'
+    folder = op + '_width_br_1.32_' + str(prop_w*100) + '/'
+    name = folder + 'Beff_'+ op +'_width_' + str(prop_w*100) + '%.txt'
     period = 17.7
     gap = 4.2
 
@@ -112,7 +112,7 @@ def run(prop_w,op=None):
     
 if __name__ == "__main__":
 
-    run(prop_w=0.7,op='op1')
+    run(prop_w=0.6,op='op1')
  
 
 
