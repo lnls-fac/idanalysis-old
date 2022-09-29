@@ -113,11 +113,9 @@ def run(prop_w,op=None):
     
     
 if __name__ == "__main__":
-
     run(prop_w=0.6,op='op1')
     run(prop_w=0.6,op='op2')
     run(prop_w=0.6,op='op3')
-
  
 
 

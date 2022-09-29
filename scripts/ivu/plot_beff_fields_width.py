@@ -130,7 +130,8 @@ def run(filename):
     
     poles_proportion = filename[10:14]
     plot_k(widths_list, beff_list, roff_list, nr_data, height_list,period,poles_proportion,filename)
+
+
 if __name__ == "__main__":
-    
     run("op3_width_90.0/Beff_op3_width_90.0%.txt")
 
