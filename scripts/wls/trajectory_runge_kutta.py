@@ -38,7 +38,7 @@ def run(idconfig, plot=True):
         # plt.show()
         plt.clf()
 
-        labelx = 'rx, delta: {:+.1f} um   2nd Integral: {:+.3e} Tm2'.format(deltarx*1e3,deltarx/1000*beam.brho)
+        labelx = 'rx, delta: {:+.1f} um'.format(deltarx*1e3)
         labely = 'ry, delta: {:+.1f} um'.format(deltary*1e3)
         plt.plot(traj.rz, 1e3*traj.rx, label=labelx, color='C1')
         plt.plot(traj.rz, 1e3*traj.ry, label=labely, color='C0')
@@ -55,7 +55,7 @@ def run(idconfig, plot=True):
     deltapy = traj.py[-1] - traj.py[0]
     print('1st Integral: {:+.3e} Tm'.format(deltapx*beam.brho))
     if plot:
-        labelx = 'px, delta: {:+.3f} urad   1st Integral: {:+.3e} Tm'.format(1e6*deltapx,deltapx*beam.brho)
+        labelx = 'px, delta: {:+.3f} urad '.format(1e6*deltapx)
         labely = 'py, delta: {:+.3f} urad'.format(1e6*deltapy)
         plt.plot(traj.rz, 1e6*traj.px, label=labelx, color='C1')
         plt.plot(traj.rz, 1e6*traj.py, label=labely, color='C0')
