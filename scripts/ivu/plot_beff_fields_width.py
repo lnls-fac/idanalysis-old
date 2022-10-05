@@ -49,21 +49,9 @@ def readfile(file_name):
 
     return data_col1, data_col2, data_col3, nr_data, height_list
 
-def calc_function(x, a, b, c):
-    return a*np.exp(-1*b*(x-18)) + c
 
-def fit_curve(widths, rollofs):
-    # a0 = 2
-    # b0 = -3
-    # c0 = 1
-   
+def plot_k(widths_list, beff_list, roff_list, nr_data, height_list,period,poles_proportion,filename,opmode):
     
-    opt = optimize.curve_fit(
-        calc_function, widths, rollofs)[0]
-
-    return opt
-
-def plot_k(widths_list, beff_list, roff_list, nr_data, height_list,period,poles_proportion,filename):
     color_list = ['b','g','y','C1','r','C3','k']
     plt.figure(1)
     label_base = 'Block height = '
@@ -76,9 +64,14 @@ def plot_k(widths_list, beff_list, roff_list, nr_data, height_list,period,poles_
         beff = np.array(beff_list[i])
         k = utils.calc_deflection_parameter(b_amp=beff, period_length=period*1e-3)
         plt.plot(widths_list[i], k, label=label, color=color_list[i])
+    k_goal = 2.1*np.ones(len(widths_list[0]))
+    plt.plot(widths_list[i],k_goal, '--', color= 'k')
     plt.grid()
     plt.legend()
-    plt.savefig(filename[0:14] + '/plot_K.png',dpi=300)
+    plt.xlim(55,80)
+    # plt.ylim(1.4,2.25)
+    figname = filename[0:14] + '/plot_K_' + poles_proportion[0:2] + '_' + opmode + '.png'
+    plt.savefig(figname,dpi=300)
 
     plt.figure(2)
     label_base = 'Block height = '
@@ -86,20 +79,21 @@ def plot_k(widths_list, beff_list, roff_list, nr_data, height_list,period,poles_
     plt.ylabel('Field roll-off [%]')
     title = "Poles proportion = " + poles_proportion + "%"
     plt.title(title)
-    width = np.arange(20,60,0.5)
-    
     for i,height in enumerate(height_list):
         label = label_base + str(height) + ' mm'
         roff = np.array(roff_list[i])
-        param = fit_curve(widths_list[i],roff)
-        rollfit = calc_function(width,param[0],param[1],param[2])
-        plt.plot(widths_list[i], roff, '.', label=label, color=color_list[i])
-        plt.plot(width, rollfit, '--', color=color_list[i])
+        plt.plot(widths_list[i], roff, '--', label=label, color=color_list[i])
+        
+    width = np.arange(20,100,0.5)
+    roff_goal = 0.01*np.ones(len(width))
+    plt.plot(width,roff_goal, '-', color= 'k', linewidth = 1.2 )
+    plt.plot(width,-1*roff_goal, '-', color= 'k', linewidth = 1.2 )
     plt.grid()
     plt.legend()
-    plt.xlim(30,60)
-    plt.ylim(-0.5,0.3)
-    plt.savefig(filename[0:14] + '/plot_rolloff.png',dpi=300)
+    plt.xlim(55,80)
+    # plt.ylim(-0.1,0.7)
+    figname = filename[0:14] + '/plot_rolloff_' + poles_proportion[0:2] + '_' + opmode + '.png'
+    plt.savefig(figname,dpi=300)
     plt.show()
     
 def run(filename):
@@ -129,8 +123,8 @@ def run(filename):
             roff_list.append(roffs[begin:begin+nr])
     
     poles_proportion = filename[10:14]
-    plot_k(widths_list, beff_list, roff_list, nr_data, height_list,period,poles_proportion,filename)
+    plot_k(widths_list, beff_list, roff_list, nr_data, height_list,period,poles_proportion,filename,opmode)
 if __name__ == "__main__":
     
-    run("op3_width_90.0/Beff_op3_width_90.0%.txt")
+    run("op3_width_85.0/Beff_op3_width_85.0%.txt")
 

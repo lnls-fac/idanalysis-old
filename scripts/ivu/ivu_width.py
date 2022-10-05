@@ -3,44 +3,62 @@
 import numpy as _np
 import matplotlib.pyplot as plt
 
+import imaids.utils
+
 from imaids.models import HybridPlanar as Hybrid
 from imaids.blocks import Block as Block
 
 
-def generate_model(height=None, width=None, p_height=None, p_width= None, period_length=17.7, gap=4.2, op=None):
+
+def generate_model(width=None, height=None, pole_prop=0.8, period_length=29, gap=10.9, op=None):
     
     opconfig = dict([
-        ('op1',[17.7,4.2,1.34]),
+        ('op1',[17.7,4.3,1.34]),
         ('op2',[17.5,3.75,1.24]),
         ('op3',[18.5,4.2,1.24])])
-
+    
+    p_width = pole_prop*width
+    p_height= pole_prop*height
+    chamfer_b = 5
+    chamfer_p = 3
+    y_pos = 0
+    
     block_shape = [
-        [width/2, 0],
-        [width/2, -height],
-        [-width/2, -height],
-        [-width/2, 0],
+        [-width/2, -chamfer_b],
+        [-width/2, -height+chamfer_b],
+        [-width/2+chamfer_b, -height],
+        [width/2-chamfer_b, -height],
+        [width/2, -height+chamfer_b],
+        [width/2, -chamfer_b],
+        [width/2-chamfer_b, 0],
+        [-width/2+chamfer_b, 0],
+        
     ]
     
     pole_shape = [
-        [p_width/2, 0],
-        [p_width/2, -p_height],
-        [-p_width/2, -p_height],
-        [-p_width/2, 0],
+        [-p_width/2, -chamfer_p-y_pos],
+        [-p_width/2, -p_height-y_pos],
+        [p_width/2, -p_height-y_pos],
+        [p_width/2, -chamfer_p-y_pos],
+        [p_width/2-chamfer_p, 0-y_pos],
+        [-p_width/2+chamfer_p, 0-y_pos],
+        
     ]
-
+    
     if op is not None:
         period_length = opconfig[op][0]
         gap = opconfig[op][1]
         br = opconfig[op][2]
     
+    block_subdivision = [8,4,3]
     pole_subdivision = [12,12,3]
-
-    ivu = Hybrid(gap=gap,period_length=period_length, mr=br, nr_periods=5,
-                 pole_length = 'default', longitudinal_distance = 0.1,
-                 block_shape=block_shape, pole_shape=pole_shape,
-                 pole_subdivision=pole_subdivision)
     
+    ivu = Hybrid(gap=gap,period_length=period_length, mr=br, nr_periods=5,
+                 longitudinal_distance = 0,block_shape=block_shape,
+                 pole_shape=pole_shape, block_subdivision=block_subdivision,
+                 pole_subdivision=pole_subdivision,trf_on_blocks=True)
     ivu.solve()
+    
     return ivu,br
 
 
@@ -54,31 +72,10 @@ def generate_beff_file(block_width, b_dict, roff_dict, name):
     my_file.close()
 
 
-def generate_field_file(block_height, block_width, period, gap, filename):
-
-    lim = period*11
-    rz = _np.linspace(-lim,lim,1500)
-    rx = 0
-    ry = 0
-
-    field = ivu.get_field(x=rx, y=ry, z=rz)
-    by = field[:,1]
-    bx = field[:,0]
-    bz = field[:,2]
-
-    my_file = open(filename,"w") #w=writing
-    my_file.write('\nz[mm]\tBx[T]\tBy[T]\tBz[T]\n')
-    for i,z in enumerate(rz):
-        my_file.write("{:.1f}\t{:.4e}\t{:.4e}\t{:.4e}\n".format(z,bx[i],by[i],bz[i]))
-    my_file.close()
-
-    return
-
-    
-def run(prop_w,op=None):
+def run(prop_p,op=None):
     """."""
-    folder = op + '_width_' + str(prop_w*100) + '/'
-    name = folder + 'Beff_'+ op + '_width_' + str(prop_w*100) + '%.txt'
+    folder = op + '_width_' + str(prop_p*100) + '/'
+    name = folder + 'Beff_'+ op + '_width_' + str(prop_p*100) + '%.txt'
     period = 17.7
     gap = 4.2
 
@@ -87,17 +84,15 @@ def run(prop_w,op=None):
     blocks_dict = dict()
 
     b_correction = 1.0095 #1.0095 For five periods  
-    for block_height in _np.arange(10,70,10): 
-        pole_height = 1*block_height
+    for block_height in _np.arange(20,60,10): 
         print("block height: ",block_height)
         K_list = []
         B_list = []
         roff_list = []
-        block_width = _np.arange(20,70,10)  
+        block_width = _np.arange(55,85,5)  
         for width in block_width:
-            pole_width = prop_w*width
-            ivu, br = generate_model(height=block_height, width=width, p_height=pole_height,
-                                    p_width=pole_width, period_length=period, gap=gap, op=op)
+            ivu, br = generate_model(height=block_height, width=width, pole_prop=prop_p,
+                                    period_length=period, gap=gap, op=op)
             Beff, B_peak, _ = ivu.get_effective_field(polarization='hp', hmax=5, x=0)
             Beff_6, B_peak_6, _ = ivu.get_effective_field(polarization='hp', hmax=5, x=6)
             Roll_off = 100*(B_peak - B_peak_6)/B_peak
@@ -114,9 +109,9 @@ def run(prop_w,op=None):
     
 if __name__ == "__main__":
 
-    run(prop_w=0.6,op='op1')
-    run(prop_w=0.6,op='op2')
-    run(prop_w=0.6,op='op3')
+    run(prop_p=0.75,op='op3')
+    run(prop_p=0.80,op='op3')
+    run(prop_p=0.85,op='op3')
 
  
 

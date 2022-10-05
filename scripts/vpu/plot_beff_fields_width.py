@@ -76,7 +76,11 @@ def plot_k(widths_list, beff_list, roff_list, nr_data, height_list,period,poles_
         beff = np.array(beff_list[i])
         k = utils.calc_deflection_parameter(b_amp=beff, period_length=period*1e-3)
         plt.plot(widths_list[i], k, label=label, color=color_list[i])
+    k_goal = 2.1*np.ones(len(widths_list[0]))
+    plt.plot(widths_list[i],k_goal, '--', color= 'k')
     plt.grid()
+    plt.ylim(1.8,2.42)
+    plt.xlim(30,60)
     plt.legend()
     plt.savefig(filename[0:22] + '/plot_K.png',dpi=300)
 
@@ -94,6 +98,11 @@ def plot_k(widths_list, beff_list, roff_list, nr_data, height_list,period,poles_
         rollfit = calc_function(width,param[0],param[1],param[2])
         plt.plot(widths_list[i], roff, '.', label=label, color=color_list[i])
         plt.plot(width, rollfit, '--', color=color_list[i])
+    roff_goal = 0.01*np.ones(len(width))
+    plt.plot(width,roff_goal, '-', color= 'k', linewidth = 0.8 )
+    plt.plot(width,-1*roff_goal, '-', color= 'k', linewidth = 0.8 )
+    plt.ylim(-0.5,5)
+    plt.xlim(30,60)
     plt.grid()
     plt.legend()
     plt.savefig(filename[0:22] + '/plot_rolloff.png',dpi=300)
@@ -122,5 +131,5 @@ def run(filename,period):
     plot_k(widths_list, beff_list, roff_list, nr_data, height_list,period,poles_proportion,filename)
 if __name__ == "__main__":
     
-    run("op1_width_br_1.32_60.0/Beff_op1_width_60.0%.txt",29)
+    run("op1_width_br_1.24_60.0/Beff_op1_width_60.0%.txt",29)
 
