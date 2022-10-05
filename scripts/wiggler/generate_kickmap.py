@@ -27,10 +27,10 @@ if __name__ == "__main__":
     """."""
     posx = np.linspace(-15, +15, 31) / 1000  # [m]
     posy = np.linspace(-12, +12, 3) / 1000  # [m]
-    # idconfig = 'ID4019'  # gap 49.73 mm, correctors with zero current
+    idconfig = 'ID4019'  # gap 49.73 mm, correctors with zero current
     # idconfig = 'ID3979'  # gap 59.6 mm, correctors with zero current
     # idconfig = 'ID4017'  # gap 59.6 mm, correctors with best current
     # idconfig = 'ID4020'  # gap 45.0 mm, correctors with zero current
-    idconfig = 'ID3969'  #gap 59.6 mm, without correctors
+    # idconfig = 'ID3969'  #gap 59.6 mm, without correctors
     run(idconfig, posx, posy)
 
