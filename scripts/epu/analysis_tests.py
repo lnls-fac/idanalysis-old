@@ -8,6 +8,7 @@ from pyaccel import optics as pyacc_opt
 from pyaccel.optics import calc_touschek_energy_acceptance
 
 import idanalysis
+import pyaccel
 #idanalysis.FOLDER_BASE = '/home/ximenes/repos-dev/'
 idanalysis.FOLDER_BASE = '/home/gabriel/repos-dev/'
 
@@ -89,6 +90,7 @@ def calc_dtune_betabeat(twiss0, twiss1):
       dtunex, dtuney, bbeatx, bbeaty,
       bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax)
 
+
 def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=True):
   if plot_flag:
     #Compare optics between nominal value and uncorrect optics due ID insertion
@@ -97,14 +99,14 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
     print('Not symmetrized optics :')
     print(f'dtunex: {dtunex:+.6f}')
     print(f'dtunex: {dtuney:+.6f}')
-    print(f'bbetax: {bbeatx_rms:04.1f} % rms, {bbeatx_absmax:04.1f} % absmax')
-    print(f'bbetay: {bbeaty_rms:04.1f} % rms, {bbeaty_absmax:04.1f} % absmax')
+    print(f'bbetax: {bbeatx_rms:04.2f} % rms, {bbeatx_absmax:04.2f} % absmax')
+    print(f'bbetay: {bbeaty_rms:04.2f} % rms, {bbeaty_absmax:04.2f} % absmax')
     print()
 
     plt.figure(1)
     blue, red = (0.4,0.4,1), (1,0.4,0.4)
-    labelx = f'X ({bbeatx_rms:.1f} % rms)'
-    labely = f'Y ({bbeaty_rms:.1f} % rms)'
+    labelx = f'X ({bbeatx_rms:.2f} % rms)'
+    labely = f'Y ({bbeaty_rms:.2f} % rms)'
     plt.plot(twiss0.spos, bbeatx, color=blue, alpha=0.8, label=labelx)
     plt.plot(twiss0.spos, bbeaty, color=red, alpha=0.8, label=labely)
     plt.xlabel('spos [m]')
@@ -120,14 +122,14 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
     print('symmetrized optics but uncorrect tunes:')
     print(f'dtunex: {dtunex:+.6f}')
     print(f'dtunex: {dtuney:+.6f}')
-    print(f'bbetax: {bbeatx_rms:04.1f} % rms, {bbeatx_absmax:04.1f} % absmax')
-    print(f'bbetay: {bbeaty_rms:04.1f} % rms, {bbeaty_absmax:04.1f} % absmax')
+    print(f'bbetax: {bbeatx_rms:04.2f} % rms, {bbeatx_absmax:04.2f} % absmax')
+    print(f'bbetay: {bbeaty_rms:04.2f} % rms, {bbeaty_absmax:04.2f} % absmax')
     print()
 
     plt.figure(2)
     blue, red = (0.4,0.4,1), (1,0.4,0.4)
-    labelx = f'X ({bbeatx_rms:.1f} % rms)'
-    labely = f'Y ({bbeaty_rms:.1f} % rms)'
+    labelx = f'X ({bbeatx_rms:.2f} % rms)'
+    labely = f'Y ({bbeaty_rms:.2f} % rms)'
     plt.plot(twiss0.spos, bbeatx, color=blue, alpha=0.8, label=labelx)
     plt.plot(twiss0.spos, bbeaty, color=red, alpha=0.8, label=labely)
     plt.xlabel('spos [m]')
@@ -143,13 +145,13 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
     print('symmetrized optics and correct tunes:')
     print(f'dtunex: {dtunex:+.6f}')
     print(f'dtunex: {dtuney:+.6f}')
-    print(f'bbetax: {bbeatx_rms:04.1f} % rms, {bbeatx_absmax:04.1f} % absmax')
-    print(f'bbetay: {bbeaty_rms:04.1f} % rms, {bbeaty_absmax:04.1f} % absmax')
+    print(f'bbetax: {bbeatx_rms:04.2f} % rms, {bbeatx_absmax:04.2f} % absmax')
+    print(f'bbetay: {bbeaty_rms:04.2f} % rms, {bbeaty_absmax:04.2f} % absmax')
 
     plt.figure(3)
     blue, red = (0.4,0.4,1), (1,0.4,0.4)
-    labelx = f'X ({bbeatx_rms:.1f} % rms)'
-    labely = f'Y ({bbeaty_rms:.1f} % rms)'
+    labelx = f'X ({bbeatx_rms:.2f} % rms)'
+    labely = f'Y ({bbeaty_rms:.2f} % rms)'
     plt.plot(twiss0.spos, bbeatx, color=blue, alpha=0.8, label=labelx)
     plt.plot(twiss0.spos, bbeaty, color=red, alpha=0.8, label=labely)
     plt.xlabel('spos [m]')
@@ -159,6 +161,7 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
     plt.legend()
     plt.grid()
     plt.show()
+
 
 def analysis_uncorrected_perturbation(
     config_label, model, twiss0=None, plot_flag=True, straight_nr=10):
@@ -207,11 +210,11 @@ def plot_betas(twiss0, twiss1, locs_beta):
     posi = np.linspace(twiss0.spos[locs_beta[0]],twiss0.spos[locs_beta[0]],100)
     posf = np.linspace(twiss0.spos[locs_beta[1]],twiss0.spos[locs_beta[1]],100)
     line = np.linspace(-15,15,100)
-    plt.plot(twiss0.spos,twiss0.betax, color = 'C0', label = 'nominal beta')
-    plt.plot(twiss0.spos,twiss0.alphax, color = 'C1', label = 'nominal alpha')
-    
-    plt.plot(twiss1.spos,twiss1.betax, '.',color = 'b', label = 'beta from ID')
-    plt.plot(twiss1.spos,twiss1.alphax,'.',color = 'g', label = 'alpha from ID')
+    plt.plot(twiss0.spos,twiss1.betax-twiss0.betax, color = 'C0', label = 'nominal beta')
+    plt.plot(twiss0.spos,twiss1.alphax-twiss0.alphax, color = 'C1', label = 'nominal alpha')
+  
+    # plt.plot(twiss1.spos,twiss1.betax, '.',color = 'b', label = 'beta from ID')
+    # plt.plot(twiss1.spos,twiss1.alphax,'.',color = 'g', label = 'alpha from ID')
     
     plt.plot(posi,line,color='k')
     plt.plot(posf,line,color='k')
@@ -219,34 +222,53 @@ def plot_betas(twiss0, twiss1, locs_beta):
     plt.show()
     plt.clf()
 
-def calc_optics(model1,loc_beta,sym_idx):
-  twiss,*_ = pyacc_opt.calc_twiss(model1, indices='closed')
+
+def calc_optics(model1, loc_beta, sym_idx):
+  twiss, *_ = pyacc_opt.calc_twiss(model1, indices='closed')
   betax = twiss.betax[loc_beta]
   betay = twiss.betay[loc_beta]
-  alphax = twiss.alphax[sym_idx]
-  alphay = twiss.alphay[sym_idx]
-  optics_list = [betax,betay,alphax,alphay]
-  return  np.array(optics_list)
+  alphax0 = twiss.alphax[sym_idx]
+  alphay0 = twiss.alphay[sym_idx]
+  alphax = twiss.alphax[loc_beta]
+  alphay = twiss.alphay[loc_beta]
+  tunes = [twiss.mux[-1] / np.pi / 2, twiss.muy[-1] / np.pi / 2]
+  optics_list = [betax, betay, alphax0, alphay0, alphax, alphay]
+  return  np.array(optics_list), tunes
 
-def correct_symmetry(model1, sym_idx,loc_beta, knobs, goal_alpha, goal_beta):
+
+def correct_symmetry(model1, sym_idx, loc_beta, knobs, optics_functions0):
+
+  goal_beta = optics_functions0[0:2]
+  goal_alpha_0 = optics_functions0[2:4]
+  goal_alpha = optics_functions0[4:6]
+
+  # respm calc
   delta_k=1e-5
-  respm = np.zeros((4,len(knobs)))
+  respm = np.zeros((6,len(knobs)))
   for i, fam in enumerate(knobs):
     indx = knobs[fam]
     k0_list = []
-    for j,idx in enumerate(indx):
+
+    for j, idx in enumerate(indx):
       k0 = model1[idx].polynom_b[1]
       k0_list.append(k0)
       model1[idx].polynom_b[1] = k0_list[j] + delta_k/2
-    optics_functions_p = calc_optics(model1,loc_beta,sym_idx)
-    
+    optics_functions_p, _ = calc_optics(model1,loc_beta,sym_idx)
+    # print(optics_functions_p)
+
     for j,idx in enumerate(indx):
       model1[idx].polynom_b[1] = k0_list[j] - delta_k/2
-    optics_functions_n = calc_optics(model1,loc_beta,sym_idx)
-    
+    optics_functions_n, _ = calc_optics(model1,loc_beta,sym_idx)
+    # print(optics_functions_n)
+
     for j,idx in enumerate(indx):
       model1[idx].polynom_b[1] = k0_list[j] 
-    respm[:,i] = (optics_functions_p - optics_functions_n)/delta_k
+
+    respm[:, i] = (optics_functions_p - optics_functions_n)/delta_k
+
+  # print(respm)
+
+  # raise ValueError
 
   # inverse matrix
   umat, smat, vmat = np.linalg.svd(respm, full_matrices=False)
@@ -259,9 +281,10 @@ def correct_symmetry(model1, sym_idx,loc_beta, knobs, goal_alpha, goal_beta):
   invmat = -1 * np.dot(np.dot(vmat.T, ismat), umat.T)
 
   obj_opt = goal_beta.tolist()
+  obj_opt += goal_alpha_0.tolist()
   obj_opt += goal_alpha.tolist()
   opt_function_nominal = np.array(obj_opt)
-  optics_functions_ID = calc_optics(model1,loc_beta,sym_idx)
+  optics_functions_ID, _ = calc_optics(model1,loc_beta,sym_idx)
   delta_optics = optics_functions_ID - opt_function_nominal
 
   dk = np.dot(invmat,delta_optics)
@@ -275,6 +298,7 @@ def correct_symmetry(model1, sym_idx,loc_beta, knobs, goal_alpha, goal_beta):
 
   return dk
 
+
 def analysis(plot_flag=True):
   rescale_kicks = 1.0
 
@@ -285,23 +309,32 @@ def analysis(plot_flag=True):
   model0, _, knobs, locs_beta = create_model(
     vchamber_on=False, straight_nr=straight_nr)
   twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
-  
+  print(model0[locs_beta[1]-1])
   print('local quadrupole fams: ', knobs)
   print('element indices for straight section begin and end: ', locs_beta)
-
-  # calculate nominal twiss
-  goal_tunes = np.array([twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
-  goal_beta = np.array([twiss0.betax[locs_beta[0]], twiss0.betay[locs_beta[0]]])
 
   idx_begin,idx_end = optics.get_id_straigh_index_interval(model0, straight_nr)
   locs = optics.symm_get_locs(model0)
   for loc in locs:
     if loc>idx_begin and loc<idx_end:
       sym_idx = loc
+  loc_beta = locs_beta[0]
+  print(locs_beta)
+  print('sym_idx: ', sym_idx)
 
-  goal_alpha = np.array([0, 0])
-  print(goal_beta)
-  print(goal_alpha)
+  # calculate nominal twiss
+  optics_functions0, tunes0 = calc_optics(model0, loc_beta, sym_idx)
+  # goal_tunes = np.array([twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
+  # goal_beta = np.array([twiss0.betax[locs_beta[0]], twiss0.betay[locs_beta[0]]])
+  # goal_alpha = np.array([twiss0.alphax[locs_beta[0]], twiss0.alphay[locs_beta[0]]])
+
+  # goal_alpha_0 = np.array([0, 0])
+  # [betax,betay,alphax0,alphay0,alphax,alphay]
+  print('beta: ', optics_functions0[0:2])
+  print('alpha: ', optics_functions0[4:6])
+  print('alpha0: ', optics_functions0[2:4])
+
+  # raise ValueError
 
   # create model with ID
   model1, config_label, straight_nr = create_model_with_id(id_config_idx=2, rescale_kicks=rescale_kicks, straight_nr=straight_nr)
@@ -311,22 +344,29 @@ def analysis(plot_flag=True):
   orbcorr.correct_orbit_sofb(model0, model1, id_famname='EPU50')
 
   # calculate beta beating and tune delta tunes
-  twiss1 = analysis_uncorrected_perturbation(
-      config_label, model1, twiss0=twiss0, plot_flag=False, straight_nr=straight_nr)
+  # twiss1 = analysis_uncorrected_perturbation(
+  #     config_label, model1, twiss0=twiss0, plot_flag=False, straight_nr=straight_nr)
 
   
   # symmetrize optics (local quad fam knobs)
   dk_tot = np.zeros(len(knobs))
   for i in range(12):
-      dk = correct_symmetry(model1=model1,sym_idx=sym_idx,loc_beta=locs_beta[0],knobs=knobs, goal_alpha=goal_alpha,goal_beta=goal_beta)
+      dk = correct_symmetry(
+        model1=model1,
+        sym_idx=sym_idx, loc_beta=locs_beta[0], knobs=knobs,
+        optics_functions0=optics_functions0)
+      # raise ValueError
       print('iteration #{}, dK: {}'.format(i+1, dk))
       dk_tot += dk
   for i, fam in enumerate(knobs):
       print('{:<9s} dK: {:+9.6f} 1/m²'.format(fam, dk_tot[i]))
   model2 = model1[:]
   twiss2, *_ = pyacc_opt.calc_twiss(model2, indices='closed')
+  optics_functions_ID = calc_optics(model1,locs_beta[0],sym_idx)
+  print(optics_functions_ID)
   print()
-
+  plot_betas(twiss0, twiss2, locs_beta)
+  raise ValueError
   # correct tunes
   tunes = twiss1.mux[-1]/np.pi/2, twiss1.muy[-1]/np.pi/2
   print('init    tunes: {:.9f} {:.9f}'.format(tunes[0], tunes[1]))
