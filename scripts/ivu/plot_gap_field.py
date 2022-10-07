@@ -145,5 +145,5 @@ def run(filename):
     plot_charts(xpos_list, beff_list, bpeak_list, zpos_list, by_list, nr_data, gap_list,poles_proportion,filename,opmode)
 if __name__ == "__main__":
     
-    run("max_iv/ivu17.txt")
+    run("max_iv/ivu17_2.txt")
 

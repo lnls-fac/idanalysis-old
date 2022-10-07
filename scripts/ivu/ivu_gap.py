@@ -54,7 +54,7 @@ def generate_model(gap=10.9, op=None):
         br = opconfig[op][2]
     
     block_subdivision = [8,4,3]
-    pole_subdivision = [15,15,3]
+    pole_subdivision = [12,12,3]
     
     ivu = Hybrid(gap=gap,period_length=period_length, mr=br, nr_periods=5,
                  longitudinal_distance = 0,block_shape=block_shape,
@@ -78,8 +78,8 @@ def generate_files(x_pos, z_pos, Beff_dict_x, Bpeak_dict_x, B_dict_z,name):
 
 def run(prop_p,op=None):
     """."""
-    folder = op + '_width_' + str(prop_p*100) + '/'
-    name = folder + 'Beff_'+ op + '_gap_' + str(prop_p*100) + '%.txt'
+    folder = 'max_iv/'
+    name = folder + 'ivu17_x.txt'
 
     Beff_dict_x = dict()
     Bpeak_dict_x = dict()
@@ -87,8 +87,8 @@ def run(prop_p,op=None):
 
     b_correction = 1.0095 #1.0095 For five periods
     gap_list = _np.arange(4,14,2) 
-    x_pos = _np.linspace(-20,20.5,320)
-    z_pos = _np.linspace(-18.5,19,320)
+    x_pos = _np.linspace(-15,15,160)
+    z_pos = _np.linspace(-18.5,18.5,160)
     for gap in gap_list:
         print("gap: ",gap)
         Beff_list_x = []
@@ -96,10 +96,10 @@ def run(prop_p,op=None):
         ivu = generate_model(gap=gap, op=op)
 
         for x in x_pos:
-            Beff_x, Bpeak_x, _ = ivu.get_effective_field(polarization='hp', hmax=5, x=x)
-            Beff_x *= b_correction
+            B1 = ivu.get_field_at_point(point=[x,0,-ivu.period_length/4])
+            Bpeak_x = B1[1]
             Bpeak_x *= b_correction
-            Beff_list_x.append(Beff_x)
+            Beff_list_x.append(Bpeak_x)
             Bpeak_list_x.append(Bpeak_x)    
         Beff_dict_x[gap] = Beff_list_x
         Bpeak_dict_x[gap] = Bpeak_list_x
