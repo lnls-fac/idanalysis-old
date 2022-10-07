@@ -39,7 +39,7 @@ def create_model(epu_config_idx=None, rescale_kicks=1.0, **kwargs):
 
       # create object with list of all possible EPU50 configurations
       configs = create_epudata()
-      
+
       # get config label
       config_label = configs.get_config_label(configs[epu_config_idx])
 
@@ -47,7 +47,7 @@ def create_model(epu_config_idx=None, rescale_kicks=1.0, **kwargs):
       nr_steps = kwargs.get('nr_steps', 40)
       kmap_fname = configs.get_kickmap_filename(configs[epu_config_idx])
       ids = model.get_id_epu_list(
-        kmap_fname, ids=None, nr_steps=nr_steps, rescale_kicks=rescale_kicks, 
+        kmap_fname, ids=None, nr_steps=nr_steps, rescale_kicks=rescale_kicks,
         straight_nr=straight_nr)
 
       # create model
@@ -64,7 +64,7 @@ def create_model(epu_config_idx=None, rescale_kicks=1.0, **kwargs):
 
 
 def create_model_with_id(id_config_idx, rescale_kicks=1.0, straight_nr=None):
-  if straight_nr is None: 
+  if straight_nr is None:
     straight_nr = 10
   kwargs = {
       'vchmaber_on': False,
@@ -140,14 +140,14 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
     print('Not symmetrized optics :')
     print(f'dtunex: {dtunex:+.6f}')
     print(f'dtunex: {dtuney:+.6f}')
-    print(f'bbetax: {bbeatx_rms:04.1f} % rms, {bbeatx_absmax:04.1f} % absmax')
-    print(f'bbetay: {bbeaty_rms:04.1f} % rms, {bbeaty_absmax:04.1f} % absmax')
+    print(f'bbetax: {bbeatx_rms:04.2f} % rms, {bbeatx_absmax:04.2f} % absmax')
+    print(f'bbetay: {bbeaty_rms:04.2f} % rms, {bbeaty_absmax:04.2f} % absmax')
     print()
 
     plt.figure(1)
     blue, red = (0.4,0.4,1), (1,0.4,0.4)
-    labelx = f'X ({bbeatx_rms:.1f} % rms)'
-    labely = f'Y ({bbeaty_rms:.1f} % rms)'
+    labelx = f'X ({bbeatx_rms:.2f} % rms)'
+    labely = f'Y ({bbeaty_rms:.2f} % rms)'
     plt.plot(twiss0.spos, bbeatx, color=blue, alpha=0.8, label=labelx)
     plt.plot(twiss0.spos, bbeaty, color=red, alpha=0.8, label=labely)
     plt.xlabel('spos [m]')
@@ -156,21 +156,21 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
     plt.suptitle('Not symmetrized optics')
     plt.legend()
     plt.grid()
-  
+
 
     #Compare optics between nominal value and symmetrized optics
     dtunex, dtuney, bbeatx, bbeaty, bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(twiss0,twiss2)
     print('symmetrized optics but uncorrect tunes:')
     print(f'dtunex: {dtunex:+.6f}')
     print(f'dtunex: {dtuney:+.6f}')
-    print(f'bbetax: {bbeatx_rms:04.1f} % rms, {bbeatx_absmax:04.1f} % absmax')
-    print(f'bbetay: {bbeaty_rms:04.1f} % rms, {bbeaty_absmax:04.1f} % absmax')
+    print(f'bbetax: {bbeatx_rms:04.2f} % rms, {bbeatx_absmax:04.2f} % absmax')
+    print(f'bbetay: {bbeaty_rms:04.2f} % rms, {bbeaty_absmax:04.2f} % absmax')
     print()
 
     plt.figure(2)
     blue, red = (0.4,0.4,1), (1,0.4,0.4)
-    labelx = f'X ({bbeatx_rms:.1f} % rms)'
-    labely = f'Y ({bbeaty_rms:.1f} % rms)'
+    labelx = f'X ({bbeatx_rms:.2f} % rms)'
+    labely = f'Y ({bbeaty_rms:.2f} % rms)'
     plt.plot(twiss0.spos, bbeatx, color=blue, alpha=0.8, label=labelx)
     plt.plot(twiss0.spos, bbeaty, color=red, alpha=0.8, label=labely)
     plt.xlabel('spos [m]')
@@ -179,20 +179,20 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
     plt.suptitle('Symmetrized optics and uncorrect tunes')
     plt.legend()
     plt.grid()
-  
+
 
     #Compare optics between nominal value and symmetrized optics with tune correction
     dtunex, dtuney, bbeatx, bbeaty, bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(twiss0,twiss3)
     print('symmetrized optics and correct tunes:')
     print(f'dtunex: {dtunex:+.6f}')
     print(f'dtunex: {dtuney:+.6f}')
-    print(f'bbetax: {bbeatx_rms:04.1f} % rms, {bbeatx_absmax:04.1f} % absmax')
-    print(f'bbetay: {bbeaty_rms:04.1f} % rms, {bbeaty_absmax:04.1f} % absmax')
+    print(f'bbetax: {bbeatx_rms:04.2f} % rms, {bbeatx_absmax:04.2f} % absmax')
+    print(f'bbetay: {bbeaty_rms:04.2f} % rms, {bbeaty_absmax:04.2f} % absmax')
 
     plt.figure(3)
     blue, red = (0.4,0.4,1), (1,0.4,0.4)
-    labelx = f'X ({bbeatx_rms:.1f} % rms)'
-    labely = f'Y ({bbeaty_rms:.1f} % rms)'
+    labelx = f'X ({bbeatx_rms:.2f} % rms)'
+    labely = f'Y ({bbeaty_rms:.2f} % rms)'
     plt.plot(twiss0.spos, bbeatx, color=blue, alpha=0.8, label=labelx)
     plt.plot(twiss0.spos, bbeaty, color=red, alpha=0.8, label=labely)
     plt.xlabel('spos [m]')
@@ -205,7 +205,7 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
 
 
 def analysis_dynapt(model0, modelf, nrtheta=9, nrpts=9):
-  
+
   model0.vchamber_on = True
   modelf.vchamber_on = True
 
@@ -218,8 +218,8 @@ def analysis_dynapt(model0, modelf, nrtheta=9, nrpts=9):
 
   x,y = optics.calc_dynapt_xy(model0, nrturns=5000, nrtheta=nrtheta, print_flag=False)
   xID,yID = optics.calc_dynapt_xy(modelf, nrturns=5000, nrtheta=nrtheta, print_flag=False)
-  
-  
+
+
   de, xe = optics.calc_dynapt_ex(model0, nrturns=5000, nrpts=nrpts, print_flag=False)
   deID, xeID = optics.calc_dynapt_ex(modelf, nrturns=5000, nrpts=nrpts, print_flag=False)
 
@@ -244,13 +244,13 @@ def analysis_dynapt(model0, modelf, nrtheta=9, nrpts=9):
   plt.grid()
   plt.legend()
   plt.show()
-  
+
 
 def analysis_energy_acceptance(model0, modelf, spos=None):
-  
+
   accep_neg, accep_pos = calc_touschek_energy_acceptance(accelerator=model0, check_tune=True)
   accep_neg_id, accep_pos_id = calc_touschek_energy_acceptance(accelerator=modelf, check_tune=True)
-  
+
   plt.figure(3)
   blue, red = (0.4,0.4,1), (1,0.4,0.4)
   plt.plot(spos, accep_neg, color=blue, label='Without ID')
@@ -275,7 +275,7 @@ def analysis(plot_flag=True):
   model0, _, knobs, locs_beta = create_model(
     vchamber_on=False, straight_nr=straight_nr)
   twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
-  
+
   print('local quadrupole fams: ', knobs)
   print('element indices for straight section begin and end: ', locs_beta)
 
@@ -289,7 +289,7 @@ def analysis(plot_flag=True):
   model1, config_label, straight_nr = create_model_with_id(id_config_idx=2, rescale_kicks=rescale_kicks, straight_nr=straight_nr)
   print(config_label)
   # correct orbit
-  orbcorr.correct_orbit_sofb(model0, model1)
+  orbcorr.correct_orbit_sofb(model0, model1, 'EPU50')
 
 
   # calculate beta beating and tune delta tunes
@@ -322,7 +322,7 @@ def analysis(plot_flag=True):
   print()
 
   plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=plot_flag)
-  
+
   analysis_dynapt(model0, model3)
   analysis_energy_acceptance(model0, model3, twiss0.spos)
 
