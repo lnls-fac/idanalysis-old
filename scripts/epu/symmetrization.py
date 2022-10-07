@@ -267,11 +267,12 @@ def run():
 	opt1 = calc_opt(model_id, loc_init, loc_end)
 
 	dk_tot = np.zeros(len(knobs))
-	for i in range(10):
+	for i in range(7):
 		respm = calc_respm(model_id, knobs, loc_init, loc_end)
 		dk = apply_corretion(respm, knobs, opt0, opt1, model_id)
 		print('iteration #{}, dK: {}'.format(i+1, dk))
 		dk_tot += dk
+		opt1 = calc_opt(model_id, loc_init, loc_end)
 	for i, fam in enumerate(knobs):
 		print('{:<9s} dK: {:+9.6f} 1/m²'.format(fam, dk_tot[i]))
 
