@@ -13,7 +13,7 @@ from idanalysis import IDKickMap
 from pyaccel import lattice as pyacc_lat
 
 def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
-  
+
   kickx_end = idkmap.kickx_upstream + idkmap.kickx_downstream
   kicky_end = idkmap.kicky_upstream + idkmap.kicky_downstream
   rx0 = idkmap.posx
@@ -32,13 +32,13 @@ def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
     plt.legend()
     plt.grid()
     plt.show()
- 
+
   return rx0,ry0, pxf, pyf, rxf, ryf
 
 
 def readfile(fname,init):
-    
-  
+
+
     file_name = fname
 
     with open(file_name, encoding='utf-8', errors='ignore') as my_file:
@@ -53,15 +53,15 @@ def readfile(fname,init):
                     line = line.replace('\t\t', ' ')
                 line = line.replace('\t', ' ')
                 list_data = line.split() #returns a list
-              
-              
+
+
                 try:
                   data_col1.append(float(list_data[0]))
                   data_col2.append(float(list_data[1]))
                 except ValueError:
                   raise ValueError
-                    
-                    
+
+
     my_file.close()
     x0 = np.array(data_col1)
     xf = np.array(data_col2)
@@ -80,13 +80,15 @@ if __name__ == '__main__':
 
   x, px_ima = readfile(ima_kickfname,1)
   x, x_ima = readfile(ima_shiftfname,1)
-  
+  print(x)
+  print(x_ima)
+
   fig, ax1 = plt.subplots()
   ax2 = ax1.twinx()
   ax1.plot(1e3*rx0, 1e6*pxf,'--', color='C1', label='Horizontal Kick - FAC')
-  ax1.plot(x, px_ima, 'o', color='C1', label='Horizontal Kick - IMA')
+  ax1.plot(x, px_ima, 'o', color='C1', label='Horizontal Kick - IMA', linewidth=8)
   ax2.plot(1e3*rx0, 1e6*(rxf-rx0),'--', color='b', label='Horizontal displacement - FAC')
-  ax2.plot(x, (x_ima-x), 'o', color='b', label='Horizontal displacement - IMA')
+  ax2.plot(x, x_ima, 'o', color='b', label='Horizontal displacement - IMA', linewidth=8)
   ax1.set_xlabel('X position [mm]')
   ax1.set_ylabel('Kick X [urad]')
   ax2.set_ylabel('Pos X [um]')
@@ -96,6 +98,3 @@ if __name__ == '__main__':
   plt.xlim(-9,9)
   plt.savefig('results/' + idconfig + '/kickmap' + idconfig + '.png',dpi=300)
   plt.show()
-
-  
-  
