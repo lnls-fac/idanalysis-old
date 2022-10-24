@@ -24,6 +24,82 @@ ID_CONFIGS = {
     'ID4038': 'probes 03121/gap 22.0mm/2022-10-05_EPU_gap22.0_fase25.00_X=-20_20mm_Z=-1800_1800mm_ID=4038.dat',
     'ID4039': 'probes 03121/gap 22.0mm/2022-10-05_EPU_gap22.0_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4039.dat',
     'ID4041': 'probes 03121/gap 22.0mm/2022-10-06_EPU_gap22.0_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4041.dat',
+
+    # sensor 03121 (with crosstalk) - gap 23.3 mm
+    'ID4047': 'probes 03121/gap 23.3mm/2022-10-06_EPU_gap23.3_fase25.00_X=-20_20mm_Z=-1800_1800mm_ID=4047.dat',
+    'ID4050': 'probes 03121/gap 23.3mm/2022-10-07_EPU_gap23.3_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4050.dat',
+    'ID4057': 'probes 03121/gap 23.3mm/2022-10-11_EPU_gap23.3_fase16.39_X=-20_20mm_Z=-1800_1800mm_ID=4057.dat',
+    'ID4058': 'probes 03121/gap 23.3mm/2022-10-11_EPU_gap23.3_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4058.dat',
+    'ID4065': 'probes 03121/gap 23.3mm/2022-10-13_EPU_gap23.3_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4065.dat',
+
+    # sensor 03121 (with crosstalk) - gap 25.7 mm
+    'ID4044': 'probes 03121/gap 25.7mm/2022-10-06_EPU_gap25.7_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4044.dat',
+    'ID4072': 'probes 03121/gap 25.7mm/2022-10-14_EPU_gap25.7_fase16.39_X=-20_20mm_Z=-1800_1800mm_ID=4072.dat',
+    'ID4070': 'probes 03121/gap 25.7mm/2022-10-14_EPU_gap25.7_fase25.00_X=-20_20mm_Z=-1800_1800mm_ID=4070.dat',
+    'ID4071': 'probes 03121/gap 25.7mm/2022-10-14_EPU_gap25.7_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4071.dat',
+    'ID4073': 'probes 03121/gap 25.7mm/2022-10-17_EPU_gap25.7_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4073.dat',
+
+    # sensor 03121 (with crosstalk) - gap 29.2 mm
+    'ID4048': 'probes 03121/gap 29.2mm/2022-10-06_EPU_gap29.2_fase25.00_X=-20_20mm_Z=-1800_1800mm_ID=4048.dat',
+    'ID4051': 'probes 03121/gap 29.2mm/2022-10-07_EPU_gap29.2_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4051.dat',
+    'ID4059': 'probes 03121/gap 29.2mm/2022-10-11_EPU_gap29.2_fase16.39_X=-20_20mm_Z=-1800_1800mm_ID=4059.dat',
+    'ID4060': 'probes 03121/gap 29.2mm/2022-10-11_EPU_gap29.2_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4060.dat',
+    'ID4064': 'probes 03121/gap 29.2mm/2022-10-13_EPU_gap29.2_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4064.dat',
+
+    # sensor 03121 (with crosstalk) - gap 29.3 mm
+    'ID4045': 'probes 03121/gap 29.3mm/2022-10-06_EPU_gap29.3_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4045.dat',
+    'ID4076': 'probes 03121/gap 29.3mm/2022-10-17_EPU_gap29.3_fase16.39_X=-20_20mm_Z=-1800_1800mm_ID=4076.dat',
+    'ID4074': 'probes 03121/gap 29.3mm/2022-10-17_EPU_gap29.3_fase25.00_X=-20_20mm_Z=-1800_1800mm_ID=4074.dat',
+    'ID4077': 'probes 03121/gap 29.3mm/2022-10-17_EPU_gap29.3_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4077.dat',
+    'ID4075': 'probes 03121/gap 29.3mm/2022-10-17_EPU_gap29.3_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4075.dat',
+
+    # sensor 03121 (with crosstalk) - gap 32.5 mm
+    'ID4049': 'probes 03121/gap 32.5mm/2022-10-07_EPU_gap32.5_fase25.00_X=-20_20mm_Z=-1800_1800mm_ID=4049.dat',
+    'ID4052': 'probes 03121/gap 32.5mm/2022-10-07_EPU_gap32.5_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4052.dat',
+    'ID4061': 'probes 03121/gap 32.5mm/2022-10-11_EPU_gap32.5_fase16.39_X=-20_20mm_Z=-1800_1800mm_ID=4061.dat',
+    'ID4062': 'probes 03121/gap 32.5mm/2022-10-11_EPU_gap32.5_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4062.dat',
+    'ID4063': 'probes 03121/gap 32.5mm/2022-10-13_EPU_gap32.5_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4063.dat',
+
+    # sensor 03121 (with crosstalk) - gap 40.9 mm
+    'ID4046': 'probes 03121/gap 40.9mm/2022-10-06_EPU_gap40.9_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4046.dat',
+    'ID4066': 'probes 03121/gap 40.9mm/2022-10-13_EPU_gap40.9_fase25.00_X=-20_20mm_Z=-1800_1800mm_ID=4066.dat',
+    'ID4067': 'probes 03121/gap 40.9mm/2022-10-13_EPU_gap40.9_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4067.dat',
+    'ID4068': 'probes 03121/gap 40.9mm/2022-10-14_EPU_gap40.9_fase16.39_X=-20_20mm_Z=-1800_1800mm_ID=4068.dat',
+    'ID4069': 'probes 03121/gap 40.9mm/2022-10-14_EPU_gap40.9_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4069.dat',
+
+    # sensor 03121 (with crosstalk) - gap 50.0 mm
+    'ID4056': 'probes 03121/gap 50.0mm/2022-10-07_EPU_gap50.0_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4056.dat',
+
+    # sensor 03121 (with crosstalk) - gap 100.0 mm
+    'ID4055': 'probes 03121/gap 100.0mm/2022-10-07_EPU_gap100_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4055.dat',
+
+    # sensor 03121 (with crosstalk) - gap 200.0 mm
+    'ID4054': 'probes 03121/gap 200.0mm/2022-10-07_EPU_gap200_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4054.dat',
+
+    # sensor 03121 (with crosstalk) - gap 300.0 mm
+    'ID4053': 'probes 03121/gap 300.0mm/2022-10-07_EPU_gap300_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4053.dat',
+
+    # sensor 133-14 (without crosstalk) - gap 22.0 mm
+    'ID4079': 'probes 133-14/gap 22.0mm/2022-10-19_EPU_gap22.0_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4079.dat',
+    'ID4080': 'probes 133-14/gap 22.0mm/2022-10-20_EPU_gap22.0_fase16.39_X=-20_20mm_Z=-1800_1800mm_ID=4080.dat',
+    'ID4082': 'probes 133-14/gap 22.0mm/2022-10-20_EPU_gap22.0_fase25.00_X=-20_20mm_Z=-1800_1800mm_ID=4082.dat',
+    'ID4081': 'probes 133-14/gap 22.0mm/2022-10-20_EPU_gap22.0_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4081.dat',
+    'ID4083': 'probes 133-14/gap 22.0mm/2022-10-20_EPU_gap22.0_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4083.dat',
+
+    # sensor 133-14 (without crosstalk) - gap 25.7 mm
+    'ID4084': 'probes 133-14/gap 25.7mm/2022-10-20_EPU_gap25.7_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4084.dat',
+    'ID4085': 'probes 133-14/gap 25.7mm/2022-10-20_EPU_gap25.7_fase16.39_X=-20_20mm_Z=-1800_1800mm_ID=4085.dat',
+    'ID4087': 'probes 133-14/gap 25.7mm/2022-10-20_EPU_gap25.7_fase25.00_X=-20_20mm_Z=-1800_1800mm_ID=4087.dat',
+    'ID4086': 'probes 133-14/gap 25.7mm/2022-10-20_EPU_gap25.7_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4086.dat',
+    'ID4088': 'probes 133-14/gap 25.7mm/2022-10-21_EPU_gap25.7_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4088.dat',
+
+    # sensor 133-14 (without crosstalk) - gap 29.3 mm
+    'ID4089': 'probes 133-14/gap 29.3mm/2022-10-21_EPU_gap29.3_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4089.dat',
+    'ID4090': 'probes 133-14/gap 29.3mm/2022-10-21_EPU_gap29.3_fase16.39_X=-20_20mm_Z=-1800_1800mm_ID=4090.dat',
+    'ID4092': 'probes 133-14/gap 29.3mm/2022-10-21_EPU_gap29.3_fase25.00_X=-20_20mm_Z=-1800_1800mm_ID=4092.dat',
+    'ID4091': 'probes 133-14/gap 29.3mm/2022-10-21_EPU_gap29.3_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4091.dat',
+    'ID4093': 'probes 133-14/gap 29.3mm/2022-10-21_EPU_gap29.3_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4093.dat',
+
     }
 
 
@@ -77,7 +153,7 @@ def create_ids(
     kicky_up = rescale_kicks * idkmap.kicky_upstream  # [T².m²]
     kickx_down = rescale_kicks * idkmap.kickx_downstream  # [T².m²]
     kicky_down = rescale_kicks * idkmap.kicky_downstream  # [T².m²]
-    termination_kicks = [kickx_up, kicky_up, kickx_down, kicky_down] 
+    termination_kicks = [kickx_up, kicky_up, kickx_down, kicky_down]
     IDModel = pymodels.si.IDModel
     wig180 = IDModel(
         subsec = IDModel.SUBSECTIONS.ID14SB,
