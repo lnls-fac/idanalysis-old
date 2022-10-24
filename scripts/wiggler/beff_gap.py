@@ -9,7 +9,7 @@ from fieldmaptrack import FieldMap
 
 from utils import FOLDER_BASE
 from utils import DATA_PATH
-from utils import WIGGLER_CONFIGS   
+from utils import ID_CONFIGS   
 
 from imaids import utils as ima_utils
 
@@ -33,7 +33,7 @@ def fit_measurement(gap,beff):
 
 def readfield(idconfig, init):
     
-    MEAS_FILE = WIGGLER_CONFIGS[idconfig]
+    MEAS_FILE = ID_CONFIGS[idconfig]
 
     _, meas_id =  MEAS_FILE.split('ID=')
     meas_id = meas_id.replace('.dat', '')
@@ -139,7 +139,7 @@ if __name__ == '__main__':
     """."""
     # run()
     # idconfig = 'ID4020' # gap 045.00mm/2022-09-01_WigglerSTI_45mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4020.dat',
-    # idconfig = 'ID4019' # gap 049.73mm/2022-09-01_WigglerSTI_49.73mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4019.dat',
-    idconfig = 'ID3979' # gap 059.60mm/2022-08-25_WigglerSTI_059.60mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3979.dat',
-
+    idconfig = 'ID4019' # gap 049.73mm/2022-09-01_WigglerSTI_49.73mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4019.dat',
+    # idconfig = 'ID3979' # gap 059.60mm/2022-08-25_WigglerSTI_059.60mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3979.dat',
+    
     plot_field(idconfig=idconfig)

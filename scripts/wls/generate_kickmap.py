@@ -18,7 +18,7 @@ def run(idconfig, posx, posy):
     # idkickmap.calc_id_termination_kicks(fmap_fname=fmap_fname, period_len=10, kmap_idlen=1.2)
     idkickmap.fmap_calc_kickmap(fmap_fname=fmap_fname, posx = posx, posy = posy)
     fname = './results/{}/kickmap-{}.txt'.format(idconfig, idconfig)
-    idkickmap.generate_kickmap_file(kickmap_filename=fname)
+    idkickmap.save_kickmap_file(kickmap_filename=fname)
 
 
 if __name__ == "__main__":

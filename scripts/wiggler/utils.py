@@ -9,13 +9,14 @@ from idanalysis import IDKickMap
 
 ID_PERIOD = 180.0  # [mm]
 
-FOLDER_BASE = '/home/gabriel/repos-dev/'
-# FOLDER_BASE = '/home/ximenes/repos-dev/'
-
-DATA_PATH = '/wiggler-2T-STI/measurement/magnetic/hallprobe/'
+# FOLDER_BASE = '/home/gabriel/repos-dev/'
+FOLDER_BASE = '/home/ximenes/repos-dev/'
 
 
-WIGGLER_CONFIGS = {
+DATA_PATH = 'wiggler-2T-STI/measurement/magnetic/hallprobe/'
+
+
+ID_CONFIGS = {
 
     # wiggler with correctors - gap 045.00mm
     'ID4020': 'gap 045.00mm/2022-09-01_WigglerSTI_45mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4020.dat',

@@ -6,12 +6,12 @@ from fieldmaptrack import FieldMap, Beam, Trajectory
 
 from utils import FOLDER_BASE
 from utils import DATA_PATH
-from utils import WIGGLER_CONFIGS   
+from utils import ID_CONFIGS   
 
 
 def run(idconfig, plot=True):
     
-    MEAS_FILE = WIGGLER_CONFIGS[idconfig]
+    MEAS_FILE = ID_CONFIGS[idconfig]
 
     _, meas_id =  MEAS_FILE.split('ID=')
     meas_id = meas_id.replace('.dat', '')
@@ -70,5 +70,6 @@ def run(idconfig, plot=True):
 
 if __name__ == "__main__":
     """."""
-    deltarx, deltary, deltapx, deltapy = run('ID4020', plot=True)
+    idconfig = 'ID4019'  # gap 49.73 mm, correctors with zero current
+    deltarx, deltary, deltapx, deltapy = run(idconfig, plot=True)
 
