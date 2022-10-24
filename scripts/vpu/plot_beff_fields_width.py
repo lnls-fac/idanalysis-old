@@ -6,6 +6,7 @@ import imaids.utils as utils
 
 from scipy import optimize as optimize
 
+
 def readfile(file_name):
 
     my_file = open(file_name)
@@ -14,17 +15,17 @@ def readfile(file_name):
     data_col3 = []
     begin_data = []
     height_list = []
-    for i,line in enumerate(my_file):
+    for i, line in enumerate(my_file):
         if "Block height" in line:
             begin_data.append(i)
             height = line[-3:-1]
             height_list.append(int(height))
-    
+
     begin_data.append(i+1)
     begin = np.array(begin_data)
     begin += 2
     nr_data = np.diff(begin) - 2
-    
+
     valid_lines = []
     for i in np.arange(len(begin)-1):
         nr_line = nr_data[i] -1
@@ -49,22 +50,9 @@ def readfile(file_name):
 
     return data_col1, data_col2, data_col3, nr_data, height_list
 
-def calc_function(x, a, b, c):
-    return a*np.exp(-1*b*(x-25)) + c
-
-def fit_curve(widths, rollofs):
-    # a0 = 2
-    # b0 = -3
-    # c0 = 1
-   
-    
-    opt = optimize.curve_fit(
-        calc_function, widths, rollofs)[0]
-
-    return opt
 
 def plot_k(widths_list, beff_list, roff_list, nr_data, height_list,period,poles_proportion,filename):
-    color_list = ['b','g','y','C1','r','C3','k']
+    color_list = ['b', 'g', 'y', 'C1', 'r', 'C3', 'k']
     plt.figure(1)
     label_base = 'Block height = '
     plt.xlabel('Block width [mm]')
@@ -77,12 +65,12 @@ def plot_k(widths_list, beff_list, roff_list, nr_data, height_list,period,poles_
         k = utils.calc_deflection_parameter(b_amp=beff, period_length=period*1e-3)
         plt.plot(widths_list[i], k, label=label, color=color_list[i])
     k_goal = 2.1*np.ones(len(widths_list[0]))
-    plt.plot(widths_list[i],k_goal, '--', color= 'k')
+    plt.plot(widths_list[i], k_goal, '--', color='k')
     plt.grid()
-    plt.ylim(1.8,2.42)
-    plt.xlim(30,60)
+    # plt.ylim(1.8,2.42)
+    plt.xlim(70,120)
     plt.legend()
-    plt.savefig(filename[0:22] + '/plot_K.png',dpi=300)
+    # plt.savefig(filename[0:22] + '/plot_K.png',dpi=300)
 
     plt.figure(2)
     label_base = 'Block height = '
@@ -90,32 +78,30 @@ def plot_k(widths_list, beff_list, roff_list, nr_data, height_list,period,poles_
     plt.ylabel('Field roll-off [%]')
     title = "Poles proportion = " + poles_proportion + "%"
     plt.title(title)
-    width = np.arange(30,80,0.5)
+    width = np.arange(70, 120, 0.5)
     for i,height in enumerate(height_list):
         label = label_base + str(height) + ' mm'
         roff = np.array(roff_list[i])
-        param = fit_curve(widths_list[i],roff)
-        rollfit = calc_function(width,param[0],param[1],param[2])
-        plt.plot(widths_list[i], roff, '.', label=label, color=color_list[i])
-        plt.plot(width, rollfit, '--', color=color_list[i])
+        plt.plot(widths_list[i], roff, '--', label=label, color=color_list[i])
+
     roff_goal = 0.01*np.ones(len(width))
-    plt.plot(width,roff_goal, '-', color= 'k', linewidth = 0.8 )
-    plt.plot(width,-1*roff_goal, '-', color= 'k', linewidth = 0.8 )
-    plt.ylim(-0.5,5)
-    plt.xlim(30,60)
+    plt.plot(width, roff_goal, '-', color='k', linewidth=0.8 )
+    plt.plot(width, -1*roff_goal, '-', color='k', linewidth=0.8 )
+    plt.ylim(-0.2, 0.2)
+    plt.xlim(70, 120)
     plt.grid()
     plt.legend()
-    plt.savefig(filename[0:22] + '/plot_rolloff.png',dpi=300)
+    # plt.savefig(filename[0:22] + '/plot_rolloff.png',dpi=300)
     plt.show()
-    
-def run(filename,period):
+
+def run(filename, period):
     widths, beffs, roffs, nr_data, height_list = readfile(filename)
     widths_list = []
     beff_list = []
     roff_list = []
     for i,nr in enumerate(nr_data):
         if i == 0:
-            width = widths[0:nr]    
+            width = widths[0:nr]
             widths_list.append(width)
             beff_list.append(beffs[0:nr])
             roff_list.append(roffs[0:nr])
@@ -126,10 +112,9 @@ def run(filename,period):
             widths_list.append(width)
             beff_list.append(beffs[begin:begin+nr])
             roff_list.append(roffs[begin:begin+nr])
-    
-    poles_proportion = filename[18:22]
+
+    poles_proportion = filename[10:14]
     plot_k(widths_list, beff_list, roff_list, nr_data, height_list,period,poles_proportion,filename)
 if __name__ == "__main__":
-    
-    run("op1_width_br_1.24_60.0/Beff_op1_width_60.0%.txt",29)
 
+    run("op3_width_85.0/Beff_op3_width_85.0%.txt",29)
