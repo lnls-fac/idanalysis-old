@@ -9,8 +9,8 @@ from idanalysis import IDKickMap
 
 ID_PERIOD = 50.0  # [mm]
 
-# FOLDER_BASE = '/home/gabriel/repos-dev/'
-FOLDER_BASE = '/home/ximenes/repos-dev/'
+FOLDER_BASE = '/home/gabriel/repos-dev/'
+# FOLDER_BASE = '/home/ximenes/repos-dev/'
 
 
 DATA_PATH = 'epu-uvx/measurement/magnetic/hallprobe/'
@@ -144,7 +144,7 @@ def create_ids(
     rescale_length = \
         rescale_length if rescale_length is not None else 1
     fname = FOLDER_BASE + \
-        'idanalysis/scripts/wiggler/results/{}/'.format(idconfig)
+        'idanalysis/scripts/epu/results/{}/'.format(idconfig)
     fname += 'kickmap-' + idconfig + '.txt'
     print(fname)
     idkmap = IDKickMap(kmap_fname=fname)
@@ -155,13 +155,13 @@ def create_ids(
     kicky_down = rescale_kicks * idkmap.kicky_downstream  # [T².m²]
     termination_kicks = [kickx_up, kicky_up, kickx_down, kicky_down]
     IDModel = pymodels.si.IDModel
-    wig180 = IDModel(
-        subsec = IDModel.SUBSECTIONS.ID14SB,
+    epu50 = IDModel(
+        subsec=IDModel.SUBSECTIONS.ID10SB,
         file_name=fname,
-        fam_name='WIG180', nr_steps=nr_steps,
+        fam_name='EPU50', nr_steps=nr_steps,
         rescale_kicks=rescale_kicks, rescale_length=rescale_length,
         termination_kicks=termination_kicks)
-    ids = [wig180, ]
+    ids = [epu50, ]
     return ids
 
 

@@ -14,7 +14,7 @@ def create_idkickmap(idconfig):
     """."""
     # get fieldmap file name
     MEAS_FILE = ID_CONFIGS[idconfig]
-    _, meas_id =  MEAS_FILE.split('ID=')
+    _, meas_id = MEAS_FILE.split('ID=')
     meas_id = meas_id.replace('.dat', '')
     fmap_fname = FOLDER_BASE + DATA_PATH + MEAS_FILE
 
@@ -39,9 +39,9 @@ def plot_rk_traj(idconfig, traj_init_rx, traj_init_ry, rk_s_step=0.2):
     idkickmap.rk_s_step = rk_s_step
     idkickmap.fmap_calc_trajectory(
         traj_init_rx=traj_init_rx, traj_init_ry=traj_init_ry)
-    
+
     traj = idkickmap.traj
-    
+
     labelx = 'rx @ end: {:+.1f} um'.format(1e3*traj.rx[-1])
     labely = 'ry @ end: {:+.1f} um'.format(1e3*traj.ry[-1])
     plt.plot(traj.rz, 1e3*traj.rx, '.-', label=labelx)
@@ -65,11 +65,7 @@ def plot_rk_traj(idconfig, traj_init_rx, traj_init_ry, rk_s_step=0.2):
 
 if __name__ == "__main__":
     """."""
-    idconfig = 'ID4019'  # gap 49.73 mm, correctors with zero current
-    # idconfig = 'ID3979'  # gap 59.6 mm, correctors with zero current
-    # idconfig = 'ID4017'  # gap 59.6 mm, correctors with best current
-    # idconfig = 'ID4020'  # gap 45.0 mm, correctors with zero current
-    # idconfig = 'ID3969'  #gap 59.6 mm, without correctors
+    idconfig = 'ID4079'  # gap 22.0 mm, phase 00.00
 
     traj_init_rx = 0.0  # [mm]
     traj_init_ry = 0.0  # [mm]
