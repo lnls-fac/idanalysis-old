@@ -86,6 +86,13 @@ ID_CONFIGS = {
     'ID4081': 'probes 133-14/gap 22.0mm/2022-10-20_EPU_gap22.0_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4081.dat',
     'ID4083': 'probes 133-14/gap 22.0mm/2022-10-20_EPU_gap22.0_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4083.dat',
 
+    # sensor 133-14 (without crosstalk) - gap 23.3 mm
+    'ID4099': 'probes 133-14/gap 23.3mm/2022-10-24_EPU_gap23.3_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4099.dat',
+    'ID4100': 'probes 133-14/gap 23.3mm/2022-10-24_EPU_gap23.3_fase16.39_X=-20_20mm_Z=-1800_1800mm_ID=4100.dat',
+    'ID4102': 'probes 133-14/gap 23.3mm/2022-10-24_EPU_gap23.3_fase25.00_X=-20_20mm_Z=-1800_1800mm_ID=4102.dat',
+    'ID4101': 'probes 133-14/gap 23.3mm/2022-10-24_EPU_gap23.3_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4101.dat',
+    'ID4103': 'probes 133-14/gap 23.3mm/2022-10-24_EPU_gap23.3_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4103.dat',
+
     # sensor 133-14 (without crosstalk) - gap 25.7 mm
     'ID4084': 'probes 133-14/gap 25.7mm/2022-10-20_EPU_gap25.7_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4084.dat',
     'ID4085': 'probes 133-14/gap 25.7mm/2022-10-20_EPU_gap25.7_fase16.39_X=-20_20mm_Z=-1800_1800mm_ID=4085.dat',
@@ -99,6 +106,13 @@ ID_CONFIGS = {
     'ID4092': 'probes 133-14/gap 29.3mm/2022-10-21_EPU_gap29.3_fase25.00_X=-20_20mm_Z=-1800_1800mm_ID=4092.dat',
     'ID4091': 'probes 133-14/gap 29.3mm/2022-10-21_EPU_gap29.3_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4091.dat',
     'ID4093': 'probes 133-14/gap 29.3mm/2022-10-21_EPU_gap29.3_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4093.dat',
+
+    # sensor 133-14 (without crosstalk) - gap 40.9 mm
+    'ID4094': 'probes 133-14/gap 40.9mm/2022-10-21_EPU_gap40.9_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4094.dat',
+    'ID4095': 'probes 133-14/gap 40.9mm/2022-10-21_EPU_gap40.9_fase16.39_X=-20_20mm_Z=-1800_1800mm_ID=4095.dat',
+    'ID4097': 'probes 133-14/gap 40.9mm/2022-10-24_EPU_gap40.9_fase25.00_X=-20_20mm_Z=-1800_1800mm_ID=4097.dat',
+    'ID4096': 'probes 133-14/gap 40.9mm/2022-10-24_EPU_gap40.9_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4096.dat',
+    'ID4098': 'probes 133-14/gap 40.9mm/2022-10-24_EPU_gap40.9_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4098.dat',
 
     }
 
