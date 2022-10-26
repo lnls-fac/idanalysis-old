@@ -31,7 +31,9 @@ def create_idkickmap(idconfig):
 
     return idkickmap
 
-def multipolar_analysis(idconfig, traj_init_rx, traj_init_ry, rk_s_step=0.2):
+
+def multipolar_analysis(
+        idconfig, gap, traj_init_rx, traj_init_ry, rk_s_step=0.2):
     """."""
     # create IDKickMap
     idkickmap = create_idkickmap(idconfig)
@@ -42,20 +44,70 @@ def multipolar_analysis(idconfig, traj_init_rx, traj_init_ry, rk_s_step=0.2):
     traj = idkickmap.traj
 
     # multipolar analysis
+    n_list = np.arange(0, 3, 1).tolist()
+    s_list = np.arange(0, 3, 1).tolist()
     idkickmap.fmap_config.multipoles_perpendicular_grid = np.linspace(-3, 3, 7)
-    idkickmap.fmap_config.multipoles_normal_field_fitting_monomials = np.arange(0,2,1).tolist()
-    idkickmap.fmap_config.multipoles_skew_field_fitting_monomials = np.arange(0,2,1).tolist()
+    idkickmap.fmap_config.multipoles_normal_field_fitting_monomials = n_list
+    idkickmap.fmap_config.multipoles_skew_field_fitting_monomials = s_list
     idkickmap.fmap_config.multipoles_r0 = 12  # [mm]
     idkickmap.fmap_config.normalization_monomial = 0
     IDKickMap.multipoles_analysis(idkickmap.fmap_config)
     multipoles = idkickmap.fmap_config.multipoles
-    y = multipoles.skew_multipoles[1, :]
-    rz = traj.rz/1000
-    integral_quad = np.trapz(y,rz)
-    print(integral_quad)
-    plt.plot(1000*rz, multipoles.skew_multipoles[1, :])
-    plt.show()
-    return multipoles.skew_multipoles_integral[1]
+    rz = traj.rz
+    skew_quad = multipoles.skew_multipoles[1, :]
+    normal_quad = multipoles.normal_multipoles[1, :]
+    skew_sext = multipoles.skew_multipoles[2, :]
+    normal_sext = multipoles.normal_multipoles[2, :]
+    integral_nquad = np.trapz(normal_quad, rz/1000)
+    integral_squad = np.trapz(skew_quad, rz/1000)
+    integral_nsext = np.trapz(normal_sext, rz/1000)
+    integral_ssext = np.trapz(skew_sext, rz/1000)
+    i_nquad = multipoles.normal_multipoles_integral[1]
+    i_squad = multipoles.skew_multipoles_integral[1]
+    i_nsext = multipoles.normal_multipoles_integral[2]
+    i_ssext = multipoles.skew_multipoles_integral[2]
+    integral_multipole_list = [i_nquad, i_squad, i_nsext, i_ssext]
+    plt.figure(1)
+    plt.plot(rz, normal_quad, color='b')
+    plt.grid()
+    plt.xlabel('rz [mm]')
+    plt.ylabel('Normal quadrupole [T/m]')
+    plt.title('UVX EPU Normal Quadrupole Components')
+    fig_path = 'results/gap ' + gap + '/' + idconfig + '/Nquad.png'
+    plt.savefig(fig_path, dpi=300)
+    plt.close()
+
+    plt.figure(2)
+    plt.plot(rz, skew_quad, color='b')
+    plt.grid()
+    plt.xlabel('rz [mm]')
+    plt.ylabel('Skew quadrupole [T/m]')
+    plt.title('UVX EPU Skew Quadrupole Components')
+    fig_path = 'results/gap ' + gap + '/' + idconfig + '/Squad.png'
+    plt.savefig(fig_path, dpi=300)
+    plt.close()
+
+    plt.figure(3)
+    plt.plot(rz, normal_sext, color='r')
+    plt.grid()
+    plt.xlabel('rz [mm]')
+    plt.ylabel('Normal sextupole [T/m²]')
+    plt.title('UVX EPU Normal Sextupole Components')
+    fig_path = 'results/gap ' + gap + '/' + idconfig + '/Nsext.png'
+    plt.savefig(fig_path, dpi=300)
+    plt.close()
+
+    plt.figure(4)
+    plt.plot(rz, skew_sext, color='r')
+    plt.grid()
+    plt.xlabel('rz [mm]')
+    plt.ylabel('Skew sextupole [T/m²]')
+    plt.title('UVX EPU Skew Sextupole Components')
+    fig_path = 'results/gap ' + gap + '/' + idconfig + '/Ssext.png'
+    plt.savefig(fig_path, dpi=300)
+    plt.close()
+    return integral_multipole_list
+
 
 def plot_rk_traj(idconfig, traj_init_rx, traj_init_ry, rk_s_step=0.2):
     """."""
@@ -78,6 +130,7 @@ def plot_rk_traj(idconfig, traj_init_rx, traj_init_ry, rk_s_step=0.2):
     plt.plot(rz, bz, color='g', label="Bz")
     plt.xlabel('rz [mm]')
     plt.ylabel('Field [T]')
+    plt.grid()
     plt.legend()
 
     labelx = 'rx @ end: {:+.1f} um'.format(1e3*traj.rx[-1])
@@ -88,6 +141,7 @@ def plot_rk_traj(idconfig, traj_init_rx, traj_init_ry, rk_s_step=0.2):
     plt.xlabel('rz [mm]')
     plt.ylabel('pos [um]')
     plt.legend()
+    plt.grid()
     plt.title('Runge-Kutta Trajectory Pos ({})'.format(idconfig))
     plt.show()
 
@@ -98,30 +152,101 @@ def plot_rk_traj(idconfig, traj_init_rx, traj_init_ry, rk_s_step=0.2):
     plt.xlabel('rz [mm]')
     plt.ylabel('ang [urad]')
     plt.legend()
+    plt.grid()
     plt.title('Runge-Kutta Trajectory Ang ({})'.format(idconfig))
     plt.show()
 
 
-if __name__ == "__main__":
+def run_multipole_analysis():
     """."""
     traj_init_rx = 0.0  # [mm]
     traj_init_ry = 0.0  # [mm]
     rk_s_step = 0.2  # [mm]
 
-    idconfig='ID4083'
-    integral_skew = multipolar_analysis(
-        idconfig, traj_init_rx, traj_init_ry, rk_s_step)
-    print(integral_skew)
+    gap22 = ['ID4083', 'ID4081', 'ID4079', 'ID4080', 'ID4082']  # gap 22.0
+    gap23 = ['ID4103', 'ID4101', 'ID4099', 'ID4100', 'ID4102']  # gap 23.3
+    gap25 = ['ID4088', 'ID4086', 'ID4084', 'ID4085', 'ID4087']  # gap 25.7
+    gap29 = ['ID4093', 'ID4091', 'ID4089', 'ID4090', 'ID4092']  # gap 29.3
+    gap40 = ['ID4098', 'ID4096', 'ID4094', 'ID4095', 'ID4097']  # gap 40.9
+    gap_list = [gap22, gap23, gap25, gap29, gap40]
+    phase = [-25, -16.39, 0, 16.39, 25]
+    gaps_values = ['22.0', '23.3', '25.7', '29.3', '40.9']
+    inormal_quad_dict = dict()
+    iskew_quad_dict = dict()
+    inormal_sext_dict = dict()
+    iskew_sext_dict = dict()
 
-    # idconfig = ['ID4083','ID4081','ID4079','ID4080','ID4082']
-    # phase = [-25, -16.39, 0, 16.39, 25]
-    # skew_quad = []
-    # for i,config in enumerate(idconfig):
-    #     skew = plot_rk_traj(config, traj_init_rx, traj_init_ry, rk_s_step)
-    #     skew_quad.append(skew)
-    # print(skew_quad)
-    # plt.plot(phase, skew_quad, 'o')
-    # plt.xlabel('phase [mm]')
-    # plt.ylabel('Integrated field gradient [T]')
-    # plt.grid()
-    # plt.show()
+    for i, gap in enumerate(gap_list):
+        gap_value = gaps_values[i]
+        inormal_quad = []
+        iskew_quad = []
+        inormal_sext = []
+        iskew_sext = []
+        for j, config in enumerate(gap):
+            imultipoles = multipolar_analysis(
+                config, gap_value, traj_init_rx, traj_init_ry, rk_s_step)
+            inormal_quad.append(imultipoles[0])
+            iskew_quad.append(imultipoles[1])
+            inormal_sext.append(imultipoles[2])
+            iskew_sext.append(imultipoles[3])
+        inormal_quad_dict[gap_value] = inormal_quad
+        iskew_quad_dict[gap_value] = iskew_quad
+        inormal_sext_dict[gap_value] = inormal_sext
+        iskew_sext_dict[gap_value] = iskew_sext
+
+    # integrated normal quadrupole
+    plt.figure(1)
+    for i, gap in enumerate(gaps_values):
+        plt.plot(phase, inormal_quad_dict[gap], 'o', label=gap)
+    plt.title('UVX EPU Integrated Normal Quadrupole Components')
+    plt.xlabel('Phase [mm]')
+    plt.ylabel('Integrated quadrupole [T]')
+    plt.grid()
+    plt.legend()
+    fig_path = 'results/Integrated normal quadrupole.png'
+    plt.savefig(fig_path, dpi=300)
+    plt.close()
+
+    # integrated skew quadrupole
+    plt.figure(2)
+    for i, gap in enumerate(gaps_values):
+        plt.plot(phase, iskew_quad_dict[gap], 'o', label=gap)
+    plt.title('UVX EPU Integrated Skew Quadrupole Components')
+    plt.xlabel('Phase [mm]')
+    plt.ylabel('Integrated quadrupole [T]')
+    plt.grid()
+    plt.legend()
+    fig_path = 'results/Integrated skew quadrupole.png'
+    plt.savefig(fig_path, dpi=300)
+    plt.close()
+
+    # integrated normal sextupole
+    plt.figure(3)
+    for i, gap in enumerate(gaps_values):
+        plt.plot(phase, inormal_sext_dict[gap], 'o', label=gap)
+    plt.title('UVX EPU Integrated Normal Sextupole Components')
+    plt.xlabel('Phase [mm]')
+    plt.ylabel('Integrated sextupole [T/m]')
+    plt.grid()
+    plt.legend()
+    fig_path = 'results/Integrated normal sextupole.png'
+    plt.savefig(fig_path, dpi=300)
+    plt.close()
+
+    # integrated skew sextupole
+    plt.figure(4)
+    for i, gap in enumerate(gaps_values):
+        plt.plot(phase, iskew_sext_dict[gap], 'o', label=gap)
+    plt.title('UVX EPU Integrated Skew Sextupole Components')
+    plt.xlabel('Phase [mm]')
+    plt.ylabel('Integrated sextupole [T/m]')
+    plt.grid()
+    plt.legend()
+    fig_path = 'results/Integrated skew sextupole.png'
+    plt.savefig(fig_path, dpi=300)
+    plt.close()
+
+
+if __name__ == "__main__":
+    """."""
+    run_multipole_analysis()
