@@ -183,16 +183,16 @@ def plot_rk_traj(
     print('Field Integrals and traj for gap {} mm and phase {} mm'.format(
         gap, phase))
     print('IBx {:.3e} Tm'.format(ibx[-1]))
-    print('px {:+.2f} urad'.format(1e6*traj.py[-1]))
+    print('py {:+.2f} urad'.format(1e6*traj.py[-1]))
     print()
     print('IIBx {:.3e} Tm²'.format(iibx[-1]))
-    print('rx {:+.2f} um'.format(1e3*traj.ry[-1]))
+    print('ry {:+.2f} um'.format(1e3*traj.ry[-1]))
     print()
     print('IBy {:.3e} Tm'.format(iby[-1]))
-    print('py {:+.2f} urad'.format(1e6*traj.px[-1]))
+    print('px {:+.2f} urad'.format(1e6*traj.px[-1]))
     print()
     print('IIBy {:.3e} Tm²'.format(iiby[-1]))
-    print('ry {:+.2f} um'.format(1e3*traj.rx[-1]))
+    print('rx {:+.2f} um'.format(1e3*traj.rx[-1]))
     print()
 
 
