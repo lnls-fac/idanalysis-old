@@ -39,7 +39,7 @@ class EPUOnAxisFieldMap(_FieldMap):
             'Campo Vertical/Gap 29.3/Map1902_Bx_Gap29.3_Fase0.0_01_Real.dat',
             'Campo Vertical/Gap 29.3/Map1902_Bz_Gap29.3_Fase0.0_01_Real.dat',
             'Campo Vertical/Gap 29.3/Map1902_By_Gap29.3_Fase0.0_01_Real.dat',
-            ],            
+            ],
         'HP_G40P9': [
             'Campo Vertical/Gap 40.9/Map1902_Bx_Gap40.9_Fase0.0_01_Real.dat',
             'Campo Vertical/Gap 40.9/Map1902_Bz_Gap40.9_Fase0.0_01_Real.dat',
@@ -49,7 +49,7 @@ class EPUOnAxisFieldMap(_FieldMap):
             'Campo Horizontal/Gap 22.0/Fase 25.0/Map0902_Bx_Gap22_Fase25.0_01_X=0_Real.dat',
             'Campo Horizontal/Gap 22.0/Fase 25.0/Map0902_Bz_Gap22_Fase25.0_01_X=0_Real.dat',
             'Campo Horizontal/Gap 22.0/Fase 25.0/Map1302_By_Gap22.0_Fase25.0_01_X=0_Real.dat',
-            ],                                    
+            ],
         }
 
     def __init__(self, folder,
@@ -336,13 +336,13 @@ class FieldmapOnAxisAnalysis:
 
     @staticmethod
     def calc_first_integral(B, rz=None):
-        dz = 1e-3*(rz[-1] - rz[0]) / len(rz)
+        dz = 1e-3*(rz[-1] - rz[0]) / (len(rz) -1)
         integral = _integrate.cumtrapz(y=B, dx=dz)
         return integral
 
     @staticmethod
     def calc_second_integral(I1, rz=None):
-        dz = 1e-3*(rz[-1] - rz[0]) / len(rz)
+        dz = 1e-3*(rz[-1] - rz[0]) / (len(rz) -1)
         integral2 = _integrate.cumtrapz(y=I1, dx=dz)
         return integral2
 
@@ -364,7 +364,7 @@ class FieldmapOnAxisAnalysis:
         x, y, px, py, z_end, idx_end = \
             self._calc_fxy(s_step=self.s_step, max_rz=4000, plot_flag=False,
                 ipos=[0,0,0], iang=[0,0,1])
-        
+
         print("Final y position: {:.2f} um".format(1e3*y))
         print("Final y angle   : {:.2f} urad".format(1e6*py))
         print("Final x position: {:.2f} um".format(1e3*x))
@@ -394,5 +394,3 @@ class FieldmapOnAxisAnalysis:
         my_file.write('x[um]\tpx[rad]\ty[mm]\tpy[urad]\tIx[Tm]\t        Iy[Tm]\t        I2x[Tm2]\tI2y[Tm2]\tBx[T]\tBy[T]\tKx\tKy\n')
         my_file.write("{:.2f}\t{:.2f}\t{:.2f}\t{:.2f}\t       {:.3e}\t{:.3e}\t{:.3e}\t{:.3e}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\n".format(1e3*x,1e6*px,1e3*y,1e6*py,bx_integral1[-1],by_integral1[-1],bx_integral2[-1],by_integral2[-1],Kx,Bxmax,Ky,Bymax))
         my_file.close()
-        
-

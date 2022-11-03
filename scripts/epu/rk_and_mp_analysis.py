@@ -40,7 +40,7 @@ def table_b_vs_gap(ax, bx, cx, ay, by, cy, phase):
     row = ['Gap [mm]', 'Bx [T]', 'By [T]']
     rows = []
     rows.append(row)
-    gaps2 = np.linspace(20, 50, 30)
+    gaps2 = np.array([22, 23.3, 25.7, 29.3, 33.5, 37.4, 40.9])
     beffx = fit_function(gaps2/50, ax, bx, cx)
     beffy = fit_function(gaps2/50, ay, by, cy)
     for i, gap in enumerate(gaps2):
@@ -133,8 +133,9 @@ def plot_b_gap(phase_config, bx_dict, by_dict, rz_dict):
     title = 'Field for phase ' + phase + ' mm'
     figname = '/B vs gap.png'
     plt.title(title)
-    fig_path = 'results/phase organized/' + phase + figname
-    plt.savefig(fig_path, dpi=300)
+    # fig_path = 'results/phase organized/' + phase + figname
+    # plt.savefig(fig_path, dpi=300)
+    plt.show()
     plt.close()
 
 
@@ -333,6 +334,7 @@ def plot_rk_traj(
 
     for i, idconfig in enumerate(phase_config):
         gap = gaps[i]
+        print(gap)
         # create IDKickMap and calc trajectory
         idkickmap = create_idkickmap(idconfig)
         idkickmap.rk_s_step = rk_s_step
@@ -486,39 +488,55 @@ def plot_rk_traj(
     plt.close()
 
     plot_b_gap(
-        phase_config, fmapbx_dict, fmapby_dict, fmaprz_dict
+        phase_config, bx_dict, by_dict, rz_dict
     )
+
+    # plot_b_gap(
+    #     phase_config, fmapbx_dict, fmapby_dict, fmaprz_dict
+    # )
 
     # generate table
     row1 = [
         'Gap [mm]',
-        'Bx 1st integral [G cm] / Δpy [urad]',
-        'Bx 2nd integral [G cm²] / Δy [um]',
-        'By 1st integral [G cm] / Δpx [urad]',
-        'By 2nd integral [G cm²] / Δx [um]']
+        'Bx 1st integral [G cm] / py [urad]',
+        'Bx 2nd integral [G cm²] / y [um]']
+    row_list = []
+    row_list.append(row1)
+    for gap in gaps:
+        py = 1e6*py_dict[gap][-1]
+        ry = 1e3*ry_dict[gap][-1]
+        ibx = 1e6*ibx_dict[gap][-1]
+        iibx = 1e8*iibx_dict[gap][-1]
+        py = format(py, '+4.2f')
+        ry = format(ry, '+4.2f')
+        ibx = format(ibx, '+5.1f')
+        iibx = format(iibx, '+3.2e')
+        row = [
+            gap,
+            '{} / {}'.format(ibx, py),
+            '{} / {}'.format(iibx, ry)]
+        row_list.append(row)
+
+    print('Tabulate Latex for phase {} mm: '.format(phase))
+    print(tabulate(row_list, headers='firstrow', tablefmt='latex'))
+
+    row1 = [
+        'Gap [mm]',
+        'By 1st integral [G cm] / px [urad]',
+        'By 2nd integral [G cm²] / x [um]']
     row_list = []
     row_list.append(row1)
     for gap in gaps:
         px = 1e6*px_dict[gap][-1]
-        py = 1e6*py_dict[gap][-1]
         rx = 1e3*rx_dict[gap][-1]
-        ry = 1e3*ry_dict[gap][-1]
-        ibx = 1e6*ibx_dict[gap][-1]
         iby = 1e6*iby_dict[gap][-1]
-        iibx = 1e8*iibx_dict[gap][-1]
         iiby = 1e8*iiby_dict[gap][-1]
         px = format(px, '+4.2f')
-        py = format(py, '+4.2f')
         rx = format(rx, '+4.2f')
-        ry = format(ry, '+4.2f')
-        ibx = format(ibx, '+5.1f')
         iby = format(iby, '+5.1f')
-        iibx = format(iibx, '+3.2e')
         iiby = format(iiby, '+3.2e')
         row = [
             gap,
-            '{} / {}'.format(ibx, py),
-            '{} / {}'.format(iibx, ry),
             '{} / {}'.format(iby, px),
             '{} / {}'.format(iiby, rx)]
         row_list.append(row)

@@ -9,7 +9,7 @@ from fieldmaptrack import FieldMap
 
 from utils import FOLDER_BASE
 from utils import DATA_PATH
-from utils import ID_CONFIGS   
+from utils import ID_CONFIGS
 
 from imaids import utils as ima_utils
 
@@ -32,12 +32,12 @@ def fit_measurement(gap,beff):
 
 
 def readfield(idconfig, init):
-    
+
     MEAS_FILE = ID_CONFIGS[idconfig]
 
     _, meas_id =  MEAS_FILE.split('ID=')
     meas_id = meas_id.replace('.dat', '')
-    
+
     file_name = FOLDER_BASE + DATA_PATH + MEAS_FILE
 
     substr = "gap"
@@ -45,9 +45,9 @@ def readfield(idconfig, init):
         idx = file_name.index(substr)
         gap = file_name[idx+4:idx+9]
         gap_value = float(gap)
-        
+
     print(file_name)
-    
+
     with open(file_name, encoding='utf-8', errors='ignore') as my_file:
         data_col1 = []
         data_col2 = []
@@ -63,7 +63,7 @@ def readfield(idconfig, init):
                     xvalue = float(list_data[0])
                 except ValueError:
                     xvalue = ((list_data[0]))
-                
+
                 if xvalue == 0:
                     try:
                         data_col1.append(float(list_data[2]))
@@ -71,8 +71,8 @@ def readfield(idconfig, init):
                     except ValueError:
                         data_col1.append((list_data[2]))
                         data_col2.append((list_data[4]))
-                    
-                    
+
+
     my_file.close()
     z = np.array(data_col1)
     B = np.array(data_col2)
@@ -83,13 +83,13 @@ def run():
     """."""
     config_list = ['ID3986','ID3987','ID3988','ID3989','ID3990',
         'ID4021','ID3991','ID4005','ID3992','ID3993','ID3994']
-    
+
     period = 180
     beff_list = []
     keff_list = []
     gap_list = []
-    for i,idconfig in enumerate(config_list):
-        z,B,gap = readfield(idconfig, 2)
+    for i, idconfig in enumerate(config_list):
+        z, B, gap = readfield(idconfig, 2)
         fraction = int(len(z)/4)
         amps = calc_beff(z[fraction:3*fraction],B[fraction:3*fraction])
         beff = np.sqrt(amps[0]**2+amps[1]**2+amps[2]**2)
@@ -97,7 +97,7 @@ def run():
         beff_list.append(beff)
         keff_list.append(keff)
         gap_list.append(gap)
-    
+
     gap_array = np.array(gap_list)
     gap_array = gap_array/period
     curve_fit = fit_measurement(gap_array, beff_list)
@@ -124,16 +124,16 @@ def run():
         gap = format(gap, '03.2f')
         beff[i] = format(beff[i], '03.2f')
         print(gap,'&', beff[i])
-    
+
     # fig.savefig('results/b_vs_gap.png', dpi=300)
-        
-    
+
+
 def plot_field(idconfig):
     """."""
     rz, B, gap = readfield(idconfig, 2)
     plt.plot(rz, B, 'o')
     plt.show()
-        
+
 
 if __name__ == '__main__':
     """."""
@@ -141,5 +141,5 @@ if __name__ == '__main__':
     # idconfig = 'ID4020' # gap 045.00mm/2022-09-01_WigglerSTI_45mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4020.dat',
     idconfig = 'ID4019' # gap 049.73mm/2022-09-01_WigglerSTI_49.73mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4019.dat',
     # idconfig = 'ID3979' # gap 059.60mm/2022-08-25_WigglerSTI_059.60mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3979.dat',
-    
+
     plot_field(idconfig=idconfig)

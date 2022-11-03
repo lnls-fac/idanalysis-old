@@ -36,10 +36,10 @@ class IDKickMap:
         self.kicky_upstream = None
         self.kickx_downstream = None
         self.kicky_downstream = None
-        
+
         # load kickmap
         self._load_kmap()
-    
+
     @property
     def kmap_fname(self):
         """Kickmap filename."""
@@ -63,7 +63,7 @@ class IDKickMap:
     def fmap_fname(self, value):
         """Set fieldmap filename and load file."""
         self._fmap_config = IDKickMap._create_fmap_config(
-            fmap_fname=value, 
+            fmap_fname=value,
             beam_energy=self.beam_energy, rk_s_step=self.rk_s_step)
 
     @property
@@ -89,7 +89,7 @@ class IDKickMap:
             return self._fmap_config.beam.brho
         else:
             return None
-            
+
     @property
     def rk_s_step(self):
         """."""
@@ -178,8 +178,9 @@ class IDKickMap:
                 self.fposy[i, j] = ryf / 1e3
 
     def save_kickmap_file(self, kickmap_filename):
+        """."""
         rst = self.__str__()
-        my_file = open(kickmap_filename,"w") #w=writing
+        my_file = open(kickmap_filename, "w")  # w=writing
         my_file.write(rst)
         my_file.close()
 
@@ -270,7 +271,7 @@ class IDKickMap:
         # calc trajectory from nominal initial conditions
         self.fmap_fname = fmap_fname
         self.beam_energy = beam_energy
-        self.rk_s_step = rk_s_step        
+        self.rk_s_step = rk_s_step
         self.fmap_calc_trajectory(traj_init_rx=0, traj_init_ry=0)
 
         # get indices for central part of ID
@@ -278,8 +279,10 @@ class IDKickMap:
         rz = self.fmap_config.traj.rz
         px = self.fmap_config.traj.px
         py = self.fmap_config.traj.py
-        idx_begin_fit = self._find_value_idx(rz, rz_center - period_len*nr_central_periods/2)
-        idx_end_fit = self._find_value_idx(rz, rz_center + period_len*nr_central_periods/2)
+        idx_begin_fit = self._find_value_idx(
+            rz, rz_center - period_len*nr_central_periods/2)
+        idx_end_fit = self._find_value_idx(
+            rz, rz_center + period_len*nr_central_periods/2)
 
         for idx, pxy in enumerate([px, py]):
             rz_sample = rz[idx_begin_fit:idx_end_fit]
@@ -305,7 +308,7 @@ class IDKickMap:
                 self.kicky_downstream = kick_end * self.brho**2
                 print("kicky_upstream: {:11.4e}  T2m2".format(self.kicky_upstream))
                 print("kicky_downstream: {:11.4e}  T2m2".format(self.kicky_downstream))
-             
+
     def plot_kickx_vs_posy(self, indx, title=''):
         """."""
         posx = self.posx
@@ -356,11 +359,13 @@ class IDKickMap:
         self.calc_KsL_kicky_at_y(iy=8, plot=True)
 
     def fit_function(self, rz, amp1, phi1, a, b):
+        """."""
         f = amp1 * _np.sin(2*_np.pi/self.period_len * rz + phi1)
         f += a * rz + b
         return f
 
     def find_fit(self, rz, pvec):
+        """."""
         opt = _curve_fit(self.fit_function, rz, pvec)[0]
         return opt
 
@@ -379,10 +384,10 @@ class IDKickMap:
         self.posx, self.posy = info['posx'], info['posy']
         self.kickx, self.kicky = info['kickx'], info['kicky']
         self.fposx, self.fposy = info['fposx'], info['fposy']
-        self.kickx_upstream =  info['kickx_upstream']
-        self.kicky_upstream =  info['kicky_upstream']
-        self.kickx_downstream =  info['kickx_downstream']
-        self.kicky_downstream =  info['kicky_downstream']
+        self.kickx_upstream = info['kickx_upstream']
+        self.kicky_upstream = info['kicky_upstream']
+        self.kickx_downstream = info['kickx_downstream']
+        self.kicky_downstream = info['kicky_downstream']
 
     def __str__(self):
         """."""
@@ -454,7 +459,7 @@ class IDKickMap:
         return rst
 
     @staticmethod
-    def _linear_function(x,a,b):
+    def _linear_function(x, a, b):
         return a*x + b
 
     @staticmethod
@@ -462,7 +467,7 @@ class IDKickMap:
         diff_array = _np.absolute(data-value)
         index = diff_array.argmin()
         return index
-    
+
     @staticmethod
     def _load_kmap_info(kmap_fname):
         """."""
@@ -548,10 +553,10 @@ class IDKickMap:
         config.traj_rk_length = None
         config.traj_rk_nrpts = None
         config.traj_force_midplane_flag = False
-        
+
         # IDKickMap._update_energy(config, beam_energy)
         config.traj_init_rz = min(config.fmap.rz)
-        
+
         return config
 
     @staticmethod
@@ -598,7 +603,7 @@ class IDKickMap:
             s_nrpts=config.traj_rk_nrpts,
             min_rz=rk_min_rz,
             force_midplane=config.traj_force_midplane_flag)
-        
+
         return config
 
     @staticmethod
@@ -684,4 +689,3 @@ class IDKickMap:
             beam=fmap_config.beam,
             fieldmap=fmap_config.fmap,
             not_raise_range_exceptions=fmap_config.not_raise_range_exceptions)
-

@@ -39,9 +39,9 @@ def plot_rk_traj(idconfig, traj_init_rx, traj_init_ry, rk_s_step=0.2):
     idkickmap.rk_s_step = rk_s_step
     idkickmap.fmap_calc_trajectory(
         traj_init_rx=traj_init_rx, traj_init_ry=traj_init_ry)
-    
+
     traj = idkickmap.traj
-    
+
     labelx = 'rx @ end: {:+.1f} um'.format(1e3*traj.rx[-1])
     labely = 'ry @ end: {:+.1f} um'.format(1e3*traj.ry[-1])
     plt.plot(traj.rz, 1e3*traj.rx, '.-', label=labelx)
