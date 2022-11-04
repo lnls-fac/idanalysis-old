@@ -37,7 +37,7 @@ def correct_orbit_local(
     # model1[idinds[-1]].rescale_kicks *= 0
     # model1[idinds[0]].t_in *= 0
     # model1[idinds[-1]].t_out *= 0
-    
+
     # calc respm
     respm = np.zeros((2*nrbpms, 2*len(cors)))
     for i in range(nrcors):
@@ -69,7 +69,7 @@ def correct_orbit_local(
     elif correction_plane == 'y':
         for i in range(nrcors):
             respm[:, 0*nrcors+i] *= 0
-  
+
     # model1[idinds[0]].rescale_kicks = 0.5
     # model1[idinds[-1]].rescale_kicks = 0.5
     # model1[idinds[0]].t_in = t_in_original
@@ -82,7 +82,7 @@ def correct_orbit_local(
     ismat[sel_svals] = 1/smat[sel_svals]
     ismat = np.diag(ismat)
     invmat = -1 * np.dot(np.dot(vmat.T, ismat), umat.T)
-    
+
     # correct orbit gradually
     dk_total = np.zeros(2*nrcors)
     for j in np.arange(10):
@@ -285,11 +285,36 @@ def correct_orbit_local(
     return ret
 
 
-def correct_orbit_sofb(model0, model1, id_famname, minsingval=0.2, nr_steps=1):
+def get_fofb_bpms(bpm_idx):
+    """."""
+    bpm_list = []
+    aux_list = []
+    for i, idx in enumerate(bpm_idx):
+        j = i + 1
+        aux_list.append(idx)
+        if j % 8 == 0 and i != 0:
+            bpm_list.append(aux_list[0])
+            bpm_list.append(aux_list[3])
+            bpm_list.append(aux_list[4])
+            bpm_list.append(aux_list[7])
+            aux_list = []
+    return bpm_list
 
+
+def correct_orbit_fb(
+        model0, model1, id_famname, minsingval=0.2,
+        nr_steps=1, corrtype='SOFB'):
+    """."""
     # calculate structures
     famdata = si.get_family_data(model1)
-    bpms = famdata['BPM']['index']
+    bpm_list = famdata['BPM']['index']
+    if corrtype == 'SOFB':
+        bpms = famdata['BPM']['index']
+    elif corrtype == 'FOFB':
+        bpm_idx = np.array([idx[0] for idx in bpm_list])
+        bpms = get_fofb_bpms(bpm_idx)
+    else:
+        raise Exception('Corretion type must be chosen (SOFB or FOFB)')
     spos_bpms = pyaccel.lattice.find_spos(model1, indices=bpms)
     inds_id = pyaccel.lattice.find_indices(model1, 'fam_name', id_famname)
 
@@ -300,7 +325,7 @@ def correct_orbit_sofb(model0, model1, id_famname, minsingval=0.2, nr_steps=1):
     cparams.maxnriters = 20
 
     # get unperturbed orbit
-    ocorr = OrbitCorr(model0, 'SI', params=cparams)
+    ocorr = OrbitCorr(model0, 'SI', params=cparams, corrtype=corrtype)
     orb0 = ocorr.get_orbit()
 
     kick_step = model1[inds_id[0]].rescale_kicks/nr_steps
@@ -310,16 +335,16 @@ def correct_orbit_sofb(model0, model1, id_famname, minsingval=0.2, nr_steps=1):
     model1[inds_id[0]].rescale_kicks *= 0
     model1[inds_id[-1]].rescale_kicks *= 0
     model1[inds_id[0]].t_in *= 0
-    model1[inds_id[-1]].t_out *=  0
+    model1[inds_id[-1]].t_out *= 0
 
     for i in np.arange(nr_steps):
-       
+
         model1[inds_id[0]].rescale_kicks += kick_step
         model1[inds_id[-1]].rescale_kicks += kick_step
         model1[inds_id[0]].t_in += t_in_step
         model1[inds_id[-1]].t_out += t_out_step
         # get perturbed orbit
-        ocorr = OrbitCorr(model1, 'SI',params=cparams)
+        ocorr = OrbitCorr(model1, 'SI', params=cparams, corrtype=corrtype)
         orb1 = ocorr.get_orbit()
 
         # calc closed orbit distortions (cod) before correction
