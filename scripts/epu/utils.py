@@ -9,8 +9,8 @@ from idanalysis import IDKickMap
 
 ID_PERIOD = 50.0  # [mm]
 
-FOLDER_BASE = '/home/gabriel/repos-dev/'
-# FOLDER_BASE = '/home/ximenes/repos-dev/'
+# FOLDER_BASE = '/home/gabriel/repos-dev/'
+FOLDER_BASE = '/home/ximenes/repos-dev/'
 
 
 DATA_PATH = 'epu-uvx/measurement/magnetic/hallprobe/'
@@ -114,38 +114,6 @@ ID_CONFIGS = {
     'ID4096': 'probes 133-14/gap 40.9mm/2022-10-24_EPU_gap40.9_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4096.dat',
     'ID4098': 'probes 133-14/gap 40.9mm/2022-10-24_EPU_gap40.9_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4098.dat',
 
-    }
-
-
-EXCDATA = {
-
-    '45.00' : {
-        'FILE':
-            ('# https://github.com/lnls-ima/wiggler-2T-STI/blob/main/'
-             'measurement/magnetic/hallprobe/gap%20045.00mm/current_test/'
-             'gap45.00mm_curent_test.xlsx'),
-        'I_UP' : np.array([
-            0.0, -0.5, -1.0, -2.0, 0.0, 0.0, 0.0, 0.0, ]),
-        'I_DOWN': np.array([
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 2.0, ]),
-        'IBY': np.array([
-            103.63, -29.59, -187.09, -583.29, 107.54, 236.31, 389.82, 744.03,])
-            },
-    '59.60' : {
-        'FILE':
-            ('# https://github.com/lnls-ima/wiggler-2T-STI/blob/main/'
-             'measurement/magnetic/hallprobe/gap%20059.60mm/current_test/'
-             'gap59.60mm_curent_test.xlsx'),
-        'I_UP' : np.array([
-            0, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1]),
-        'I_DOWN': np.array([
-            0, 0, 1, -1, -2, -1.25,
-            -1.15, -1.15, -1.1, -1, -0.9, -0.9]),
-        'IBY': np.array([
-            103.93, 455.53, 743.42, 82, -289.7, -90.2,
-            -63.68, -65.43, -50.8, -21.88, 8.12, 3.35])
-            },
     }
 
 
