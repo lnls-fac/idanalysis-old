@@ -10,7 +10,7 @@ from pyaccel.optics import calc_touschek_energy_acceptance
 import utils
 import pyaccel
 import pymodels
-import idanalysis
+# import idanalysis
 # idanalysis.FOLDER_BASE = '/home/ximenes/repos-dev/'
 # idanalysis.FOLDER_BASE = '/home/gabriel/repos-dev/'
 
@@ -18,11 +18,15 @@ from idanalysis import orbcorr as orbcorr
 from idanalysis import model as model
 from idanalysis import optics as optics
 
+from run_rk_traj import PHASES, GAPS
+from utils import get_idconfig
+# from utils import create_kmap_filename
 
-def create_model_ids(idconfig):
+
+def create_model_ids(phase, gap):
     """."""
     print('--- model with kickmap ---')
-    ids = utils.create_ids(idconfig=idconfig, rescale_kicks=1)
+    ids = utils.create_ids(phase, gap, rescale_kicks=1)
     model = pymodels.si.create_accelerator(ids=ids)
     model.cavity_on = True
     model.radiation_on = 1
@@ -275,7 +279,7 @@ def analysis_energy_acceptance(model0, model_id, spos=None):
   plt.show()
 
 
-def analysis(idconfig, plot_flag=True):
+def analysis(phase, gap, plot_flag=True):
     """."""
     # select where EPU will be installed
     straight_nr = 10
@@ -287,7 +291,8 @@ def analysis(idconfig, plot_flag=True):
     twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
 
     # create model with id
-    model1, knobs, locs_beta = create_model_ids(idconfig)
+    idconfig = get_idconfig(phase, gap)
+    model1, knobs, locs_beta = create_model_ids(phase, gap)
 
     print('local quadrupole fams: ', knobs)
     print('element indices for straight section begin and end: ', locs_beta)
@@ -345,4 +350,6 @@ def analysis(idconfig, plot_flag=True):
 
 
 if __name__ == '__main__':
-    analysis('ID4080')
+
+    phase, gap = PHASES[0], GAPS[0]
+    analysis(phase, gap)

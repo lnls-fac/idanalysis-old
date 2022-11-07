@@ -6,7 +6,8 @@ from scipy import optimize as optimize
 
 from idanalysis.kickmaps import IDKickMap
 
-from run_rk_traj import GAPS, PHASES, CONFIGS
+from utils import GAPS, PHASES
+from utils import get_idconfig
 from run_rk_traj import create_idkickmap
 from run_rk_traj import load_rk_traj
 
@@ -217,9 +218,7 @@ if __name__ == "__main__":
     traj_init_rx, traj_init_ry, \
     traj_init_px, traj_init_py = load_rk_traj()
 
-    phase_idx, gap_idx = 0, 0
-    phase = PHASES[phase_idx]
-    gap = GAPS[gap_idx]
-    idconfig = CONFIGS[0][0]
+    phase, gap = PHASES[0], GAPS[0]
+    idconfig = get_idconfig(phase, gap)
     harmonics = [0, 1, 2]
     data = calc_multipoles(idconfig, phase, GAPS[:2], traj_data, harmonics)

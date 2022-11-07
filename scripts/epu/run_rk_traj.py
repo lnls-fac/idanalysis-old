@@ -6,25 +6,14 @@ from mathphys.functions import save_pickle, load_pickle
 from idanalysis import IDKickMap
 from idanalysis.fmap import FieldmapOnAxisAnalysis
 
-from utils import FOLDER_BASE
-from utils import DATA_PATH
-from utils import ID_CONFIGS
-
-_phase25n = ['ID4083', 'ID4103', 'ID4088', 'ID4093', 'ID4098']  # phase -25
-_phase16n = ['ID4081', 'ID4101', 'ID4086', 'ID4091', 'ID4096']  # phase -16
-_phase00p = ['ID4079', 'ID4099', 'ID4084', 'ID4089', 'ID4094']  # phase  00
-_phase16p = ['ID4080', 'ID4100', 'ID4085', 'ID4090', 'ID4095']  # phase  16
-_phase25p = ['ID4082', 'ID4102', 'ID4087', 'ID4092', 'ID4097']  # phase  25
-
-DEF_RK_S_STEP = 2  # [mm] seems converged for the measurement fieldmap grids
-
-GAPS = ['22.0', '23.3', '25.7', '29.3', '40.9']
-PHASES = ['-25.00', '-16.39', '+00.00', '+16.39', '+25.00']
-CONFIGS = [_phase25n, _phase16n, _phase00p, _phase16p, _phase25p]
+from utils import FOLDER_BASE, DATA_PATH, ID_CONFIGS
+from utils import ORDERED_CONFIGS, GAPS, PHASES
+from utils import get_idconfig
 
 
-def create_idkickmap(idconfig):
+def create_idkickmap(phase, gap):
     """."""
+    idconfig = get_idconfig(phase, gap)
     # get fieldmap file name
     MEAS_FILE = ID_CONFIGS[idconfig]
     _, meas_id = MEAS_FILE.split('ID=')
@@ -45,7 +34,7 @@ def create_idkickmap(idconfig):
 
 
 def calc_rk_traj(
-        configs, rk_s_step, 
+        phase, rk_s_step,
         traj_init_rx, traj_init_ry, traj_init_px, traj_init_py):
     """Calculate RK for set of EPU configurations."""
     s = dict()
@@ -57,10 +46,10 @@ def calc_rk_traj(
     fmapbx, fmapby, fmaprz = dict(), dict(), dict()
     
     fieldtools = FieldmapOnAxisAnalysis()
-    for gap, idconfig in zip(GAPS, configs):
+    for gap in GAPS:
         print('gap: {} mm'.format(gap))
         # create IDKickMap and calc trajectory
-        idkickmap = create_idkickmap(idconfig)
+        idkickmap = create_idkickmap(phase, gap)
         idkickmap.rk_s_step = rk_s_step
         idkickmap.fmap_calc_trajectory(
             traj_init_rx=traj_init_rx, traj_init_ry=traj_init_ry,
@@ -101,11 +90,11 @@ def save_rk_traj(
         traj_init_px, traj_init_py):
     """."""
     data = dict()
-    for phase, configs in zip(PHASES, CONFIGS):
+    for phase, configs in zip(PHASES, ORDERED_CONFIGS):
         print('phase {} mm, configs: {}'.format(phase, configs))
         data_ = \
             calc_rk_traj(
-                configs, rk_s_step,
+                phase, rk_s_step,
                 traj_init_rx, traj_init_ry, traj_init_px, traj_init_py)
         data[phase] = data_
         print()

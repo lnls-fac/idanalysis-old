@@ -4,8 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import optimize as optimize
 
-from run_rk_traj import GAPS
-from run_rk_traj import PHASES
+from utils import GAPS, PHASES
 from run_rk_traj import load_rk_traj
 
 

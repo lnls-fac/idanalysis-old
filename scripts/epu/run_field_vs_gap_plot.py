@@ -7,8 +7,7 @@ from scipy import optimize as optimize
 from imaids import utils as ima_utils
 
 from utils import ID_PERIOD
-from run_rk_traj import GAPS
-from run_rk_traj import PHASES
+from utils import GAPS, PHASES
 from run_rk_traj import load_rk_traj
 
 

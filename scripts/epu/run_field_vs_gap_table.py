@@ -7,7 +7,8 @@ from tabulate import tabulate
 from mathphys.functions import load_pickle
 
 from utils import ID_PERIOD
-from run_rk_traj import GAPS, PHASES, load_rk_traj
+from utils import GAPS, PHASES
+from run_rk_traj import load_rk_traj
 from scripts.epu.run_field_vs_gap_plot import function_field_vs_gap
 from scripts.epu.run_field_vs_gap_plot import calc_field_vs_gap_coeffs
 

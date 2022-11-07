@@ -254,23 +254,15 @@ class IDKickMap:
         return rz_center
 
     def calc_id_termination_kicks(
-            self, fmap_fname, period_len=None, kmap_idlen=None,
-            beam_energy=None, rk_s_step=None):
+            self, period_len=None, kmap_idlen=None, plot_flag=False):
         """."""
         # get parameters
-        beam_energy = beam_energy or IDKickMap.DEF_BEAM_ENERGY
-        rk_s_step = rk_s_step or IDKickMap.DEF_RK_S_STEP
-        # set kickmap ID length and ID period length
         kmap_idlen = kmap_idlen or self.kmap_idlen
         self.kmap_idlen = kmap_idlen
         period_len = period_len or self.period_len
         self.period_len = period_len
         nr_central_periods = int(kmap_idlen*1e3/period_len) - 4
 
-        # calc trajectory from nominal initial conditions
-        self.fmap_fname = fmap_fname
-        self.beam_energy = beam_energy
-        self.rk_s_step = rk_s_step        
         self.fmap_calc_trajectory(traj_init_rx=0, traj_init_ry=0)
 
         # get indices for central part of ID
@@ -290,10 +282,11 @@ class IDKickMap:
             linefit = self._linear_function(rz,opt[2],opt[3])
             kick_begin = linefit[idx_begin_ID] - pxy[0]
             kick_end = pxy[-1] - linefit[idx_end_ID]
-            _plt.plot(rz,pxy)
-            _plt.plot(rz_sample,p_sample,'.')
-            _plt.plot(rz,linefit)
-            _plt.show()
+            if plot_flag:
+                _plt.plot(rz,pxy)
+                _plt.plot(rz_sample,p_sample,'.')
+                _plt.plot(rz,linefit)
+                _plt.show()
             if idx == 0:
                 self.kickx_upstream = kick_begin * self.brho**2
                 self.kickx_downstream = kick_end * self.brho**2
