@@ -16,7 +16,8 @@ _phase00p = ['ID4079', 'ID4099', 'ID4084', 'ID4089', 'ID4094']  # phase  00
 _phase16p = ['ID4080', 'ID4100', 'ID4085', 'ID4090', 'ID4095']  # phase  16
 _phase25p = ['ID4082', 'ID4102', 'ID4087', 'ID4092', 'ID4097']  # phase  25
 
-DEF_RK_S_STEP = 0.2  # [mm]
+DEF_RK_S_STEP = 2  # [mm] seems converged for the measurement fieldmap grids
+
 GAPS = ['22.0', '23.3', '25.7', '29.3', '40.9']
 PHASES = ['-25.00', '-16.39', '+00.00', '+16.39', '+25.00']
 CONFIGS = [_phase25n, _phase16n, _phase00p, _phase16p, _phase25p]

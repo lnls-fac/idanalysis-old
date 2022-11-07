@@ -4,24 +4,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import optimize as optimize
 
-
-from imaids import utils as ima_utils
-
-from mathphys.functions import save_pickle
-from idanalysis import IDKickMap
-from idanalysis.fmap import FieldmapOnAxisAnalysis
-
-from utils import FOLDER_BASE
-from utils import DATA_PATH
-from utils import ID_CONFIGS
-from utils import ID_PERIOD
+from run_rk_traj import GAPS
+from run_rk_traj import PHASES
+from run_rk_traj import load_rk_traj
 
 
 def run_multipoles(
-        phase_config, idx, traj_init_rx, traj_init_ry, rk_s_step=0.2,
+        phase_config, phase, traj_init_rx, traj_init_ry, rk_s_step=0.2,
         tabulate_flag=True):
     """."""
-    phase = PHASES[idx]
     rz_dict = dict()
     skew_quad_dict = dict()
     normal_quad_dict = dict()
@@ -178,6 +169,4 @@ def run_multipole_analysis(rk_s_step=DEF_RK_S_STEP, tabulate_flag=True):
 
 if __name__ == "__main__":
     """."""
-    rk_s_step = 10 * DEF_RK_S_STEP
-    # run_multipole_analysis()
-    run_rk_traj(rk_s_step, tabulate_flag=False)
+    traj_data,  = load_rk_traj()

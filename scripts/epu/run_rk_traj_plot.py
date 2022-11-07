@@ -22,10 +22,10 @@ def plot_rk_traj_normalized_fields(
         label = GAPS[i] + ' mm'
         plt.plot(rz_, bx_/np.max(np.abs(bx_)), colors[i], label=label)
     plt.xlabel('rz [mm]')
-    plt.ylabel('Normalized field')
+    plt.ylabel('Field [a.u.]')
     plt.grid()
     plt.legend()
-    plt.title('Horizontal field' + title_fld_sufix)
+    plt.title('Normalized horizontal field' + title_fld_sufix)
     plt.savefig(fig_path + 'field-bx.png', dpi=dpi)
     if show_flag:
         plt.show()
@@ -39,10 +39,10 @@ def plot_rk_traj_normalized_fields(
         label = GAPS[i] + ' mm'
         plt.plot(rz_, by_/np.max(np.abs(by_)), colors[i], label=label)
     plt.xlabel('rz [mm]')
-    plt.ylabel('Normalized field')
+    plt.ylabel('Field [a.u.]')
     plt.grid()
     plt.legend()
-    plt.title('Vertical field' + title_fld_sufix)
+    plt.title('Normalized vertical field' + title_fld_sufix)
     plt.savefig(fig_path + 'field-by.png', dpi=dpi)
     if show_flag:
         plt.show()
@@ -56,10 +56,10 @@ def plot_rk_traj_normalized_fields(
         label = GAPS[i] + ' mm'
         plt.plot(rz_, bz_/np.max(np.abs(bz_)), colors[i], label=label)
     plt.xlabel('rz [mm]')
-    plt.ylabel('Normalized field')
+    plt.ylabel('Field [a.u.]')
     plt.grid()
     plt.legend()
-    plt.title('Longitudinal field' + title_fld_sufix)
+    plt.title('Normalized longitudinal field' + title_fld_sufix)
     plt.savefig(fig_path + 'field-bz.png', dpi=dpi)
     if show_flag:
         plt.show()
@@ -80,7 +80,7 @@ def plot_rk_traj_pos(fig_path, colors, dpi, show_flag, rz, rx, ry):
     plt.grid()
     plt.legend()
     plt.title(
-        'RK Trajectory Pos for phase {} mm'.format(phase))
+        'RK Trajectory PosX for phase {} mm'.format(phase))
     plt.savefig(fig_path + 'traj-posx.png', dpi=dpi)
     if show_flag:
         plt.show()
@@ -98,7 +98,7 @@ def plot_rk_traj_pos(fig_path, colors, dpi, show_flag, rz, rx, ry):
     plt.grid()
     plt.legend()
     plt.title(
-        'RK Trajectory Pos for phase {} mm'.format(phase))
+        'RK Trajectory PosY for phase {} mm'.format(phase))
     plt.savefig(fig_path + 'traj-posy.png', dpi=dpi)
     if show_flag:
         plt.show()
@@ -119,7 +119,7 @@ def plot_rk_traj_ang(fig_path, colors, dpi, show_flag, rz, px, py):
     plt.grid()
     plt.legend()
     plt.title(
-        'RK Trajectory Ang for phase {} mm'.format(phase))
+        'RK Trajectory AngX for phase {} mm'.format(phase))
     plt.savefig(fig_path + 'traj-angx.png', dpi=dpi)
     if show_flag:
         plt.show()
@@ -137,7 +137,7 @@ def plot_rk_traj_ang(fig_path, colors, dpi, show_flag, rz, px, py):
     plt.grid()
     plt.legend()
     plt.title(
-        'RK Trajectory Ang for phase {} mm'.format(phase))
+        'RK Trajectory AngY for phase {} mm'.format(phase))
     plt.savefig(fig_path + 'traj-angy.png', dpi=dpi)
     if show_flag:
         plt.show()
