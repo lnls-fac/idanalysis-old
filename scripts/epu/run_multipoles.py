@@ -4,8 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import optimize as optimize
 
-from run_rk_traj import GAPS
-from run_rk_traj import PHASES
+from run_rk_traj import GAPS, PHASES, CONFIGS
+from run_rk_traj import create_idkickmap
 from run_rk_traj import load_rk_traj
 
 
@@ -156,17 +156,30 @@ def run_multipoles(
     return
 
 
-def run_multipole_analysis(rk_s_step=DEF_RK_S_STEP, tabulate_flag=True):
-    """."""
-    traj_init_rx = 0.0  # [mm]
-    traj_init_ry = 0.0  # [mm]
+# def run_multipole_analysis(rk_s_step=DEF_RK_S_STEP, tabulate_flag=True):
+#     """."""
+#     traj_init_rx = 0.0  # [mm]
+#     traj_init_ry = 0.0  # [mm]
 
-    for i, phase in enumerate(CONFIGS):
-        run_multipoles(
-            float(PHASES[i]), i, traj_init_rx, traj_init_ry, rk_s_step=rk_s_step,
-            tabulate_flag=tabulate_flag)
+#     for i, phase in enumerate(CONFIGS):
+#         run_multipoles(
+#             float(PHASES[i]), i, traj_init_rx, traj_init_ry, rk_s_step=rk_s_step,
+#             tabulate_flag=tabulate_flag)
+
+
+
+def calc_multipoles(idconfig):
+    """."""
+    idkickmap = create_idkickmap(idconfig=idconfig)
+
 
 
 if __name__ == "__main__":
     """."""
-    traj_data,  = load_rk_traj()
+    traj_data, traj_init_rx, traj_init_ry, rk_s_step = load_rk_traj()
+    
+    phase_idx, gap_idx = 0, 0
+    phase = PHASES[phase_idx]
+    gap = GAPS[gap_idx]
+    idconfig = CONFIGS[0][0]
+    calc_multipoles(idconfig)

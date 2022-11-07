@@ -44,7 +44,9 @@ def create_idkickmap(idconfig):
     return idkickmap
 
 
-def calc_rk_traj(configs, traj_init_rx, traj_init_ry, rk_s_step=DEF_RK_S_STEP):
+def calc_rk_traj(
+        configs, rk_s_step, 
+        traj_init_rx, traj_init_ry, traj_init_px, traj_init_py):
     """Calculate RK for set of EPU configurations."""
     bx, by, bz = dict(), dict(), dict()
     rz, rx, ry = dict(), dict(), dict()
@@ -60,7 +62,8 @@ def calc_rk_traj(configs, traj_init_rx, traj_init_ry, rk_s_step=DEF_RK_S_STEP):
         idkickmap = create_idkickmap(idconfig)
         idkickmap.rk_s_step = rk_s_step
         idkickmap.fmap_calc_trajectory(
-            traj_init_rx=traj_init_rx, traj_init_ry=traj_init_ry)
+            traj_init_rx=traj_init_rx, traj_init_ry=traj_init_ry,
+            traj_init_px=traj_init_px, traj_init_py=traj_init_py)
         traj = idkickmap.traj
         fmap = idkickmap.fmap_config.fmap
 
@@ -89,22 +92,26 @@ def calc_rk_traj(configs, traj_init_rx, traj_init_ry, rk_s_step=DEF_RK_S_STEP):
     return data
 
 
-def save_rk_traj(rk_s_step=DEF_RK_S_STEP):
-    """"""
-    traj_init_rx = 0.0  # [mm]
-    traj_init_ry = 0.0  # [mm]
-
+def save_rk_traj(
+        rk_s_step,
+        traj_init_rx, traj_init_ry,
+        traj_init_px, traj_init_py):
+    """."""
     data = dict()
     for phase, configs in zip(PHASES, CONFIGS):
         print('phase {} mm, configs: {}'.format(phase, configs))
         data_ = \
-            calc_rk_traj(configs, traj_init_rx, traj_init_ry, rk_s_step)
+            calc_rk_traj(
+                configs, rk_s_step,
+                traj_init_rx, traj_init_ry, traj_init_px, traj_init_py)
         data[phase] = data_
         print()
 
     rk_traj_data = dict()
     rk_traj_data['traj_init_rx'] = traj_init_rx
     rk_traj_data['traj_init_ry'] = traj_init_ry
+    rk_traj_data['traj_init_px'] = traj_init_px
+    rk_traj_data['traj_init_py'] = traj_init_py
     rk_traj_data['rk_s_step'] = rk_s_step
     rk_traj_data['data'] = data
     fpath = './results/phase-organized/'
@@ -116,12 +123,30 @@ def load_rk_traj():
     traj_data = load_pickle(fpath + 'rk_traj_data.pickle')
     traj_init_rx = traj_data['traj_init_rx']
     traj_init_ry = traj_data['traj_init_ry']
+    traj_init_px = traj_data['traj_init_px']
+    traj_init_py = traj_data['traj_init_py']
     rk_s_step = traj_data['rk_s_step']
     data = traj_data['data']
-    return data, traj_init_rx, traj_init_ry, rk_s_step
+    res = (
+        data, rk_s_step,
+        traj_init_rx, traj_init_ry,
+        traj_init_px, traj_init_py
+        )
+    return res
 
 
 if __name__ == "__main__":
     """."""
     rk_s_step = DEF_RK_S_STEP
-    save_rk_traj(rk_s_step)
+    traj_init_rx = 0.0  # [mm]
+    traj_init_ry = 0.0  # [mm]
+    traj_init_px = 0.0  # [rad]
+    traj_init_py = 0.0  # [rad]
+
+    save_rk_traj(
+        rk_s_step=DEF_RK_S_STEP,
+        traj_init_rx=traj_init_rx,
+        traj_init_ry=traj_init_ry,
+        traj_init_px=traj_init_px,
+        traj_init_py=traj_init_py,
+        )
