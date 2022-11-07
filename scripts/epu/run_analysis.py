@@ -7,60 +7,35 @@ from pyaccel import lattice as pyacc_lat
 from pyaccel import optics as pyacc_opt
 from pyaccel.optics import calc_touschek_energy_acceptance
 
+import utils
+import pyaccel
+import pymodels
 import idanalysis
-#idanalysis.FOLDER_BASE = '/home/ximenes/repos-dev/'
-idanalysis.FOLDER_BASE = '/home/gabriel/repos-dev/'
+# idanalysis.FOLDER_BASE = '/home/ximenes/repos-dev/'
+# idanalysis.FOLDER_BASE = '/home/gabriel/repos-dev/'
 
 from idanalysis import orbcorr as orbcorr
 from idanalysis import model as model
 from idanalysis import optics as optics
-from idanalysis import EPUData
 
-
-def create_epudata():
-
-    folder = idanalysis.FOLDER_BASE + EPUData.FOLDER_EPU_MAPS
-    configs = EPUData.EPU_CONFIGS
-    epudata = EPUData(folder=folder, configs=configs)
-    return epudata
-
-
-def create_model(epu_config_idx=None, rescale_kicks=1.0, **kwargs):
-    """Create pyaccel model."""
-
-    vchamber_on = kwargs.get('vchamber_on', False)
-    straight_nr = kwargs.get('straight_nr', None)
-
-    if epu_config_idx is None:
-      # create model withou IDs, if the case
-      model_ = model.create_model(ids=None, vchamber_on=vchamber_on)
-      config_label = None
-    else:
-
-      # create object with list of all possible EPU50 configurations
-      configs = create_epudata()
-
-      # get config label
-      config_label = configs.get_config_label(configs[epu_config_idx])
-
-      # list of IDs
-      nr_steps = kwargs.get('nr_steps', 40)
-      kmap_fname = configs.get_kickmap_filename(configs[epu_config_idx])
-      ids = model.get_id_epu_list(
-        kmap_fname, ids=None, nr_steps=nr_steps, rescale_kicks=rescale_kicks,
-        straight_nr=straight_nr)
-
-      # create model
-      model_ = model.create_model(ids=ids, vchamber_on=False)
-
+def create_model_ids(idconfig):
+    """."""
+    print('--- model with kickmap ---')
+    ids = utils.create_ids(idconfig=idconfig, rescale_kicks=1)
+    model = pymodels.si.create_accelerator(ids=ids)
+    twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
+    print('length : {:.4f} m'.format(model.length))
+    print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/np.pi))
+    print('tuney  : {:.6f}'.format(twiss.muy[-1]/2/np.pi))
+    straight_nr = int(ids[0].subsec[2:4])
     # get knobs and beta locations
     if straight_nr is not None:
-      _, knobs, _ = optics.symm_get_knobs(model_, straight_nr)
-      locs_beta = optics.symm_get_locs_beta(knobs)
+        _, knobs, _ = optics.symm_get_knobs(model, straight_nr)
+        locs_beta = optics.symm_get_locs_beta(knobs)
     else:
-      knobs, locs_beta = None, None
+        knobs, locs_beta = None, None
 
-    return model_, config_label, knobs, locs_beta
+    return model, knobs, locs_beta
 
 
 def create_model_with_id(id_config_idx, rescale_kicks=1.0, straight_nr=None):
@@ -74,6 +49,45 @@ def create_model_with_id(id_config_idx, rescale_kicks=1.0, straight_nr=None):
   model1, config_label, *_ = \
     create_model(epu_config_idx=id_config_idx, rescale_kicks=rescale_kicks, **kwargs)
   return model1, config_label, straight_nr
+
+
+def orbit_analysis(model0, model_id, orbcorr_results):
+    kicks = orbcorr_results[0]
+    spos_bpms = orbcorr_results[1]
+    codx_bpms = orbcorr_results[2]
+    cody_bpms = orbcorr_results[3]
+    cod_ring = pyaccel.tracking.find_orbit4(model_id, indices='open')
+    spos = pyaccel.lattice.find_spos(model_id)
+    orb0 = pyaccel.tracking.find_orbit4(model0, indices='open')
+    codxbpms_rms = 1e6*np.std(codx_bpms)
+    codybpms_rms = 1e6*np.std(cody_bpms)
+    codx_rms = 1e6*np.std(cod_ring[0])
+    cody_rms = 1e6*np.std(cod_ring[2])
+    labelx_bpm = 'COD @ bpms: rms = {:.2f} um'.format(codxbpms_rms)
+    labely_bpm = 'COD @ bpms: rms = {:.2f} um'.format(codybpms_rms)
+    labelx_ring = 'COD @ ring: rms = {:.2f} um'.format(codx_rms)
+    labely_ring = 'COD @ ring: rms = {:.2f} um'.format(cody_rms)
+
+    plt.figure(1)
+    plt.plot(spos, 1e6*cod_ring[0], '-', color='b', label=labelx_ring)
+    plt.plot(spos_bpms, codx_bpms, '.', color='b', label=labelx_bpm)
+    plt.plot(spos, 1e6*orb0[0], color='C1')
+    plt.xlabel('spos [m]')
+    plt.ylabel('pos [um]')
+    plt.title('Horizontal COD')
+    plt.grid()
+    plt.legend()
+
+    plt.figure(2)
+    plt.plot(spos, 1e6*cod_ring[2], '-', color='b', label=labely_ring)
+    plt.plot(spos_bpms, cody_bpms, '.', color='b', label=labely_bpm)
+    plt.plot(spos, 1e6*orb0[2], color='C1')
+    plt.xlabel('spos [m]')
+    plt.ylabel('pos [um]')
+    plt.title('Vertical COD')
+    plt.grid()
+    plt.legend()
+    plt.show()
 
 
 def calc_dtune_betabeat(twiss0, twiss1):
@@ -91,18 +105,9 @@ def calc_dtune_betabeat(twiss0, twiss1):
 
 
 def analysis_uncorrected_perturbation(
-    config_label, model, twiss0=None, plot_flag=True, straight_nr=10):
+        model, idconfig, twiss0=None, plot_flag=True):
     """."""
-    if twiss0 is None:
-      model0, *_ = create_model(vchamber_on=False)
-      twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
-    kwargs = {
-      'vchmaber_on': False,
-      'nr_steps': 40,
-      'straight_nr': straight_nr,
-    }
-    # model1, config_label, *_ = \
-    #   create_model(epu_config_idx=epu_config_idx, **kwargs)
+    config_label = idconfig
     twiss, *_ = pyacc_opt.calc_twiss(model, indices='closed')
 
     dtunex, dtuney, \
@@ -111,17 +116,15 @@ def analysis_uncorrected_perturbation(
     bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(twiss0, twiss)
 
     if plot_flag:
-        print(config_label)
         print(f'dtunex: {dtunex:+.6f}')
         print(f'dtunex: {dtuney:+.6f}')
         print(f'bbetax: {bbeatx_rms:04.1f} % rms, {bbeatx_absmax:04.1f} % absmax')
         print(f'bbetay: {bbeaty_rms:04.1f} % rms, {bbeaty_absmax:04.1f} % absmax')
 
-        blue, red = (0.4,0.4,1), (1,0.4,0.4)
         labelx = f'X ({bbeatx_rms:.1f} % rms)'
         labely = f'Y ({bbeaty_rms:.1f} % rms)'
-        plt.plot(twiss.spos, bbeatx, color=blue, alpha=0.8, label=labelx)
-        plt.plot(twiss.spos, bbeaty, color=red, alpha=0.8, label=labely)
+        plt.plot(twiss.spos, bbeatx, color='b', alpha=1, label=labelx)
+        plt.plot(twiss.spos, bbeaty, color='r', alpha=0.8, label=labely)
         plt.xlabel('spos [m]')
         plt.ylabel('Beta Beat [%]')
         plt.title('Beta Beating from ID - ' + config_label)
@@ -132,11 +135,12 @@ def analysis_uncorrected_perturbation(
     return twiss
 
 
-def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=True):
-  if plot_flag:
-    #Compare optics between nominal value and uncorrect optics due ID insertion
-    dtunex, dtuney, bbeatx, bbeaty, bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(twiss0,twiss1)
-    print(config_label,'\n')
+def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label):
+    """."""
+    # Compare optics between nominal value and uncorrect optics due ID
+    dtunex, dtuney, bbeatx, bbeaty, bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(
+        twiss0, twiss1)
+    print(config_label, '\n')
     print('Not symmetrized optics :')
     print(f'dtunex: {dtunex:+.6f}')
     print(f'dtunex: {dtuney:+.6f}')
@@ -145,11 +149,10 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
     print()
 
     plt.figure(1)
-    blue, red = (0.4,0.4,1), (1,0.4,0.4)
     labelx = f'X ({bbeatx_rms:.2f} % rms)'
     labely = f'Y ({bbeaty_rms:.2f} % rms)'
-    plt.plot(twiss0.spos, bbeatx, color=blue, alpha=0.8, label=labelx)
-    plt.plot(twiss0.spos, bbeaty, color=red, alpha=0.8, label=labely)
+    plt.plot(twiss0.spos, bbeatx, color='b', alpha=1.0, label=labelx)
+    plt.plot(twiss0.spos, bbeaty, color='r', alpha=0.8, label=labely)
     plt.xlabel('spos [m]')
     plt.ylabel('Beta Beat [%]')
     plt.title('Beta Beating from ID - ' + config_label)
@@ -157,9 +160,9 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
     plt.legend()
     plt.grid()
 
-
-    #Compare optics between nominal value and symmetrized optics
-    dtunex, dtuney, bbeatx, bbeaty, bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(twiss0,twiss2)
+    # Compare optics between nominal value and symmetrized optics
+    dtunex, dtuney, bbeatx, bbeaty, bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(
+        twiss0, twiss2)
     print('symmetrized optics but uncorrect tunes:')
     print(f'dtunex: {dtunex:+.6f}')
     print(f'dtunex: {dtuney:+.6f}')
@@ -168,11 +171,10 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
     print()
 
     plt.figure(2)
-    blue, red = (0.4,0.4,1), (1,0.4,0.4)
     labelx = f'X ({bbeatx_rms:.2f} % rms)'
     labely = f'Y ({bbeaty_rms:.2f} % rms)'
-    plt.plot(twiss0.spos, bbeatx, color=blue, alpha=0.8, label=labelx)
-    plt.plot(twiss0.spos, bbeaty, color=red, alpha=0.8, label=labely)
+    plt.plot(twiss0.spos, bbeatx, color='b', alpha=1.0, label=labelx)
+    plt.plot(twiss0.spos, bbeaty, color='r', alpha=0.8, label=labely)
     plt.xlabel('spos [m]')
     plt.ylabel('Beta Beat [%]')
     plt.title('Beta Beating from ID - ' + config_label)
@@ -180,9 +182,9 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
     plt.legend()
     plt.grid()
 
-
-    #Compare optics between nominal value and symmetrized optics with tune correction
-    dtunex, dtuney, bbeatx, bbeaty, bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(twiss0,twiss3)
+    # Compare optics between nominal value and all corrected
+    dtunex, dtuney, bbeatx, bbeaty, bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(
+        twiss0, twiss3)
     print('symmetrized optics and correct tunes:')
     print(f'dtunex: {dtunex:+.6f}')
     print(f'dtunex: {dtuney:+.6f}')
@@ -190,11 +192,10 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
     print(f'bbetay: {bbeaty_rms:04.2f} % rms, {bbeaty_absmax:04.2f} % absmax')
 
     plt.figure(3)
-    blue, red = (0.4,0.4,1), (1,0.4,0.4)
     labelx = f'X ({bbeatx_rms:.2f} % rms)'
     labely = f'Y ({bbeaty_rms:.2f} % rms)'
-    plt.plot(twiss0.spos, bbeatx, color=blue, alpha=0.8, label=labelx)
-    plt.plot(twiss0.spos, bbeaty, color=red, alpha=0.8, label=labely)
+    plt.plot(twiss0.spos, bbeatx, color='b', alpha=1.0, label=labelx)
+    plt.plot(twiss0.spos, bbeaty, color='r', alpha=0.8, label=labely)
     plt.xlabel('spos [m]')
     plt.ylabel('Beta Beat [%]')
     plt.title('Beta Beating from ID - ' + config_label)
@@ -204,24 +205,24 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=Tr
     plt.show()
 
 
-def analysis_dynapt(model0, modelf, nrtheta=9, nrpts=9):
+def analysis_dynapt(model0, model_id, nrtheta=9, nrpts=9):
 
   model0.vchamber_on = True
-  modelf.vchamber_on = True
+  model_id.vchamber_on = True
 
   model0.cavity_on = True
-  modelf.cavity_on = True
+  model_id.cavity_on = True
 
   model0.radiation_on = True
-  modelf.radiation_on = True
+  model_id.radiation_on = True
 
 
   x,y = optics.calc_dynapt_xy(model0, nrturns=5000, nrtheta=nrtheta, print_flag=False)
-  xID,yID = optics.calc_dynapt_xy(modelf, nrturns=5000, nrtheta=nrtheta, print_flag=False)
+  xID,yID = optics.calc_dynapt_xy(model_id, nrturns=5000, nrtheta=nrtheta, print_flag=False)
 
 
   de, xe = optics.calc_dynapt_ex(model0, nrturns=5000, nrpts=nrpts, print_flag=False)
-  deID, xeID = optics.calc_dynapt_ex(modelf, nrturns=5000, nrpts=nrpts, print_flag=False)
+  deID, xeID = optics.calc_dynapt_ex(model_id, nrturns=5000, nrpts=nrpts, print_flag=False)
 
   plt.figure(1)
   blue, red = (0.4,0.4,1), (1,0.4,0.4)
@@ -246,10 +247,10 @@ def analysis_dynapt(model0, modelf, nrtheta=9, nrpts=9):
   plt.show()
 
 
-def analysis_energy_acceptance(model0, modelf, spos=None):
+def analysis_energy_acceptance(model0, model_id, spos=None):
 
   accep_neg, accep_pos = calc_touschek_energy_acceptance(accelerator=model0, check_tune=True)
-  accep_neg_id, accep_pos_id = calc_touschek_energy_acceptance(accelerator=modelf, check_tune=True)
+  accep_neg_id, accep_pos_id = calc_touschek_energy_acceptance(accelerator=model_id, check_tune=True)
 
   plt.figure(3)
   blue, red = (0.4,0.4,1), (1,0.4,0.4)
@@ -265,67 +266,72 @@ def analysis_energy_acceptance(model0, modelf, spos=None):
   plt.show()
 
 
-def analysis(plot_flag=True):
-  rescale_kicks = 1.0
+def analysis(idconfig, plot_flag=True):
+    """."""
+    # select where EPU will be installed
+    straight_nr = 10
 
-  # select where EPU will be installed
-  straight_nr = 10
+    # create unperturbed model for reference
+    model0 = pymodels.si.create_accelerator()
+    twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
 
-  # create unperturbed model for reference
-  model0, _, knobs, locs_beta = create_model(
-    vchamber_on=False, straight_nr=straight_nr)
-  twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
+    # create model with id
+    model1, knobs, locs_beta = create_model_ids(idconfig)
 
-  print('local quadrupole fams: ', knobs)
-  print('element indices for straight section begin and end: ', locs_beta)
+    print('local quadrupole fams: ', knobs)
+    print('element indices for straight section begin and end: ', locs_beta)
 
-  # calculate nominal twiss
-  goal_tunes = np.array([twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
-  goal_beta = np.array([twiss0.betax[locs_beta], twiss0.betay[locs_beta]])
-  goal_alpha = np.array([twiss0.alphax[locs_beta], twiss0.alphay[locs_beta]])
-  print(goal_beta)
-  goal_beta2 = np.array([twiss0.betax[locs_beta], twiss0.betay[locs_beta]])
-  # create model with ID
-  model1, config_label, straight_nr = create_model_with_id(id_config_idx=2, rescale_kicks=rescale_kicks, straight_nr=straight_nr)
-  print(config_label)
-  # correct orbit
-  orbcorr.correct_orbit_sofb(model0, model1, 'EPU50')
+    # calculate nominal twiss
+    goal_tunes = np.array(
+        [twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
+    goal_beta = np.array(
+        [twiss0.betax[locs_beta], twiss0.betay[locs_beta]])
+    goal_alpha = np.array(
+        [twiss0.alphax[locs_beta], twiss0.alphay[locs_beta]])
+    print(goal_beta)
 
+    # correct orbit
+    orb_results = orbcorr.correct_orbit_fb(
+        model0, model1, 'EPU50', corrtype='FOFB')
+    orbit_analysis(model0, model1, orb_results)
 
-  # calculate beta beating and tune delta tunes
-  twiss1 = analysis_uncorrected_perturbation(
-      config_label, model1, twiss0=twiss0, plot_flag=False, straight_nr=straight_nr)
+    raise ValueError
+    # calculate beta beating and tune delta tunes
+    twiss1 = analysis_uncorrected_perturbation(
+        model1, idconfig=idconfig, twiss0=twiss0, plot_flag=False)
 
-  # symmetrize optics (local quad fam knobs)
-  dk_tot = np.zeros(len(knobs))
-  for i in range(7):
-      dk = optics.correct_symmetry_withbeta(model1, straight_nr, goal_beta, goal_alpha)
-      print('iteration #{}, dK: {}'.format(i+1, dk))
-      dk_tot += dk
-  for i, fam in enumerate(knobs):
-      print('{:<9s} dK: {:+9.6f} 1/m²'.format(fam, dk_tot[i]))
-  model2 = model1[:]
-  twiss2, *_ = pyacc_opt.calc_twiss(model2, indices='closed')
-  print()
+    # symmetrize optics (local quad fam knobs)
+    dk_tot = np.zeros(len(knobs))
+    for i in range(7):
+        dk = optics.correct_symmetry_withbeta(
+            model1, straight_nr, goal_beta, goal_alpha)
+        print('iteration #{}, dK: {}'.format(i+1, dk))
+        dk_tot += dk
+    for i, fam in enumerate(knobs):
+        print('{:<9s} dK: {:+9.6f} 1/m²'.format(fam, dk_tot[i]))
+    model2 = model1[:]
+    twiss2, *_ = pyacc_opt.calc_twiss(model2, indices='closed')
+    print()
 
-  # correct tunes
-  tunes = twiss1.mux[-1]/np.pi/2, twiss1.muy[-1]/np.pi/2
-  print('init    tunes: {:.9f} {:.9f}'.format(tunes[0], tunes[1]))
-  for i in range(2):
-      optics.correct_tunes_twoknobs(model1, goal_tunes)
-      twiss, *_ = pyacc_opt.calc_twiss(model1)
-      tunes = twiss.mux[-1]/np.pi/2, twiss.muy[-1]/np.pi/2
-      print('iter #{} tunes: {:.9f} {:.9f}'.format(i+1, tunes[0], tunes[1]))
-  print('goal    tunes: {:.9f} {:.9f}'.format(goal_tunes[0], goal_tunes[1]))
-  model3 = model1[:]
-  twiss3, *_ = pyacc_opt.calc_twiss(model3, indices='closed')
-  print()
+    # correct tunes
+    tunes = twiss1.mux[-1]/np.pi/2, twiss1.muy[-1]/np.pi/2
+    print('init    tunes: {:.9f} {:.9f}'.format(tunes[0], tunes[1]))
+    for i in range(2):
+        optics.correct_tunes_twoknobs(model1, goal_tunes)
+        twiss, *_ = pyacc_opt.calc_twiss(model1)
+        tunes = twiss.mux[-1]/np.pi/2, twiss.muy[-1]/np.pi/2
+        print('iter #{} tunes: {:.9f} {:.9f}'.format(i+1, tunes[0], tunes[1]))
+    print('goal    tunes: {:.9f} {:.9f}'.format(goal_tunes[0], goal_tunes[1]))
+    model3 = model1[:]
+    twiss3, *_ = pyacc_opt.calc_twiss(model3, indices='closed')
+    print()
 
-  plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label, plot_flag=plot_flag)
+    plot_beta_beating(
+        twiss0, twiss1, twiss2, twiss3, idconfig)
 
-  analysis_dynapt(model0, model3)
-  analysis_energy_acceptance(model0, model3, twiss0.spos)
+    # analysis_dynapt(model0, model3)
+    # analysis_energy_acceptance(model0, model3, twiss0.spos)
 
 
 if __name__ == '__main__':
-    analysis()
+    analysis('ID4080')

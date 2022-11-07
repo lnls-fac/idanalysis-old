@@ -9,8 +9,8 @@ from idanalysis import IDKickMap
 
 ID_PERIOD = 50.0  # [mm]
 
-# FOLDER_BASE = '/home/gabriel/repos-dev/'
-FOLDER_BASE = '/home/ximenes/repos-dev/'
+FOLDER_BASE = '/home/gabriel/repos-dev/'
+# FOLDER_BASE = '/home/ximenes/repos-dev/'
 
 
 DATA_PATH = 'epu-uvx/measurement/magnetic/hallprobe/'
@@ -130,7 +130,6 @@ def create_ids(
     fname += 'kickmap-' + idconfig + '.txt'
     print(fname)
     idkmap = IDKickMap(kmap_fname=fname)
-    idkmap.load()
     kickx_up = rescale_kicks * idkmap.kickx_upstream  # [T².m²]
     kicky_up = rescale_kicks * idkmap.kicky_upstream  # [T².m²]
     kickx_down = rescale_kicks * idkmap.kickx_downstream  # [T².m²]
