@@ -29,7 +29,7 @@ class IDKickMap:
         self.kicky = None  # [T².m²]
         self.fposx = None  # [m]
         self.fposy = None  # [m]
-        self.period_len = None # [mm]
+        self.period_len = None  # [mm]
         self._fmap_config = None
         self.author = author or IDKickMap.DEF_AUTHOR
         self.kickx_upstream = None
@@ -290,13 +290,13 @@ class IDKickMap:
             opt = self.find_fit(rz_sample, p_sample)
             idx_begin_ID = self._find_value_idx(rz, -kmap_idlen * 1e3/2)
             idx_end_ID = self._find_value_idx(rz, +kmap_idlen * 1e3/2)
-            linefit = self._linear_function(rz,opt[2],opt[3])
+            linefit = self._linear_function(rz, opt[2], opt[3])
             kick_begin = linefit[idx_begin_ID] - pxy[0]
             kick_end = pxy[-1] - linefit[idx_end_ID]
-            _plt.plot(rz,pxy)
-            _plt.plot(rz_sample,p_sample,'.')
-            _plt.plot(rz,linefit)
-            _plt.show()
+            # _plt.plot(rz,pxy)
+            # _plt.plot(rz_sample,p_sample,'.')
+            # _plt.plot(rz,linefit)
+            # _plt.show()
             if idx == 0:
                 self.kickx_upstream = kick_begin * self.brho**2
                 self.kickx_downstream = kick_end * self.brho**2

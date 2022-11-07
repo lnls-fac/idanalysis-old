@@ -366,4 +366,4 @@ def correct_orbit_fb(
         codx_c = cod_c[:len(bpms)]
         cody_c = cod_c[len(bpms):]
 
-    return kicks, spos_bpms, codx_c, cody_c, codx_u, cody_u
+    return kicks, spos_bpms, codx_c, cody_c, codx_u, cody_u, bpms
