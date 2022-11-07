@@ -56,6 +56,8 @@ def orbit_analysis(model0, model_id, orbcorr_results):
     spos_bpms = orbcorr_results[1]
     codx_bpms = orbcorr_results[2]
     cody_bpms = orbcorr_results[3]
+    codx_u = orbcorr_results[4]
+    cody_u = orbcorr_results[5]
     cod_ring = pyaccel.tracking.find_orbit4(model_id, indices='open')
     spos = pyaccel.lattice.find_spos(model_id)
     orb0 = pyaccel.tracking.find_orbit4(model0, indices='open')
@@ -71,7 +73,9 @@ def orbit_analysis(model0, model_id, orbcorr_results):
     plt.figure(1)
     plt.plot(spos, 1e6*cod_ring[0], '-', color='b', label=labelx_ring)
     plt.plot(spos_bpms, codx_bpms, '.', color='b', label=labelx_bpm)
-    plt.plot(spos, 1e6*orb0[0], color='C1')
+    # plt.plot(
+    #     spos_bpms, 1e6*codx_u, '--', color='r', alpha=0.8, label='uncorrected')
+    plt.plot(spos, 1e6*orb0[0], color='C1', label='Nominal orbit')
     plt.xlabel('spos [m]')
     plt.ylabel('pos [um]')
     plt.title('Horizontal COD')
@@ -81,7 +85,9 @@ def orbit_analysis(model0, model_id, orbcorr_results):
     plt.figure(2)
     plt.plot(spos, 1e6*cod_ring[2], '-', color='b', label=labely_ring)
     plt.plot(spos_bpms, cody_bpms, '.', color='b', label=labely_bpm)
-    plt.plot(spos, 1e6*orb0[2], color='C1')
+    # plt.plot(
+    #     spos_bpms, 1e6*cody_u, '--', color='r', alpha=0.8, label='uncorrected')
+    plt.plot(spos, 1e6*orb0[2], color='C1', label='Nominal orbit')
     plt.xlabel('spos [m]')
     plt.ylabel('pos [um]')
     plt.title('Vertical COD')

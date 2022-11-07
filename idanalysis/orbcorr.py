@@ -285,20 +285,9 @@ def correct_orbit_local(
     return ret
 
 
-def get_fofb_bpms(bpm_idx):
+def get_fofb_bpms_idx(bpms):
     """."""
-    bpm_list = []
-    aux_list = []
-    for i, idx in enumerate(bpm_idx):
-        j = i + 1
-        aux_list.append(idx)
-        if j % 8 == 0 and i != 0:
-            bpm_list.append(aux_list[0])
-            bpm_list.append(aux_list[3])
-            bpm_list.append(aux_list[4])
-            bpm_list.append(aux_list[7])
-            aux_list = []
-    return bpm_list
+    return bpms.reshape(20, -1)[:, [0, 3, 4, 7]].ravel()
 
 
 def correct_orbit_fb(
@@ -307,14 +296,7 @@ def correct_orbit_fb(
     """."""
     # calculate structures
     famdata = si.get_family_data(model1)
-    bpm_list = famdata['BPM']['index']
-    if corrtype == 'SOFB':
-        bpms = famdata['BPM']['index']
-    elif corrtype == 'FOFB':
-        bpm_idx = np.array([idx[0] for idx in bpm_list])
-        bpms = get_fofb_bpms(bpm_idx)
-    else:
-        raise Exception('Corretion type must be chosen (SOFB or FOFB)')
+    bpms = np.array([idx[0] for idx in famdata['BPM']['index']])
     spos_bpms = pyaccel.lattice.find_spos(model1, indices=bpms)
     inds_id = pyaccel.lattice.find_indices(model1, 'fam_name', id_famname)
 
@@ -365,5 +347,16 @@ def correct_orbit_fb(
         cod_c = orb2 - orb0
         codx_c = cod_c[:len(bpms)]
         cody_c = cod_c[len(bpms):]
+
+    if corrtype == 'FOFB':
+        codx_c = codx_c.reshape(20, -1)[:, [0, 3, 4, 7]].ravel()
+        cody_c = cody_c.reshape(20, -1)[:, [0, 3, 4, 7]].ravel()
+        codx_u = codx_u.reshape(20, -1)[:, [0, 3, 4, 7]].ravel()
+        cody_u = cody_u.reshape(20, -1)[:, [0, 3, 4, 7]].ravel()
+        spos_bpms = spos_bpms.reshape(20, -1)[:, [0, 3, 4, 7]].ravel()
+    elif corrtype == 'SOFB':
+        pass
+    else:
+        raise Exception('Corretion type must be chosen "SOFB" or "FOFB"')
 
     return kicks, spos_bpms, codx_c, cody_c, codx_u, cody_u, bpms
