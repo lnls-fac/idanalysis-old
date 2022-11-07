@@ -18,11 +18,14 @@ from idanalysis import orbcorr as orbcorr
 from idanalysis import model as model
 from idanalysis import optics as optics
 
+
 def create_model_ids(idconfig):
     """."""
     print('--- model with kickmap ---')
     ids = utils.create_ids(idconfig=idconfig, rescale_kicks=1)
     model = pymodels.si.create_accelerator(ids=ids)
+    model.cavity_on = True
+    model.radiation_on = 1
     twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
     print('length : {:.4f} m'.format(model.length))
     print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/np.pi))
@@ -58,9 +61,9 @@ def orbit_analysis(model0, model_id, orbcorr_results):
     cody_bpms = orbcorr_results[3]
     codx_u = orbcorr_results[4]
     cody_u = orbcorr_results[5]
-    cod_ring = pyaccel.tracking.find_orbit4(model_id, indices='open')
+    cod_ring = pyaccel.tracking.find_orbit6(model_id, indices='open')
     spos = pyaccel.lattice.find_spos(model_id)
-    orb0 = pyaccel.tracking.find_orbit4(model0, indices='open')
+    orb0 = pyaccel.tracking.find_orbit6(model0, indices='open')
     codxbpms_rms = 1e6*np.std(codx_bpms)
     codybpms_rms = 1e6*np.std(cody_bpms)
     codx_rms = 1e6*np.std(cod_ring[0])
@@ -71,11 +74,11 @@ def orbit_analysis(model0, model_id, orbcorr_results):
     labely_ring = 'COD @ ring: rms = {:.2f} um'.format(cody_rms)
 
     plt.figure(1)
-    plt.plot(spos, 1e6*cod_ring[0], '-', color='b', label=labelx_ring)
-    plt.plot(spos_bpms, codx_bpms, '.', color='b', label=labelx_bpm)
-    # plt.plot(
-    #     spos_bpms, 1e6*codx_u, '--', color='r', alpha=0.8, label='uncorrected')
-    plt.plot(spos, 1e6*orb0[0], color='C1', label='Nominal orbit')
+    plt.plot(
+        spos, 1e6*(cod_ring[0]-orb0[0]), '-', color='b', label=labelx_ring)
+    plt.plot(spos_bpms, codx_bpms, 'o', color='b', label=labelx_bpm)
+    plt.plot(
+        spos_bpms, 1e6*codx_u, '--', color='r', alpha=0.8, label='uncorrected')
     plt.xlabel('spos [m]')
     plt.ylabel('pos [um]')
     plt.title('Horizontal COD')
@@ -83,11 +86,11 @@ def orbit_analysis(model0, model_id, orbcorr_results):
     plt.legend()
 
     plt.figure(2)
-    plt.plot(spos, 1e6*cod_ring[2], '-', color='b', label=labely_ring)
+    plt.plot(
+        spos, 1e6*(cod_ring[2]-orb0[2]), '-', color='b', label=labely_ring)
     plt.plot(spos_bpms, cody_bpms, '.', color='b', label=labely_bpm)
-    # plt.plot(
-    #     spos_bpms, 1e6*cody_u, '--', color='r', alpha=0.8, label='uncorrected')
-    plt.plot(spos, 1e6*orb0[2], color='C1', label='Nominal orbit')
+    plt.plot(
+        spos_bpms, 1e6*cody_u, '--', color='r', alpha=0.8, label='uncorrected')
     plt.xlabel('spos [m]')
     plt.ylabel('pos [um]')
     plt.title('Vertical COD')
@@ -279,6 +282,8 @@ def analysis(idconfig, plot_flag=True):
 
     # create unperturbed model for reference
     model0 = pymodels.si.create_accelerator()
+    model0.cavity_on = True
+    model0.radiation_on = 1
     twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
 
     # create model with id

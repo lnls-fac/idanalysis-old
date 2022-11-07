@@ -314,15 +314,15 @@ def correct_orbit_fb(
     t_in_step = model1[inds_id[0]].t_in/nr_steps
     t_out_step = model1[inds_id[-1]].t_out/nr_steps
 
-    model1[inds_id[0]].rescale_kicks *= 0
-    model1[inds_id[-1]].rescale_kicks *= 0
+    for idx in inds_id:
+        model1[idx].rescale_kicks *= 0
     model1[inds_id[0]].t_in *= 0
     model1[inds_id[-1]].t_out *= 0
 
     for i in np.arange(nr_steps):
 
-        model1[inds_id[0]].rescale_kicks += kick_step
-        model1[inds_id[-1]].rescale_kicks += kick_step
+        for idx in inds_id:
+            model1[idx].rescale_kicks += kick_step
         model1[inds_id[0]].t_in += t_in_step
         model1[inds_id[-1]].t_out += t_out_step
         # get perturbed orbit
@@ -335,8 +335,7 @@ def correct_orbit_fb(
         cody_u = cod_u[len(bpms):]
 
         # calc response matrix and correct orbit
-        respm = ocorr.get_jacobian_matrix()
-        if not ocorr.correct_orbit(jacobian_matrix=respm, goal_orbit=orb0):
+        if not ocorr.correct_orbit(goal_orbit=orb0):
             print('Could not correct orbit!')
 
         # get corrected orbit
@@ -349,11 +348,11 @@ def correct_orbit_fb(
         cody_c = cod_c[len(bpms):]
 
     if corrtype == 'FOFB':
-        codx_c = codx_c.reshape(20, -1)[:, [0, 3, 4, 7]].ravel()
-        cody_c = cody_c.reshape(20, -1)[:, [0, 3, 4, 7]].ravel()
-        codx_u = codx_u.reshape(20, -1)[:, [0, 3, 4, 7]].ravel()
-        cody_u = cody_u.reshape(20, -1)[:, [0, 3, 4, 7]].ravel()
-        spos_bpms = spos_bpms.reshape(20, -1)[:, [0, 3, 4, 7]].ravel()
+        codx_c = codx_c[ocorr.params.enbllistbpm[:len(bpms)]]
+        cody_c = cody_c[ocorr.params.enbllistbpm[len(bpms):]]
+        codx_u = codx_u[ocorr.params.enbllistbpm[:len(bpms)]]
+        cody_u = cody_u[ocorr.params.enbllistbpm[len(bpms):]]
+        spos_bpms = spos_bpms[ocorr.params.enbllistbpm[:len(bpms)]]
     elif corrtype == 'SOFB':
         pass
     else:
