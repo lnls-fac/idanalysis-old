@@ -21,7 +21,7 @@ def calc_eff_field(rz, field):
 
 def function_field_vs_gap(gap_over_lambda, a, b):
     """."""
-    amp = a*np.exp(-b*gap_over_lambda)
+    amp = a*np.exp(-b * gap_over_lambda)
     return amp
 
 
@@ -68,7 +68,7 @@ def calc_field_vs_gap_coeffs(traj_data, phase, datatype='fmap'):
         function_field_vs_gap, gap_array/ID_PERIOD, beffy)[0]
     a, b = curve_fit[:2]
     ay, by = a*np.exp(-b*g0/ID_PERIOD), b/np.pi
-
+    
     return ax, bx, ay, by, beffx, keffx, beffy, keffy
 
 
@@ -106,6 +106,7 @@ def plot_field_vs_gap(traj_data, phase, show_flag=False, datatype='fmap'):
     ax2.plot(gap_array, keffy, 'o', color='C1')
 
     # configure plot
+    fig_path = 'results/phase-organized/' + phase + '/'
     ax1.set_xlabel('Gap [mm]')
     ax1.set_ylabel('Beff [T]')
     ax2.set_ylabel('Keff')
@@ -113,10 +114,9 @@ def plot_field_vs_gap(traj_data, phase, show_flag=False, datatype='fmap'):
     ax1.grid()
     title = 'Field amplitudes for phase ' + phase + ' mm'
     plt.title(title)
-    fig_path = 'results/phase-organized/' + phase + '/'
+    plt.savefig(fig_path + 'field-amplitude-vs-gap.png', dpi=300)
     if show_flag:
         plt.show()
-    plt.savefig(fig_path + 'field-amplitude-vs-gap.png', dpi=300)
     plt.close()
 
 
@@ -126,5 +126,5 @@ if __name__ == "__main__":
 
     for phase in PHASES:
         print(phase)
-        plot_field_vs_gap(traj_data, phase, show_flag=True)
+        plot_field_vs_gap(traj_data, phase, show_flag=False)
     

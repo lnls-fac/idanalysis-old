@@ -9,21 +9,10 @@ from run_rk_traj import PHASES
 from run_rk_traj import load_rk_traj
 
 
-def plot_rk_traj(traj_data, phase, show_flag=False):
+def plot_rk_traj_normalized_fields(
+        fig_path, colors, dpi, show_flag, rz, bx, by, bz):
     """."""
-    data = traj_data
-    bx, by, bz = data['bx'], data['by'], data['bz']
-    rx, ry, rz = data['rx'], data['ry'], data['rz']
-    fmapbx, fmapby = data['fmapbx'], data['fmapby']
-    fmaprz = data['fmaprz']
-    px, py = data['px'], data['py']
-    i1bx, i1by = data['i1bx'], data['i1by']
-    i2bx, i2by = data['i2bx'], data['i2by']
-
-    colors = ['b', 'g', 'C1', 'r', 'k']
-    fig_path = 'results/phase-organized/' + phase + '/'
     title_fld_sufix = ' for phase {} mm'.format(phase)
-    dpi = 300
 
     # plot bx
     plt.figure(1)
@@ -37,9 +26,9 @@ def plot_rk_traj(traj_data, phase, show_flag=False):
     plt.grid()
     plt.legend()
     plt.title('Horizontal field' + title_fld_sufix)
+    plt.savefig(fig_path + 'field-bx.png', dpi=dpi)
     if show_flag:
         plt.show()
-    plt.savefig(fig_path + 'field-bx.png', dpi=dpi)
     plt.close()
 
     # plot by
@@ -54,9 +43,9 @@ def plot_rk_traj(traj_data, phase, show_flag=False):
     plt.grid()
     plt.legend()
     plt.title('Vertical field' + title_fld_sufix)
+    plt.savefig(fig_path + 'field-by.png', dpi=dpi)
     if show_flag:
         plt.show()
-    plt.savefig(fig_path + 'field-by.png', dpi=dpi)
     plt.close()
 
     # plot bz
@@ -71,11 +60,14 @@ def plot_rk_traj(traj_data, phase, show_flag=False):
     plt.grid()
     plt.legend()
     plt.title('Longitudinal field' + title_fld_sufix)
+    plt.savefig(fig_path + 'field-bz.png', dpi=dpi)
     if show_flag:
         plt.show()
-    plt.savefig(fig_path + 'field-bz.png', dpi=dpi)
     plt.close()
 
+
+def plot_rk_traj_pos(fig_path, colors, dpi, show_flag, rz, rx, ry):
+    """."""
     # plot rx
     plt.figure(4)
     for i in range(len(GAPS)):
@@ -89,29 +81,9 @@ def plot_rk_traj(traj_data, phase, show_flag=False):
     plt.legend()
     plt.title(
         'RK Trajectory Pos for phase {} mm'.format(phase))
-    if show_flag:
-        plt.show()
-    fig_path = 'results/phase-organized/' + phase + '/'
     plt.savefig(fig_path + 'traj-posx.png', dpi=dpi)
-    plt.close()
-
-    # plot px
-    plt.figure(5)
-    for i in range(len(GAPS)):
-        gap = GAPS[i]
-        rz_, px_ = rz[gap], 1e6*px[gap]
-        label = GAPS[i] + ' mm' + ' px @ end: {:+.2f} urad'.format(px_[-1])
-        plt.plot(rz_, px_, colors[i], label=label)
-    plt.xlabel('rz [mm]')
-    plt.ylabel('ang [urad]')
-    plt.grid()
-    plt.legend()
-    plt.title(
-        'RK Trajectory Ang for phase {} mm'.format(phase))
     if show_flag:
         plt.show()
-    fig_path = 'results/phase-organized/' + phase + '/'
-    plt.savefig(fig_path + 'traj-angx.png', dpi=dpi)
     plt.close()
 
     # plot ry
@@ -127,10 +99,30 @@ def plot_rk_traj(traj_data, phase, show_flag=False):
     plt.legend()
     plt.title(
         'RK Trajectory Pos for phase {} mm'.format(phase))
+    plt.savefig(fig_path + 'traj-posy.png', dpi=dpi)
     if show_flag:
         plt.show()
-    fig_path = 'results/phase-organized/' + phase + '/'
-    plt.savefig(fig_path + 'traj-posy.png', dpi=dpi)
+    plt.close()
+
+
+def plot_rk_traj_ang(fig_path, colors, dpi, show_flag, rz, px, py):
+    """."""
+    # plot px
+    plt.figure(5)
+    for i in range(len(GAPS)):
+        gap = GAPS[i]
+        rz_, px_ = rz[gap], 1e6*px[gap]
+        label = GAPS[i] + ' mm' + ' px @ end: {:+.2f} urad'.format(px_[-1])
+        plt.plot(rz_, px_, colors[i], label=label)
+    plt.xlabel('rz [mm]')
+    plt.ylabel('ang [urad]')
+    plt.grid()
+    plt.legend()
+    plt.title(
+        'RK Trajectory Ang for phase {} mm'.format(phase))
+    plt.savefig(fig_path + 'traj-angx.png', dpi=dpi)
+    if show_flag:
+        plt.show()
     plt.close()
 
     # plot py
@@ -146,12 +138,31 @@ def plot_rk_traj(traj_data, phase, show_flag=False):
     plt.legend()
     plt.title(
         'RK Trajectory Ang for phase {} mm'.format(phase))
+    plt.savefig(fig_path + 'traj-angy.png', dpi=dpi)
     if show_flag:
         plt.show()
-    fig_path = 'results/phase-organized/' + phase + '/'
-    plt.savefig(fig_path + 'traj-angy.png', dpi=dpi)
     plt.close()
 
+
+def plot_rk_traj(traj_data, phase, show_flag=False):
+    """."""
+    data = traj_data
+    bx, by, bz = data['bx'], data['by'], data['bz']
+    rx, ry, rz = data['rx'], data['ry'], data['rz']
+    fmapbx, fmapby = data['fmapbx'], data['fmapby']
+    fmaprz = data['fmaprz']
+    px, py = data['px'], data['py']
+    i1bx, i1by = data['i1bx'], data['i1by']
+    i2bx, i2by = data['i2bx'], data['i2by']
+
+    fig_path = 'results/phase-organized/' + phase + '/'
+    colors = ['b', 'g', 'C1', 'r', 'k']
+    dpi = 300
+
+    plot_rk_traj_normalized_fields(fig_path, colors, dpi, show_flag, rz, bx, by, bz)
+    plot_rk_traj_pos(fig_path, colors, dpi, show_flag, rz, rx, ry)
+    plot_rk_traj_ang(fig_path, colors, dpi, show_flag, rz, px, py)
+  
     # # generate table
     # row1 = [
     #     'Gap [mm]',
@@ -201,4 +212,4 @@ if __name__ == "__main__":
 
     for phase in PHASES:
         print(phase)
-        plot_rk_traj(traj_data[phase], phase, show_flag=True)
+        plot_rk_traj(traj_data[phase], phase, show_flag=False)
