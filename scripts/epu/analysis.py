@@ -51,6 +51,45 @@ def create_model_with_id(id_config_idx, rescale_kicks=1.0, straight_nr=None):
   return model1, config_label, straight_nr
 
 
+def orbit_analysis(model0, model_id, orbcorr_results):
+    kicks = orbcorr_results[0]
+    spos_bpms = orbcorr_results[1]
+    codx_bpms = orbcorr_results[2]
+    cody_bpms = orbcorr_results[3]
+    cod_ring = pyaccel.tracking.find_orbit4(model_id, indices='open')
+    spos = pyaccel.lattice.find_spos(model_id)
+    orb0 = pyaccel.tracking.find_orbit4(model0, indices='open')
+    codxbpms_rms = 1e6*np.std(codx_bpms)
+    codybpms_rms = 1e6*np.std(cody_bpms)
+    codx_rms = 1e6*np.std(cod_ring[0])
+    cody_rms = 1e6*np.std(cod_ring[2])
+    labelx_bpm = 'COD @ bpms: rms = {:.2f} um'.format(codxbpms_rms)
+    labely_bpm = 'COD @ bpms: rms = {:.2f} um'.format(codybpms_rms)
+    labelx_ring = 'COD @ ring: rms = {:.2f} um'.format(codx_rms)
+    labely_ring = 'COD @ ring: rms = {:.2f} um'.format(cody_rms)
+
+    plt.figure(1)
+    plt.plot(spos, 1e6*cod_ring[0], '-', color='b', label=labelx_ring)
+    plt.plot(spos_bpms, codx_bpms, '.', color='b', label=labelx_bpm)
+    plt.plot(spos, 1e6*orb0[0], color='C1')
+    plt.xlabel('spos [m]')
+    plt.ylabel('pos [um]')
+    plt.title('Horizontal COD')
+    plt.grid()
+    plt.legend()
+
+    plt.figure(2)
+    plt.plot(spos, 1e6*cod_ring[2], '-', color='b', label=labely_ring)
+    plt.plot(spos_bpms, cody_bpms, '.', color='b', label=labely_bpm)
+    plt.plot(spos, 1e6*orb0[2], color='C1')
+    plt.xlabel('spos [m]')
+    plt.ylabel('pos [um]')
+    plt.title('Vertical COD')
+    plt.grid()
+    plt.legend()
+    plt.show()
+
+
 def calc_dtune_betabeat(twiss0, twiss1):
     dtunex = (twiss1.mux[-1] - twiss0.mux[-1]) / 2 / np.pi
     dtuney = (twiss1.muy[-1] - twiss0.muy[-1]) / 2 / np.pi
@@ -166,24 +205,24 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label):
     plt.show()
 
 
-def analysis_dynapt(model0, modelf, nrtheta=9, nrpts=9):
+def analysis_dynapt(model0, model_id, nrtheta=9, nrpts=9):
 
   model0.vchamber_on = True
-  modelf.vchamber_on = True
+  model_id.vchamber_on = True
 
   model0.cavity_on = True
-  modelf.cavity_on = True
+  model_id.cavity_on = True
 
   model0.radiation_on = True
-  modelf.radiation_on = True
+  model_id.radiation_on = True
 
 
   x,y = optics.calc_dynapt_xy(model0, nrturns=5000, nrtheta=nrtheta, print_flag=False)
-  xID,yID = optics.calc_dynapt_xy(modelf, nrturns=5000, nrtheta=nrtheta, print_flag=False)
+  xID,yID = optics.calc_dynapt_xy(model_id, nrturns=5000, nrtheta=nrtheta, print_flag=False)
 
 
   de, xe = optics.calc_dynapt_ex(model0, nrturns=5000, nrpts=nrpts, print_flag=False)
-  deID, xeID = optics.calc_dynapt_ex(modelf, nrturns=5000, nrpts=nrpts, print_flag=False)
+  deID, xeID = optics.calc_dynapt_ex(model_id, nrturns=5000, nrpts=nrpts, print_flag=False)
 
   plt.figure(1)
   blue, red = (0.4,0.4,1), (1,0.4,0.4)
@@ -208,10 +247,10 @@ def analysis_dynapt(model0, modelf, nrtheta=9, nrpts=9):
   plt.show()
 
 
-def analysis_energy_acceptance(model0, modelf, spos=None):
+def analysis_energy_acceptance(model0, model_id, spos=None):
 
   accep_neg, accep_pos = calc_touschek_energy_acceptance(accelerator=model0, check_tune=True)
-  accep_neg_id, accep_pos_id = calc_touschek_energy_acceptance(accelerator=modelf, check_tune=True)
+  accep_neg_id, accep_pos_id = calc_touschek_energy_acceptance(accelerator=model_id, check_tune=True)
 
   plt.figure(3)
   blue, red = (0.4,0.4,1), (1,0.4,0.4)
@@ -252,8 +291,11 @@ def analysis(idconfig, plot_flag=True):
     print(goal_beta)
 
     # correct orbit
-    orbcorr.correct_orbit_fb(model0, model1, 'EPU50', corrtype='FOFB')
+    orb_results = orbcorr.correct_orbit_fb(
+        model0, model1, 'EPU50', corrtype='FOFB')
+    orbit_analysis(model0, model1, orb_results)
 
+    raise ValueError
     # calculate beta beating and tune delta tunes
     twiss1 = analysis_uncorrected_perturbation(
         model1, idconfig=idconfig, twiss0=twiss0, plot_flag=False)

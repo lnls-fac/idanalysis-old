@@ -33,15 +33,18 @@ def create_idkickmap(idconfig):
 
     return idkickmap
 
+
 def fit_function(rx, a, b, c):
     """."""
     f = a*rx**2 + b*rx + c
     return f
 
+
 def find_fit(rx, pvec):
     """."""
     opt = curve_fit(fit_function, rx, pvec)[0]
     return opt
+
 
 def plot_field(
         idconfig, traj_init_rx, traj_init_ry, rk_s_step=0.2):

@@ -233,17 +233,23 @@ def plot_beta_beating(twiss0, twiss1, twiss2, plot_flag=True):
         plt.show()
 
 
-def plot_betas(twiss0, twiss1, locs_beta):
+def plot_betas(model, twiss0, twiss1, locs_beta):
 
     posi = np.linspace(twiss0.spos[locs_beta[0]], twiss0.spos[locs_beta[0]], 100)
     posf = np.linspace(twiss0.spos[locs_beta[1]], twiss0.spos[locs_beta[1]], 100)
-    line = np.linspace(-15, 15, 100)
-    plt.plot(twiss0.spos, twiss1.betax-twiss0.betax, color='C0', label='nominal beta')
-    plt.plot(twiss0.spos, twiss1.alphax-twiss0.alphax, color='C1', label='nominal alpha')
+    line = np.linspace(0, np.max(twiss0.betay), 100)
+    plt.plot(twiss0.spos, twiss0.betax, color='b', label='beta x')
+    plt.plot(twiss0.spos, twiss0.betay, color='r', label='beta y')
 
+    plt.xlim(216,250)
     plt.plot(posi, line, color='k')
     plt.plot(posf, line, color='k')
+    plt.xlabel('s[m]')
+    plt.ylabel('beta [m]')
     plt.legend()
+    plt.grid()
+    pyaccel.graphics.draw_lattice(model, offset=-2, height=2, gca=True)
+    plt.savefig('betas', dpi=300)
     plt.show()
     plt.clf()
 
@@ -278,7 +284,7 @@ def run():
     twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
     twiss2, *_ = pyacc_opt.calc_twiss(model_id, indices='closed')
     plot_beta_beating(twiss0, twiss1, twiss2, plot_flag=True)
-    plot_betas(twiss0, twiss2, [loc_init, loc_end])
+    plot_betas(model0, twiss0, twiss2, [loc_init, loc_end])
 
 
 if __name__ == '__main__':
