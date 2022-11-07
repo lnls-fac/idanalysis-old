@@ -4,12 +4,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import optimize as optimize
 
-from run_rk_traj import GAPS
-from run_rk_traj import PHASES
+from idanalysis.kickmaps import IDKickMap
+
+from run_rk_traj import GAPS, PHASES, CONFIGS
+from run_rk_traj import create_idkickmap
 from run_rk_traj import load_rk_traj
 
 
-def run_multipoles(
+def plot_multipoles(
         phase_config, phase, traj_init_rx, traj_init_ry, rk_s_step=0.2,
         tabulate_flag=True):
     """."""
@@ -156,17 +158,68 @@ def run_multipoles(
     return
 
 
-def run_multipole_analysis(rk_s_step=DEF_RK_S_STEP, tabulate_flag=True):
+def calc_multipoles(idconfig, phase, gaps, data, harmonics):
     """."""
-    traj_init_rx = 0.0  # [mm]
-    traj_init_ry = 0.0  # [mm]
+    data_ = data[phase]  # data for specific phase
 
-    for i, phase in enumerate(CONFIGS):
-        run_multipoles(
-            float(PHASES[i]), i, traj_init_rx, traj_init_ry, rk_s_step=rk_s_step,
-            tabulate_flag=tabulate_flag)
+    # load fieldmap file and rebuild traj attributes
+    idkickmap = create_idkickmap(idconfig=idconfig)
+
+    # calc multipoles
+    n_list = harmonics
+    s_list = harmonics
+    idkickmap.fmap_config.multipoles_perpendicular_grid = np.linspace(-3, 3, 7)
+    idkickmap.fmap_config.multipoles_normal_field_fitting_monomials = n_list
+    idkickmap.fmap_config.multipoles_skew_field_fitting_monomials = s_list
+    idkickmap.fmap_config.multipoles_r0 = 12  # [mm]
+    idkickmap.fmap_config.normalization_monomial = 0
+    
+    mult_quad_norm, mult_quad_skew = dict(), dict()
+    mult_sext_norm, mult_sext_skew = dict(), dict()
+    mult_quad_norm_integ, mult_quad_skew_integ = dict(), dict()
+    mult_sext_norm_integ, mult_sext_skew_integ = dict(), dict()
+    
+    for gap in gaps:
+        print(gap)
+        idkickmap.traj.s = data_['s'][gap]
+        idkickmap.traj.rx = data_['rx'][gap]
+        idkickmap.traj.ry = data_['ry'][gap]
+        idkickmap.traj.rz = data_['rz'][gap]
+        idkickmap.traj.px = data_['px'][gap]
+        idkickmap.traj.py = data_['py'][gap]
+        idkickmap.traj.pz = data_['pz'][gap]
+        IDKickMap.multipoles_analysis(idkickmap.fmap_config)
+        multipoles = idkickmap.fmap_config.multipoles
+        mult_quad_norm[gap] = multipoles.normal_multipoles[1, :]
+        mult_quad_skew[gap] = multipoles.skew_multipoles[1, :]
+        mult_sext_norm[gap] = multipoles.normal_multipoles[2, :]
+        mult_sext_skew[gap] = multipoles.skew_multipoles[2, :]
+        mult_quad_norm_integ[gap] = multipoles.normal_multipoles_integral[1]
+        mult_quad_skew_integ[gap] = multipoles.skew_multipoles_integral[1]
+        mult_sext_norm_integ[gap] = multipoles.normal_multipoles_integral[2]
+        mult_sext_skew_integ[gap] = multipoles.skew_multipoles_integral[2]
+
+    data = dict()
+    data['mult_quad_norm'] = mult_quad_norm
+    data['mult_quad_skew'] = mult_quad_skew
+    data['mult_sext_norm'] = mult_sext_norm
+    data['mult_sext_skew'] = mult_sext_skew
+    data['mult_quad_norm_integ'] = mult_quad_norm_integ
+    data['mult_quad_skew_integ'] = mult_quad_skew_integ
+    data['mult_sext_norm_integ'] = mult_sext_norm_integ
+    data['mult_sext_skew_integ'] = mult_sext_skew_integ
+    return data
 
 
 if __name__ == "__main__":
     """."""
-    traj_data,  = load_rk_traj()
+    traj_data, rk_s_step, \
+    traj_init_rx, traj_init_ry, \
+    traj_init_px, traj_init_py = load_rk_traj()
+
+    phase_idx, gap_idx = 0, 0
+    phase = PHASES[phase_idx]
+    gap = GAPS[gap_idx]
+    idconfig = CONFIGS[0][0]
+    harmonics = [0, 1, 2]
+    data = calc_multipoles(idconfig, phase, GAPS[:2], traj_data, harmonics)
