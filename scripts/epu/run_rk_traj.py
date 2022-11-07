@@ -48,9 +48,10 @@ def calc_rk_traj(
         configs, rk_s_step, 
         traj_init_rx, traj_init_ry, traj_init_px, traj_init_py):
     """Calculate RK for set of EPU configurations."""
+    s = dict()
     bx, by, bz = dict(), dict(), dict()
     rz, rx, ry = dict(), dict(), dict()
-    px, py = dict(), dict()
+    px, py, pz = dict(), dict(), dict()
     i1bx, i2bx = dict(), dict()
     i1by, i2by = dict(), dict()
     fmapbx, fmapby, fmaprz = dict(), dict(), dict()
@@ -71,9 +72,10 @@ def calc_rk_traj(
         fmapbx[gap] = fmap.bx[fmap.ry_zero][fmap.rx_zero][:]
         fmapby[gap] = fmap.by[fmap.ry_zero][fmap.rx_zero][:]
 
+        s[gap] = traj.s
         bx[gap], by[gap], bz[gap] = traj.bx, traj.by, traj.bz
         rx[gap], ry[gap], rz[gap] = traj.rx, traj.ry, traj.rz
-        px[gap], py[gap] = traj.px, traj.py
+        px[gap], py[gap], pz[gap] = traj.px, traj.py, traj.pz
 
         i1bx_ = fieldtools.calc_first_integral(traj.bx, traj.rz)
         i1by_ = fieldtools.calc_first_integral(traj.by, traj.rz)
@@ -83,8 +85,9 @@ def calc_rk_traj(
 
     data = dict()
     data['bx'], data['by'], data['bz'] = bx, by, bz
+    data['s'] = s
     data['rx'], data['ry'], data['rz'] = rx, ry, rz
-    data['px'], data['py'] = px, py
+    data['px'], data['py'], data['pz'] = px, py, pz
     data['fmapbx'], data['fmapby'] = fmapbx, fmapby
     data['fmaprz'] = fmaprz
     data['i1bx'], data['i1by'] = i1bx, i1by
