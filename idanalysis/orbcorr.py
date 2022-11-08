@@ -326,7 +326,8 @@ def correct_orbit_fb(
         model1[inds_id[0]].t_in += t_in_step
         model1[inds_id[-1]].t_out += t_out_step
         # get perturbed orbit
-        ocorr = OrbitCorr(model1, 'SI', params=cparams, corr_system=corr_system)
+        ocorr = OrbitCorr(
+            model1, 'SI', params=cparams, corr_system=corr_system)
         orb1 = ocorr.get_orbit()
 
         # calc closed orbit distortions (cod) before correction
@@ -356,6 +357,6 @@ def correct_orbit_fb(
     elif corr_system == 'SOFB':
         pass
     else:
-        raise Exception('Corretion type must be chosen "SOFB" or "FOFB"')
+        raise Exception('Corretion system must be "SOFB" or "FOFB"')
 
     return kicks, spos_bpms, codx_c, cody_c, codx_u, cody_u, bpms
