@@ -292,7 +292,7 @@ def get_fofb_bpms_idx(bpms):
 
 def correct_orbit_fb(
         model0, model1, id_famname, minsingval=0.2,
-        nr_steps=1, corrtype='SOFB'):
+        nr_steps=1, corr_system='SOFB'):
     """."""
     # calculate structures
     famdata = si.get_family_data(model1)
@@ -307,7 +307,7 @@ def correct_orbit_fb(
     cparams.maxnriters = 20
 
     # get unperturbed orbit
-    ocorr = OrbitCorr(model0, 'SI', params=cparams, corrtype=corrtype)
+    ocorr = OrbitCorr(model0, 'SI', params=cparams, corr_system=corr_system)
     orb0 = ocorr.get_orbit()
 
     kick_step = model1[inds_id[0]].rescale_kicks/nr_steps
@@ -326,7 +326,7 @@ def correct_orbit_fb(
         model1[inds_id[0]].t_in += t_in_step
         model1[inds_id[-1]].t_out += t_out_step
         # get perturbed orbit
-        ocorr = OrbitCorr(model1, 'SI', params=cparams, corrtype=corrtype)
+        ocorr = OrbitCorr(model1, 'SI', params=cparams, corr_system=corr_system)
         orb1 = ocorr.get_orbit()
 
         # calc closed orbit distortions (cod) before correction
@@ -347,13 +347,13 @@ def correct_orbit_fb(
         codx_c = cod_c[:len(bpms)]
         cody_c = cod_c[len(bpms):]
 
-    if corrtype == 'FOFB':
+    if corr_system == 'FOFB':
         codx_c = codx_c[ocorr.params.enbllistbpm[:len(bpms)]]
         cody_c = cody_c[ocorr.params.enbllistbpm[len(bpms):]]
         codx_u = codx_u[ocorr.params.enbllistbpm[:len(bpms)]]
         cody_u = cody_u[ocorr.params.enbllistbpm[len(bpms):]]
         spos_bpms = spos_bpms[ocorr.params.enbllistbpm[:len(bpms)]]
-    elif corrtype == 'SOFB':
+    elif corr_system == 'SOFB':
         pass
     else:
         raise Exception('Corretion type must be chosen "SOFB" or "FOFB"')

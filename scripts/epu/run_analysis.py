@@ -45,56 +45,53 @@ def create_model_ids(phase, gap):
     return model, knobs, locs_beta
 
 
-def create_model_with_id(id_config_idx, rescale_kicks=1.0, straight_nr=None):
-  if straight_nr is None:
-    straight_nr = 10
-  kwargs = {
-      'vchmaber_on': False,
-      'nr_steps': 40,
-      'straight_nr': straight_nr,
-    }
-  model1, config_label, *_ = \
-    create_model(epu_config_idx=id_config_idx, rescale_kicks=rescale_kicks, **kwargs)
-  return model1, config_label, straight_nr
-
-
 def orbit_analysis(model0, model_id, orbcorr_results):
     kicks = orbcorr_results[0]
     spos_bpms = orbcorr_results[1]
     codx_bpms = orbcorr_results[2]
     cody_bpms = orbcorr_results[3]
-    codx_u = orbcorr_results[4]
-    cody_u = orbcorr_results[5]
-    cod_ring = pyaccel.tracking.find_orbit6(model_id, indices='open')
-    spos = pyaccel.lattice.find_spos(model_id)
-    orb0 = pyaccel.tracking.find_orbit6(model0, indices='open')
-    codxbpms_rms = 1e6*np.std(codx_bpms)
-    codybpms_rms = 1e6*np.std(cody_bpms)
-    codx_rms = 1e6*np.std(cod_ring[0])
-    cody_rms = 1e6*np.std(cod_ring[2])
-    labelx_bpm = 'COD @ bpms: rms = {:.2f} um'.format(codxbpms_rms)
-    labely_bpm = 'COD @ bpms: rms = {:.2f} um'.format(codybpms_rms)
-    labelx_ring = 'COD @ ring: rms = {:.2f} um'.format(codx_rms)
-    labely_ring = 'COD @ ring: rms = {:.2f} um'.format(cody_rms)
+    codxbfc_bpms = orbcorr_results[4]
+    codybfc_bpms = orbcorr_results[5]
+    orb1_ring = pyaccel.tracking.find_orbit6(model_id, indices='open')
+    spos_ring = pyaccel.lattice.find_spos(model_id)
+    orb0_ring = pyaccel.tracking.find_orbit6(model0, indices='open')
 
+    # calculate statistics
+    codxbpms_rms = 1e6*np.std(codx_bpms)
+    codx_rms = 1e6*np.std(orb1_ring[0]-orb0_ring[0])
+    codx_u_rms = 1e6*np.std(codxbfc_bpms)
+    codybpms_rms = 1e6*np.std(cody_bpms)
+    cody_rms = 1e6*np.std(orb1_ring[2]-orb0_ring[2])
+    cody_u_rms = 1e6*np.std(codybfc_bpms)
+
+    labelx_cod = 'Corrected COD rms: @bpms {:.2f} um @ring {:.2f} um'.format(
+        codxbpms_rms, codx_rms)
+    labelx_codu = 'Uncorrected COD rms: @bpms {:.2f} um'.format(codx_u_rms)
     plt.figure(1)
     plt.plot(
-        spos, 1e6*(cod_ring[0]-orb0[0]), '-', color='b', label=labelx_ring)
-    plt.plot(spos_bpms, codx_bpms, 'o', color='b', label=labelx_bpm)
+        spos_ring, 1e6*(orb1_ring[0]-orb0_ring[0]), '-',
+        color='b', label=labelx_cod)
+    plt.plot(spos_bpms, codx_bpms, '.', color='b')
     plt.plot(
-        spos_bpms, 1e6*codx_u, '--', color='r', alpha=0.8, label='uncorrected')
+        spos_bpms, 1e6*codxbfc_bpms, '.-', color='tab:blue',
+        alpha=0.6, label=labelx_codu)
     plt.xlabel('spos [m]')
     plt.ylabel('pos [um]')
     plt.title('Horizontal COD')
     plt.grid()
     plt.legend()
 
+    labely_cod = 'COD rms: @bpms {:.2f} um @ring {:.2f} um'.format(
+        codybpms_rms, cody_rms)
+    labely_codu = 'Uncorrected COD rms: @bpms {:.2f} um'.format(cody_u_rms)
     plt.figure(2)
     plt.plot(
-        spos, 1e6*(cod_ring[2]-orb0[2]), '-', color='b', label=labely_ring)
-    plt.plot(spos_bpms, cody_bpms, '.', color='b', label=labely_bpm)
+        spos_ring, 1e6*(orb1_ring[2]-orb0_ring[2]), '-',
+        color='r', label=labely_cod)
+    plt.plot(spos_bpms, cody_bpms, '.', color='r')
     plt.plot(
-        spos_bpms, 1e6*cody_u, '--', color='r', alpha=0.8, label='uncorrected')
+        spos_bpms, 1e6*codybfc_bpms, '.-', color='tab:red',
+        alpha=0.6, label=labely_codu)
     plt.xlabel('spos [m]')
     plt.ylabel('pos [um]')
     plt.title('Vertical COD')
@@ -308,7 +305,7 @@ def analysis(phase, gap, plot_flag=True):
 
     # correct orbit
     orb_results = orbcorr.correct_orbit_fb(
-        model0, model1, 'EPU50', corrtype='FOFB')
+        model0, model1, 'EPU50', corr_system='FOFB')
     orbit_analysis(model0, model1, orb_results)
 
     raise ValueError
@@ -352,4 +349,5 @@ def analysis(phase, gap, plot_flag=True):
 if __name__ == '__main__':
 
     phase, gap = PHASES[0], GAPS[0]
+    print(phase, gap)
     analysis(phase, gap)
