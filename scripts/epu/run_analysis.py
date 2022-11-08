@@ -23,7 +23,7 @@ from utils import get_idconfig
 # from utils import create_kmap_filename
 
 
-def create_model_ids(phase, gap):
+def create_model_ids():
     """."""
     print('--- model with kickmap ---')
     ids = utils.create_ids(phase, gap, rescale_kicks=1)
@@ -64,6 +64,8 @@ def orbit_analysis(model0, model_id, orbcorr_results):
     cody_rms = 1e6*np.std(orb1_ring[2]-orb0_ring[2])
     cody_u_rms = 1e6*np.std(codybfc_bpms)
 
+    # get figures file path
+    figpath = 'results/phase-organized/{}/gap-{}/'.format(phase, gap)
     labelx_cod = 'Corrected COD rms: @bpms {:.2f} um @ring {:.2f} um'.format(
         codxbpms_rms, codx_rms)
     labelx_codu = 'Uncorrected COD rms: @bpms {:.2f} um'.format(codx_u_rms)
@@ -80,6 +82,7 @@ def orbit_analysis(model0, model_id, orbcorr_results):
     plt.title('Horizontal COD')
     plt.grid()
     plt.legend()
+    # plt.savefig(figpath + 'COD-horizontal', dpi=300)
 
     labely_cod = 'COD rms: @bpms {:.2f} um @ring {:.2f} um'.format(
         codybpms_rms, cody_rms)
@@ -97,6 +100,7 @@ def orbit_analysis(model0, model_id, orbcorr_results):
     plt.title('Vertical COD')
     plt.grid()
     plt.legend()
+    # plt.savefig(figpath + 'COD-vertical', dpi=300)
     plt.show()
 
 
@@ -276,7 +280,7 @@ def analysis_energy_acceptance(model0, model_id, spos=None):
   plt.show()
 
 
-def analysis(phase, gap, plot_flag=True):
+def analysis(plot_flag=True):
     """."""
     # select where EPU will be installed
     straight_nr = 10
@@ -289,7 +293,7 @@ def analysis(phase, gap, plot_flag=True):
 
     # create model with id
     idconfig = get_idconfig(phase, gap)
-    model1, knobs, locs_beta = create_model_ids(phase, gap)
+    model1, knobs, locs_beta = create_model_ids()
 
     print('local quadrupole fams: ', knobs)
     print('element indices for straight section begin and end: ', locs_beta)
@@ -348,6 +352,7 @@ def analysis(phase, gap, plot_flag=True):
 
 if __name__ == '__main__':
 
+    global phase, gap
     phase, gap = PHASES[0], GAPS[0]
     print(phase, gap)
-    analysis(phase, gap)
+    analysis()
