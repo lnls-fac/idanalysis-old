@@ -2,6 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.offsetbox import AnchoredText
 
 from mathphys.functions import save_pickle, load_pickle
 from pyaccel import lattice as pyacc_lat
@@ -38,14 +39,8 @@ def create_model_ids():
     print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/np.pi))
     print('tuney  : {:.6f}'.format(twiss.muy[-1]/2/np.pi))
     straight_nr = int(ids[0].subsec[2:4])
-    # get knobs and beta locations
-    if straight_nr is not None:
-        _, knobs, _ = optics.symm_get_knobs(model, straight_nr)
-        locs_beta = optics.symm_get_locs_beta(knobs)
-    else:
-        knobs, locs_beta = None, None
 
-    return model, knobs, locs_beta
+    return model
 
 
 def kicks_analysis(model_id, kicks, corr_system='FOFB'):
@@ -225,7 +220,7 @@ def run_individual_analysis():
     model0.radiation_on = 1
 
     # create model with id
-    model1, *_ = create_model_ids()
+    model1 = create_model_ids()
 
     # calc perturbed orbit
     orbp_ring = pyaccel.tracking.find_orbit6(model1, indices='open')
@@ -267,26 +262,67 @@ def generate_current_data():
     save_pickle(currents_data, fpath + 'corr_currents.pickle', overwrite=True)
 
 
+def get_max_diff(currx_list, curry_list):
+    currx_diff, curry_diff = dict(), dict()
+    maxx, maxy = dict(), dict()
+    for i in np.arange(0, len(currx_list)-1, 1):
+        gapi = GAPS[i]
+        for j in np.arange(i+1, len(currx_list), 1):
+            gapf = GAPS[j]
+            diffx = np.abs(currx_list[i] - currx_list[j])
+            diffy = np.abs(curry_list[i] - curry_list[j])
+            currx_diff[(gapi, gapf)] = diffx
+            curry_diff[(gapi, gapf)] = diffy
+    for key in currx_diff.keys():
+        maxx[key] = np.max(currx_diff[key])
+        maxy[key] = np.max(curry_diff[key])
+
+    # get maximum diff for x
+    max_list = []
+    key_list = []
+    for value in maxx.values():
+        max_list.append(value)
+    maximum_x = np.max(np.array(max_list))
+    key_idx = np.where(np.array(max_list) == maximum_x)[0][0]
+    for key in currx_diff.keys():
+        key_list.append(key)
+    gapjumpx = key_list[key_idx]
+
+    # get maximum diff for y
+    max_list = []
+    key_list = []
+    for value in maxy.values():
+        max_list.append(value)
+    maximum_y = np.max(np.array(max_list))
+    key_idx = np.where(np.array(max_list) == maximum_y)[0][0]
+    for key in currx_diff.keys():
+        key_list.append(key)
+    gapjumpy = key_list[key_idx]
+
+    return maximum_x, gapjumpx, maximum_y, gapjumpy
+
+
 def load_current_data():
     fpath = './results/phase-organized/'
     currents_data = load_pickle(fpath + 'corr_currents.pickle')
     spos_ch = currents_data[('spos', 'x')]
     spos_cv = currents_data[('spos', 'y')]
     colors = ['b', 'g', 'C1', 'r', 'k']
+    alplist = [1, 0.8, 0.6, 0.4, 0.2]
     plt.figure(100)
     plt.figure(101)
     for i, phase0 in enumerate(PHASES):
         phase = phase0
-        plt.figure(i+3*len(GAPS))
-        plt.figure(i+2*len(GAPS))
         plt.figure(i+len(GAPS))
         plt.figure(i)
-        maxx_list, maxy_list, gap_list = list(), list(), list()
+        currx_list, curry_list, gap_list = list(), list(), list()
         for j, gap0 in enumerate(GAPS):
             gap = gap0
             gap_list.append(float(gap))
             currx = currents_data[(phase, gap, 'x')]
             curry = currents_data[(phase, gap, 'y')]
+            currx_list.append(currx)
+            curry_list.append(curry)
 
             if np.max(currx) >= np.abs(np.min(currx)):
                 maxx = np.max(currx)
@@ -298,74 +334,65 @@ def load_current_data():
             else:
                 maxy = np.min(curry)
 
-            maxx_list.append(maxx)
-            maxy_list.append(maxy)
-
             # plot current curves for this specific phase
             plt.figure(i)
             labelx = 'Gap ' + gap + ': max current = {:.2f} '.format(
                 maxx)
-            plt.plot(spos_ch, currx, label=labelx, color=colors[j])
+            plt.plot(spos_ch, currx, '.-', label=labelx, color=colors[j])
 
-            plt.figure(i+len(GAPS))
+            plt.figure(i + len(GAPS))
             labely = 'Gap ' + gap + ': max current = {:.2f} '.format(
                 maxy)
-            plt.plot(spos_cv, curry, label=labely, color=colors[j])
+            plt.plot(spos_cv, curry, '.-', label=labely, color=colors[j])
 
             # plot current curves for all configurations
             plt.figure(100)
-            labelx = 'phase' + phase + ' gap' + gap + ': max = {:.2f} '.format(
+            labelx = 'p ' + phase + ' g ' + gap + ': max = {:.2f} A'.format(
                 maxx)
-            plt.plot(spos_ch, currx, label=labelx)
+            plt.plot(spos_ch, currx, '.-', color=colors[i],
+                     label=labelx, alpha=alplist[j])
             plt.figure(101)
-            labely = 'phase' + phase + ' gap' + gap + ': max = {:.2f} '.format(
+            labely = 'p ' + phase + ' g ' + gap + ': max = {:.2f} A'.format(
                 maxy)
-            plt.plot(spos_cv, curry, label=labely)
+            plt.plot(spos_cv, curry, '.-', color=colors[i],
+                     label=labely, alpha=alplist[j])
+
+        max_results = get_max_diff(
+            np.array(currx_list), np.array(curry_list))
+
+        maximum_x = max_results[0]
+        gapjumpx = max_results[1]
+        maximum_y = max_results[2]
+        gapjumpy = max_results[3]
 
         figpath = 'results/phase-organized/{}/'.format(phase)
-        plt.figure(i+2*len(GAPS))
-        label = 'phase ' + phase
-        plt.plot(gap_list, maxx_list, color='b', label=labelx)
-        plt.title('Horizontal max current')
-        plt.grid()
-        plt.ylabel('Maximum current [A]')
-        plt.xlabel('Gap [mm]')
-        plt.legend()
-        plt.tight_layout()
-        plt.savefig(figpath + 'horizontal_maxcurr', dpi=300)
-        plt.close()
 
-        plt.figure(i+3*len(GAPS))
-        plt.plot(gap_list, maxy_list, color='r', label=label)
-        plt.title('Vertical max current')
-        plt.grid()
-        plt.ylabel('Maximum current [A]')
-        plt.xlabel('Gap [mm]')
-        plt.legend()
-        plt.tight_layout()
-        plt.savefig(figpath + 'vertical_maxcurr', dpi=300)
-        plt.close()
-
+        titlex = 'Horizontal currents: MAX diff = '
+        titlex = titlex + '{:.2f}'.format(maximum_x) + ' A at gap jump '
+        titlex = titlex + gapjumpx[0] + ' - ' + gapjumpx[1]
         plt.figure(i)
-        plt.title('Horizontal correctors currents')
+        plt.title(titlex)
         plt.xlim(180, 280)
         plt.grid()
         plt.ylabel('Currents [A]')
         plt.xlabel('spos [m]')
         plt.legend()
         plt.tight_layout()
-        plt.savefig(figpath + 'horizontal_currents', dpi=300)
+        plt.savefig(figpath + 'horizontal-currents', dpi=300)
         plt.close()
 
+        titley = 'Vertical currents: MAX diff = '
+        titley = titley + '{:.2f}'.format(maximum_y) + ' A at gap jump '
+        titley = titley + gapjumpy[0] + ' - ' + gapjumpy[1]
         plt.figure(i+len(GAPS))
-        plt.title('Vertical correctors currents')
+        plt.title(titley)
         plt.xlim(180, 280)
         plt.grid()
         plt.ylabel('Currents [A]')
         plt.xlabel('spos [m]')
         plt.legend()
         plt.tight_layout()
-        plt.savefig(figpath + 'vertical_currents', dpi=300)
+        plt.savefig(figpath + 'vertical-currents', dpi=300)
         plt.close()
 
     plt.figure(100)
