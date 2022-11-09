@@ -357,6 +357,6 @@ def correct_orbit_fb(
     elif corr_system == 'SOFB':
         pass
     else:
-        raise Exception('Corretion system must be "SOFB" or "FOFB"')
+        raise ValueError('Corretion system must be "SOFB" or "FOFB"')
 
     return kicks, spos_bpms, codx_c, cody_c, codx_u, cody_u, bpms
