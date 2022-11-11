@@ -36,10 +36,10 @@ class IDKickMap:
         self.kicky_upstream = None
         self.kickx_downstream = None
         self.kicky_downstream = None
-        
+
         # load kickmap
         self._load_kmap()
-    
+
     @property
     def kmap_fname(self):
         """Kickmap filename."""
@@ -63,7 +63,7 @@ class IDKickMap:
     def fmap_fname(self, value):
         """Set fieldmap filename and load file."""
         self._fmap_config = IDKickMap._create_fmap_config(
-            fmap_fname=value, 
+            fmap_fname=value,
             beam_energy=self.beam_energy, rk_s_step=self.rk_s_step)
 
     @property
@@ -89,7 +89,7 @@ class IDKickMap:
             return self._fmap_config.beam.brho
         else:
             return None
-            
+
     @property
     def rk_s_step(self):
         """."""
@@ -125,7 +125,7 @@ class IDKickMap:
             self, traj_init_rx, traj_init_ry,
             traj_init_px=0, traj_init_py=0,
             traj_init_rz=None, traj_rk_min_rz=None,
-            rk_s_step=None):
+            rk_s_step=None, **kwargs):
         """."""
         if rk_s_step is not None:
             self.rk_s_step = rk_s_step
@@ -139,7 +139,7 @@ class IDKickMap:
             self.fmap_config.traj_init_rz = traj_init_rz
         if traj_rk_min_rz is not None:
             self.fmap_config.traj_rk_min_rz = traj_rk_min_rz
-        fmap_config = IDKickMap._fmap_calc_traj(self.fmap_config)
+        fmap_config = IDKickMap._fmap_calc_traj(self.fmap_config, **kwargs)
         return fmap_config
 
     def fmap_calc_kickmap(
@@ -298,7 +298,7 @@ class IDKickMap:
                 self.kicky_downstream = kick_end * self.brho**2
                 print("kicky_upstream: {:11.4e}  T2m2".format(self.kicky_upstream))
                 print("kicky_downstream: {:11.4e}  T2m2".format(self.kicky_downstream))
-             
+
     def plot_kickx_vs_posy(self, indx, title=''):
         """."""
         posx = self.posx
@@ -372,10 +372,10 @@ class IDKickMap:
         self.posx, self.posy = info['posx'], info['posy']
         self.kickx, self.kicky = info['kickx'], info['kicky']
         self.fposx, self.fposy = info['fposx'], info['fposy']
-        self.kickx_upstream =  info['kickx_upstream']
-        self.kicky_upstream =  info['kicky_upstream']
-        self.kickx_downstream =  info['kickx_downstream']
-        self.kicky_downstream =  info['kicky_downstream']
+        self.kickx_upstream = info['kickx_upstream']
+        self.kicky_upstream = info['kicky_upstream']
+        self.kickx_downstream = info['kickx_downstream']
+        self.kicky_downstream = info['kicky_downstream']
 
     def __str__(self):
         """."""
@@ -455,7 +455,7 @@ class IDKickMap:
         diff_array = _np.absolute(data-value)
         index = diff_array.argmin()
         return index
-    
+
     @staticmethod
     def _load_kmap_info(kmap_fname):
         """."""
@@ -541,14 +541,14 @@ class IDKickMap:
         config.traj_rk_length = None
         config.traj_rk_nrpts = None
         config.traj_force_midplane_flag = False
-        
+
         # IDKickMap._update_energy(config, beam_energy)
         config.traj_init_rz = min(config.fmap.rz)
-        
+
         return config
 
     @staticmethod
-    def _fmap_calc_traj(config):
+    def _fmap_calc_traj(config, **kwargs):
         """Calcs trajectory."""
         config.beam = _fmaptrack.Beam(energy=config.beam_energy)
         config.traj = _fmaptrack.Trajectory(
@@ -568,11 +568,11 @@ class IDKickMap:
         else:
             config.traj_init_rz = init_rz = 0.0
         if hasattr(config, 'traj_init_px'):
-            init_px = config.traj_init_px * (_np.pi/180.0)
+            init_px = config.traj_init_px  # * 180/_np.pi
         else:
             config.traj_init_px = init_px = 0.0
         if hasattr(config, 'traj_init_py'):
-            init_py = config.traj_init_py * (_np.pi/180.0)
+            init_py = config.traj_init_py  # * 180/_np.pi
         else:
             config.traj_init_py = init_py = 0.0
         init_pz = _np.sqrt(1.0 - init_px**2 - init_py**2)
@@ -590,8 +590,9 @@ class IDKickMap:
             s_length=config.traj_rk_length,
             s_nrpts=config.traj_rk_nrpts,
             min_rz=rk_min_rz,
-            force_midplane=config.traj_force_midplane_flag)
-        
+            force_midplane=config.traj_force_midplane_flag,
+            **kwargs)
+
         return config
 
     @staticmethod
@@ -677,4 +678,3 @@ class IDKickMap:
             beam=fmap_config.beam,
             fieldmap=fmap_config.fmap,
             not_raise_range_exceptions=fmap_config.not_raise_range_exceptions)
-

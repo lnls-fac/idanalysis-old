@@ -280,23 +280,19 @@ def get_max_diff(currx_list, curry_list):
     # get maximum diff for x
     max_list = []
     key_list = []
-    for value in maxx.values():
-        max_list.append(value)
+    max_list = list(maxx.values())
     maximum_x = np.max(np.array(max_list))
     key_idx = np.where(np.array(max_list) == maximum_x)[0][0]
-    for key in currx_diff.keys():
-        key_list.append(key)
+    key_list = list(currx_diff.keys())
     gapjumpx = key_list[key_idx]
 
     # get maximum diff for y
     max_list = []
     key_list = []
-    for value in maxy.values():
-        max_list.append(value)
+    max_list = list(maxy.values())
     maximum_y = np.max(np.array(max_list))
     key_idx = np.where(np.array(max_list) == maximum_y)[0][0]
-    for key in currx_diff.keys():
-        key_list.append(key)
+    key_list = list(curry_diff.keys())
     gapjumpy = key_list[key_idx]
 
     return maximum_x, gapjumpx, maximum_y, gapjumpy
@@ -336,12 +332,12 @@ def load_current_data():
 
             # plot current curves for this specific phase
             plt.figure(i)
-            labelx = 'Gap ' + gap + ': max current = {:.2f} '.format(
+            labelx = 'Gap ' + gap + ': max curr = {:.2f} A'.format(
                 maxx)
             plt.plot(spos_ch, currx, '.-', label=labelx, color=colors[j])
 
             plt.figure(i + len(GAPS))
-            labely = 'Gap ' + gap + ': max current = {:.2f} '.format(
+            labely = 'Gap ' + gap + ': max curr = {:.2f} A'.format(
                 maxy)
             plt.plot(spos_cv, curry, '.-', label=labely, color=colors[j])
 
@@ -367,7 +363,7 @@ def load_current_data():
 
         figpath = 'results/phase-organized/{}/'.format(phase)
 
-        titlex = 'Horizontal currents: MAX diff = '
+        titlex = 'Horizontal currents\nMAX diff = '
         titlex = titlex + '{:.2f}'.format(maximum_x) + ' A at gap jump '
         titlex = titlex + gapjumpx[0] + ' - ' + gapjumpx[1]
         plt.figure(i)
@@ -381,7 +377,7 @@ def load_current_data():
         plt.savefig(figpath + 'horizontal-currents', dpi=300)
         plt.close()
 
-        titley = 'Vertical currents: MAX diff = '
+        titley = 'Vertical currents\nMAX diff = '
         titley = titley + '{:.2f}'.format(maximum_y) + ' A at gap jump '
         titley = titley + gapjumpy[0] + ' - ' + gapjumpy[1]
         plt.figure(i+len(GAPS))
