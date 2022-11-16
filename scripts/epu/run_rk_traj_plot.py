@@ -165,10 +165,10 @@ def plot_rk_traj(traj_data, phase, show_flag=False):
     # # generate table
     row1 = [
         'Gap [mm]',
-        'Bx 1st integral [G cm] / Δpy [urad]',
-        'By 1st integral [G cm] / Δpx [urad]',
-        'Bx 2nd integral [G cm²] / Δy [um]',
-        'By 2nd integral [G cm²] / Δx [um]']
+        'Bx 1st integral [G cm] / \Deltapy [urad]',
+        'By 1st integral [G cm] / \Deltapx [urad]',
+        'Bx 2nd integral [G cm²] / \Deltay [um]',
+        'By 2nd integral [G cm²] / \Deltax [um]']
     row_list = []
     row_list.append(row1)
     for gap in GAPS:
@@ -208,6 +208,17 @@ def plot_rk_traj(traj_data, phase, show_flag=False):
        print(row_list[i+1][0]  + " & "  + row_list[i+1][1]
           + " & "  + row_list[i+1][2] + " \\") 
 
+    print("\bbegin{table }[H]")
+    print("\centering")
+    print("\caption{Segundas integrais de campo}")
+    print("\bbegin{tabular }{|c|c|c|}")
+    print("\hline")
+    print(row_list[0][0]  + " & "  + row_list[0][3]
+          + " & "  + row_list[0][4] + " \\")
+    print("\hline")
+    for i, gap in enumerate(GAPS):
+       print(row_list[i+1][0]  + " & "  + row_list[i+1][3]
+      + " & "  + row_list[i+1][4] + " \\") 
 
 if __name__ == "__main__":
     """."""
