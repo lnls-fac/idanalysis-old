@@ -347,6 +347,8 @@ def plot_traj(traj, corr_system):
     plt.savefig(figpath + '-vertical-trajectory-ang', dpi=300)
     plt.close()
 
+    return 1e3*angx, 1e3*angy
+
 
 def get_max_diff(rx_list, ry_list):
     rx_diff, ry_diff = dict(), dict()
@@ -384,6 +386,44 @@ def get_max_diff(rx_list, ry_list):
     return maximum_x, gapjumpx, maximum_y, gapjumpy
 
 
+def get_max_ang_diff(angx_list, angy_list):
+    diffx_dict, diffy_dict = dict(), dict()
+    maxx, maxy = dict(), dict()
+    for i in np.arange(0, len(angx_list) - 1, 1):
+        gapi = GAPS[i]
+        for j in np.arange(i+1, len(angx_list), 1):
+            gapf = GAPS[j]
+            diffx = np.abs(angx_list[i] - angx_list[j])
+            diffy = np.abs(angy_list[i] - angy_list[j])
+            diffx_dict[(gapi, gapf)] = diffx
+            diffy_dict[(gapi, gapf)] = diffy
+    
+    for key in diffx_dict.keys():
+        maxx[key] = diffx_dict[key]
+        maxy[key] = diffy_dict[key]
+    
+    # get maximum diff for x
+    max_list = []
+    key_list = []
+    max_list = list(maxx.values())
+    maximum_x = np.max(np.array(max_list))
+    key_idx = np.where(np.array(max_list) == maximum_x)[0][0]
+    key_list = list(diffx_dict.keys())
+    gapjumpx = key_list[key_idx]
+
+
+    # get maximum diff for y
+    max_list = []
+    key_list = []
+    max_list = list(maxy.values())
+    maximum_y = np.max(np.array(max_list))
+    key_idx = np.where(np.array(max_list) == maximum_y)[0][0]
+    key_list = list(diffy_dict.keys())
+    gapjumpy = key_list[key_idx]
+
+    return maximum_x, gapjumpx, maximum_y, gapjumpy
+
+
 def run_load_data(corr_system):
     fpath = './results/phase-organized/'
     traj_data = load_pickle(
@@ -391,6 +431,7 @@ def run_load_data(corr_system):
     for i, phase0 in enumerate(PHASES):
         phase = phase0
         rx_list, ry_list, gap_list = list(), list(), list()
+        angx_list, angy_list = list(), list()
         for j, gap0 in enumerate(GAPS):
             gap = gap0
             gap_list.append(float(gap))
@@ -398,6 +439,15 @@ def run_load_data(corr_system):
             ry = traj_data[(phase, gap, 'ry')]
             rx_list.append(rx)
             ry_list.append(ry)
+            angx = traj_data[(phase, gap, 'angx')]
+            angy = traj_data[(phase, gap, 'angy')]
+            angx_list.append(angx)
+            angy_list.append(angy)
+        
+        angxa = np.array(angx_list)
+        angya = np.array(angy_list)
+
+        max_ang = get_max_ang_diff(angxa, angya)
 
         max_results = get_max_diff(
             np.array(rx_list), np.array(ry_list))
@@ -406,15 +456,24 @@ def run_load_data(corr_system):
         gapjumpx = max_results[1]
         maximum_y = 1e3*max_results[2]
         gapjumpy = max_results[3]
+
+        maximum_angx = max_ang[0]
+        gapjump_angx = max_ang[1]
+        maximum_angy = max_ang[2]
+        gapjump_angy = max_ang[3]
         print('phase:' + phase)
+        print('gap jump pos', gapjumpx)
         print('max x ', maximum_x)
-        print('gap jump ', gapjumpx)
+        print('gap jump ang', gapjump_angx)
+        print('max ang x ', maximum_angx)
+        print('gap jump pos ', gapjumpy)
         print('max y ', maximum_y)
-        print('gap jump ', gapjumpy)
+        print('gap jump ang', gapjump_angy)
+        print('max ang y ', maximum_angy)
         print()
 
 
-def generate_pickle(traj):
+def generate_pickle(traj, angx, angy):
     s = traj.s
     bx, by, bz = traj.bx, traj.by, traj.bz
     rx, ry, rz = traj.rx, traj.ry, traj.rz
@@ -429,6 +488,8 @@ def generate_pickle(traj):
     traj_data[(phase, gap, 'bx')] = px
     traj_data[(phase, gap, 'py')] = py
     traj_data[(phase, gap, 'pz')] = pz
+    traj_data[(phase, gap, 'angx')] = angx
+    traj_data[(phase, gap, 'angy')] = angy
 
 
 def run_generate_data(corr_system):
@@ -452,8 +513,8 @@ def run_generate_data(corr_system):
                 deltapy += dpy
             print(deltapx, deltapy)
             print(delta_pos)
-            plot_traj(traj, corr_system)
-            generate_pickle(traj)
+            angx, angy = plot_traj(traj, corr_system)
+            generate_pickle(traj, angx, angy)
 
     fpath = './results/phase-organized/'
     save_pickle(traj_data,
@@ -467,5 +528,5 @@ if __name__ == "__main__":
     global traj_data
     traj_data = dict()
     corr_system = 'FOFB'
-    run_generate_data(corr_system)
+    # run_generate_data(corr_system)
     run_load_data(corr_system)
