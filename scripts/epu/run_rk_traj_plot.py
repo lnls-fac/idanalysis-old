@@ -163,46 +163,50 @@ def plot_rk_traj(traj_data, phase, show_flag=False):
     plot_rk_traj_ang(fig_path, colors, dpi, show_flag, rz, px, py)
   
     # # generate table
-    # row1 = [
-    #     'Gap [mm]',
-    #     'Bx 1st integral [G cm] / Δpy [urad]',
-    #     'Bx 2nd integral [G cm²] / Δy [um]',
-    #     'By 1st integral [G cm] / Δpx [urad]',
-    #     'By 2nd integral [G cm²] / Δx [um]']
-    # row_list = []
-    # row_list.append(row1)
-    # for gap in GAPS:
-    #     px_ = 1e6*px[gap][-1]
-    #     py_ = 1e6*py[gap][-1]
-    #     rx_ = 1e3*rx[gap][-1]
-    #     ry_ = 1e3*ry[gap][-1]
-    #     i1bx_ = 1e6*i1bx[gap][-1]
-    #     i1by_ = 1e6*i1by[gap][-1]
-    #     i2bx_ = 1e8*i2bx[gap][-1]
-    #     i2by_ = 1e8*i2by[gap][-1]
-    #     px_ = format(px_, '+4.2f')
-    #     py_ = format(py_, '+4.2f')
-    #     rx_ = format(rx_, '+4.2f')
-    #     ry_ = format(ry_, '+4.2f')
-    #     i1bx_ = format(i1bx_, '+5.1f')
-    #     i1by_ = format(i1by_, '+5.1f')
-    #     i2bx_ = format(i2bx_, '+3.2e')
-    #     i2by_ = format(i2by_, '+3.2e')
-    #     row = [
-    #         gap,
-    #         '{} / {}'.format(i1bx_, py_),
-    #         '{} / {}'.format(i2bx_, ry_),
-    #         '{} / {}'.format(i1by_, px_),
-    #         '{} / {}'.format(i2by_, rx_)]
-    #     row_list.append(row)
-
-    # if tabulate_flag:
-    #     from tabulate import tabulate
-    #     # print('Tabulate Table for phase {} mm: '.format(phase))
-    #     # print(tabulate(row_list, headers='firstrow'))
-
-    #     print('Tabulate Latex for phase {} mm: '.format(phase))
-    #     print(tabulate(row_list, headers='firstrow', tablefmt='latex'))
+    row1 = [
+        'Gap [mm]',
+        'Bx 1st integral [G cm] / Δpy [urad]',
+        'By 1st integral [G cm] / Δpx [urad]',
+        'Bx 2nd integral [G cm²] / Δy [um]',
+        'By 2nd integral [G cm²] / Δx [um]']
+    row_list = []
+    row_list.append(row1)
+    for gap in GAPS:
+        px_ = 1e6*px[gap][-1]
+        py_ = 1e6*py[gap][-1]
+        rx_ = 1e3*rx[gap][-1]
+        ry_ = 1e3*ry[gap][-1]
+        i1bx_ = 1e6*i1bx[gap][-1]
+        i1by_ = 1e6*i1by[gap][-1]
+        i2bx_ = 1e8*i2bx[gap][-1]
+        i2by_ = 1e8*i2by[gap][-1]
+        px_ = format(px_, '+4.2f')
+        py_ = format(py_, '+4.2f')
+        rx_ = format(rx_, '+4.2f')
+        ry_ = format(ry_, '+4.2f')
+        i1bx_ = format(i1bx_, '+5.1f')
+        i1by_ = format(i1by_, '+5.1f')
+        i2bx_ = format(i2bx_, '+3.2e')
+        i2by_ = format(i2by_, '+3.2e')
+        row = [
+            gap,
+            '{} / {}'.format(i1bx_, py_),
+            '{} / {}'.format(i1by_, px_),
+            '{} / {}'.format(i2bx_, ry_),
+            '{} / {}'.format(i2by_, rx_)]
+        row_list.append(row)
+    
+    print("\bbegin{table }[H]")
+    print("\centering")
+    print("\caption{Primeiras integrais de campo}")
+    print("\bbegin{tabular }{|c|c|c|}")
+    print("\hline")
+    print(row_list[0][0]  + " & "  + row_list[0][1]
+          + " & "  + row_list[0][2] + " \\")
+    print("\hline")
+    for i, gap in enumerate(GAPS):
+       print(row_list[i+1][0]  + " & "  + row_list[i+1][1]
+          + " & "  + row_list[i+1][2] + " \\") 
 
 
 if __name__ == "__main__":
