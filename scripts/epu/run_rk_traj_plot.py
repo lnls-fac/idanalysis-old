@@ -158,10 +158,11 @@ def plot_rk_traj(traj_data, phase, show_flag=False):
     colors = ['b', 'g', 'C1', 'r', 'k']
     dpi = 300
 
-    plot_rk_traj_normalized_fields(fig_path, colors, dpi, show_flag, rz, bx, by, bz)
+    plot_rk_traj_normalized_fields(
+        fig_path, colors, dpi, show_flag, rz, bx, by, bz)
     plot_rk_traj_pos(fig_path, colors, dpi, show_flag, rz, rx, ry)
     plot_rk_traj_ang(fig_path, colors, dpi, show_flag, rz, px, py)
-  
+
     # # generate table
     row1 = [
         'Gap [mm]',
@@ -195,30 +196,33 @@ def plot_rk_traj(traj_data, phase, show_flag=False):
             '{} / {}'.format(i2bx_, ry_),
             '{} / {}'.format(i2by_, rx_)]
         row_list.append(row)
-    
+
     print("\bbegin{table }[H]")
     print("\centering")
     print("\caption{Primeiras integrais de campo}")
     print("\bbegin{tabular }{|c|c|c|}")
     print("\hline")
-    print(row_list[0][0]  + " & "  + row_list[0][1]
-          + " & "  + row_list[0][2] + " \\")
+    print(row_list[0][0] + " & " + row_list[0][1]
+          + " & " + row_list[0][2] + " \\")
     print("\hline")
     for i, gap in enumerate(GAPS):
-       print(row_list[i+1][0]  + " & "  + row_list[i+1][1]
-          + " & "  + row_list[i+1][2] + " \\") 
+        print(
+            row_list[i+1][0] + " & " + row_list[i+1][1]
+            + " & " + row_list[i+1][2] + " \\")
 
     print("\bbegin{table }[H]")
     print("\centering")
     print("\caption{Segundas integrais de campo}")
     print("\bbegin{tabular }{|c|c|c|}")
     print("\hline")
-    print(row_list[0][0]  + " & "  + row_list[0][3]
-          + " & "  + row_list[0][4] + " \\")
+    print(row_list[0][0] + " & " + row_list[0][3]
+          + " & " + row_list[0][4] + " \\")
     print("\hline")
     for i, gap in enumerate(GAPS):
-       print(row_list[i+1][0]  + " & "  + row_list[i+1][3]
-      + " & "  + row_list[i+1][4] + " \\") 
+        print(
+            row_list[i+1][0] + " & " + row_list[i+1][3]
+            + " & " + row_list[i+1][4] + " \\")
+
 
 if __name__ == "__main__":
     """."""

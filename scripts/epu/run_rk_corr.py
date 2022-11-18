@@ -3,6 +3,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import optimize as optimize
+from scipy.optimize import curve_fit
 
 from mathphys.functions import save_pickle, load_pickle
 from idanalysis import IDKickMap
@@ -218,8 +219,10 @@ def calc_delta_pos(
     traj = idkickmap.traj
     dxf = -1*traj.rx[-1]
     dyf = -1*traj.ry[-1]
+    pxf = -1*traj.px[-1]
+    pyf = -1*traj.py[-1]
     delta_pos = np.array([dxf, dyf])
-    return delta_pos, traj
+    return delta_pos, traj, pxf, pyf
 
 
 def calc_correction(respm, delta_pos):
@@ -228,39 +231,46 @@ def calc_correction(respm, delta_pos):
     return dp[0], dp[1]
 
 
+def find_idx_pos(spos, sposf):
+
+    aux = np.abs(spos-sposf)
+    idx = np.argmin(aux)
+    return idx
+
+
 def find_limit_field(traj, corr_system):
+    period_len = 50
+    nr_period = 56
     bx = np.array(traj.bx)
     spos = traj.s
-    bx_idx = np.where(bx != 0)[0]
+    bx_idx_init = np.where(bx != 0)[0]
+    bx_idx = np.where(bx > 15*bx[bx_idx_init[0]])[0]
     idx_initf = bx_idx[0]  # get idx for significative values of field
-    idx_finalf = bx_idx[-1]  # get idx for significative values of field
+    sposf = spos[idx_initf] + nr_period*period_len + 50/4
+    idx_finalf = find_idx_pos(spos, sposf)
+    # idx_finalf = bx_idx[-1]  # get idx for significative values of field
     if corr_system == 'FOFB':
-        idx_initf += 30  # get idx for significative values of field
-        idx_finalf -= 30  # get idx for significative values of field
+        idx_initf += 20  # get idx for significative values of field
+        idx_finalf -= 20  # get idx for significative values of field
     elif corr_system == 'LOCAL':
-        idx_initf += 10  # get idx for significative values of field
-        idx_finalf -= 10  # get idx for significative values of field
+        idx_initf += 20  # get idx for significative values of field
+        idx_finalf -= 20  # get idx for significative values of field
 
     return idx_initf, idx_finalf
 
 
 def calc_avg_angle(traj, idx_initf, idx_finalf):
-    spos = traj.s
-    ry = traj.ry
-    rx = traj.rx
-
-    posi = 1e3*spos[int(idx_initf)]
-    posf = 1e3*spos[int(idx_finalf)]
+    spos = traj.s[idx_initf:idx_finalf]
+    py = 1e6*traj.py[idx_initf:idx_finalf]
+    px = 1e6*traj.px[idx_initf:idx_finalf]
 
     # calculate average horizontal angle
-    rxi = rx[idx_initf]
-    rxf = rx[idx_finalf]
-    deltax = 1e6*(rxf - rxi)/(posf - posi)
+    optx = find_fit_ang(spos, px)
+    deltax = 1e-3*optx[2]
 
     # calculate average vertical angle
-    ryi = ry[idx_initf]
-    ryf = ry[idx_finalf]
-    deltay = 1e6*(ryf - ryi)/(posf - posi)
+    opty = find_fit_ang(spos, py)
+    deltay = 1e-3*opty[2]
 
     return deltax, deltay
 
@@ -270,27 +280,71 @@ def avg_angle_curve(r0, ang, spos_avg):
     return avg_r
 
 
-def plot_traj(traj, corr_system):
+def fit_function_poly2(rz, a, b, c):
+    f = a*rz**2 + b*rz + c
+    return f
+
+
+def fit_function_ang(rz, amp1, phi1, a):
+    period_len = 50
+    f = amp1 * np.sin(2*np.pi/period_len * rz + phi1) + a
+    return f
+
+
+def find_fit_poly2(rz, r):
+    opt = curve_fit(fit_function_poly2, rz, r)[0]
+    return opt
+
+
+def find_fit_ang(rz, r):
+    opt = curve_fit(fit_function_ang, rz, r)[0]
+    return opt
+
+
+def find_max_pos_ang(traj, corr_system):
     spos = traj.s
     ry = 1e3*traj.ry
     rx = 1e3*traj.rx
     px = 1e6*traj.px
     py = 1e6*traj.py
 
-    maxry = np.max(np.abs(ry))
-    maxrx = np.max(np.abs(rx))
     maxpx = np.max(np.abs(px))
     maxpy = np.max(np.abs(py))
 
     idx_initf, idx_finalf = find_limit_field(traj, corr_system=corr_system)
-    angx, angy = calc_avg_angle(traj, idx_initf, idx_finalf)
+    optx = find_fit_poly2(spos[idx_initf:idx_finalf], rx[idx_initf:idx_finalf])
+    opty = find_fit_poly2(spos[idx_initf:idx_finalf], ry[idx_initf:idx_finalf])
+    parx = fit_function_poly2(
+        spos[idx_initf:idx_finalf], optx[0], optx[1], optx[2])
+    pary = fit_function_poly2(
+        spos[idx_initf:idx_finalf], opty[0], opty[1], opty[2])
 
-    spos0 = spos[idx_initf]
-    sposf = spos[idx_finalf]
-    spos_avg = np.arange(spos0, sposf, 20)
-    pos_avg = np.arange(0, sposf-spos0, 20)
-    avg_rx = avg_angle_curve(rx[idx_initf], angx, pos_avg)
-    avg_ry = avg_angle_curve(ry[idx_initf], angy, pos_avg)
+    maxry = np.max(np.abs(pary))
+    maxrx = np.max(np.abs(parx))
+
+    angx, angy = calc_avg_angle(traj, idx_initf, idx_finalf)
+    angx *= 1e3
+    angy *= 1e3
+    return angx, angy, maxrx, maxry, parx, pary, spos[idx_initf:idx_finalf]
+
+
+def plot_traj(traj, corr_system):
+    spos = traj.s
+    ry = 1e3*traj.ry
+    rx = 1e3*traj.rx
+    px = 1e6*traj.px
+    py = 1e6*traj.py
+    maxpx = np.max(np.abs(px))
+    maxpy = np.max(np.abs(py))
+
+    angx, angy, maxrx, maxry, parx, pary, pos_avg = find_max_pos_ang(
+        traj, corr_system)
+    # spos0 = spos[idx_initf]
+    # sposf = spos[idx_finalf]
+    # spos_avg = np.arange(spos0, sposf, len(parx))
+    # pos_avg = np.arange(0, sposf-spos0, len(parx))
+    # avg_rx = avg_angle_curve(parx[0], angx, pos_avg)
+    # avg_ry = avg_angle_curve(pary[0], angy, pos_avg)
 
     figpath = 'results/phase-organized/{}/gap-{}/{}'.format(
         phase, gap, corr_system)
@@ -298,8 +352,9 @@ def plot_traj(traj, corr_system):
     plt.figure(1)
     labely = 'Max ry = {:.2f} um'.format(maxry)
     plt.plot(1e-3*spos, ry, color='r', label=labely)
-    plt.plot(1e-3*spos_avg, avg_ry, '--', color='k',
-             label='Avg ang = {:.2f} urad'.format(1e3*angy))
+    plt.plot(1e-3*pos_avg, pary, '--', color='r')
+    # plt.plot(1e-3*spos_avg, avg_ry, '-.', color='k',
+    #          label='Avg ang = {:.2f} urad'.format(1e3*angy))
     plt.xlabel('Distance from corrector [m]')
     plt.ylabel('Vertical position [um]')
     plt.title('Vertical traj - ' + corr_system + ' correction')
@@ -312,8 +367,9 @@ def plot_traj(traj, corr_system):
     plt.figure(2)
     labelx = 'Max rx = {:.2f} um'.format(maxrx)
     plt.plot(1e-3*spos, rx, color='b', label=labelx)
-    plt.plot(1e-3*spos_avg, avg_rx, '--', color='k',
-             label='Avg ang = {:.2f} urad'.format(1e3*angx))
+    plt.plot(1e-3*pos_avg, parx, '--', color='b')
+    # plt.plot(1e-3*spos_avg, avg_rx, '--', color='k',
+    #          label='Avg ang = {:.2f} urad'.format(1e3*angx))
     plt.xlabel('Distance from corrector [m]')
     plt.ylabel('Horizontal position [um]')
     plt.title('Horizontal traj - ' + corr_system + ' correction')
@@ -347,7 +403,63 @@ def plot_traj(traj, corr_system):
     plt.savefig(figpath + '-vertical-trajectory-ang', dpi=300)
     plt.close()
 
-    return 1e3*angx, 1e3*angy
+
+def generate_pickle(traj, angx, angy, maxrx, maxry):
+    s = traj.s
+    bx, by, bz = traj.bx, traj.by, traj.bz
+    rx, ry, rz = traj.rx, traj.ry, traj.rz
+    px, py, pz = traj.px, traj.py, traj.pz
+    traj_data[(phase, gap, 's')] = s
+    traj_data[(phase, gap, 'bx')] = bx
+    traj_data[(phase, gap, 'by')] = by
+    traj_data[(phase, gap, 'bz')] = bz
+    traj_data[(phase, gap, 'rx')] = rx
+    traj_data[(phase, gap, 'ry')] = ry
+    traj_data[(phase, gap, 'rz')] = rz
+    traj_data[(phase, gap, 'bx')] = px
+    traj_data[(phase, gap, 'py')] = py
+    traj_data[(phase, gap, 'pz')] = pz
+    traj_data[(phase, gap, 'angx')] = angx
+    traj_data[(phase, gap, 'angy')] = angy
+    traj_data[(phase, gap, 'maxrx')] = maxrx
+    traj_data[(phase, gap, 'maxry')] = maxry
+
+
+def run_generate_data(corr_system):
+    global phase, gap
+    for phase0 in PHASES:
+        phase = phase0
+        for gap0 in GAPS:
+            gap = gap0
+            model_id, ids = create_model_ids()
+            positions = get_correctors_pos(
+                model_id, ids, corr_system=corr_system)
+            respm, idkickmap, init_rz, end_rz = calc_rk_respm(
+                positions=positions, rk_s_step=5)
+            delta_pos, *_ = calc_delta_pos(idkickmap, init_rz, end_rz, 0, 0)
+            deltapx, deltapy = calc_correction(respm, delta_pos)
+            for i in np.arange(3):
+                delta_pos, traj, pxf, pyf = calc_delta_pos(
+                    idkickmap, init_rz, end_rz, deltapx, deltapy)
+                dpx, dpy = calc_correction(respm, delta_pos)
+                deltapx += dpx
+                deltapy += dpy
+            print('phase ' + phase + ' and ' + 'gap ' + gap)
+            print('Upstream correctors kicks:')
+            txt = '{:.2f}  {:.2f}'.format(1e6*deltapx, 1e6*deltapy)
+            print(txt)
+            print('Downstream correctors kicks:')
+            txt = '{:.2f}  {:.2f}'.format(1e6*pxf, 1e6*pyf)
+            print(txt)
+            print()
+            plot_traj(traj, corr_system)
+            angx, angy, maxrx, maxry, *_ = find_max_pos_ang(traj, corr_system)
+            generate_pickle(traj, angx, angy, maxrx, maxry)
+
+    fpath = './results/phase-organized/'
+    save_pickle(traj_data,
+                fpath + 'rk_traj_' + corr_system + '_corr_data.pickle',
+                overwrite=True)
 
 
 def get_max_diff(rx_list, ry_list):
@@ -397,11 +509,11 @@ def get_max_ang_diff(angx_list, angy_list):
             diffy = np.abs(angy_list[i] - angy_list[j])
             diffx_dict[(gapi, gapf)] = diffx
             diffy_dict[(gapi, gapf)] = diffy
-    
+
     for key in diffx_dict.keys():
         maxx[key] = diffx_dict[key]
         maxy[key] = diffy_dict[key]
-    
+
     # get maximum diff for x
     max_list = []
     key_list = []
@@ -410,7 +522,6 @@ def get_max_ang_diff(angx_list, angy_list):
     key_idx = np.where(np.array(max_list) == maximum_x)[0][0]
     key_list = list(diffx_dict.keys())
     gapjumpx = key_list[key_idx]
-
 
     # get maximum diff for y
     max_list = []
@@ -424,7 +535,7 @@ def get_max_ang_diff(angx_list, angy_list):
     return maximum_x, gapjumpx, maximum_y, gapjumpy
 
 
-def run_load_data(corr_system):
+def generate_table(corr_system):
     fpath = './results/phase-organized/'
     traj_data = load_pickle(
         fpath + 'rk_traj_' + corr_system + '_corr_data.pickle')
@@ -432,6 +543,7 @@ def run_load_data(corr_system):
         phase = phase0
         rx_list, ry_list, gap_list = list(), list(), list()
         angx_list, angy_list = list(), list()
+        maxrx_list, maxry_list = list(), list()
         for j, gap0 in enumerate(GAPS):
             gap = gap0
             gap_list.append(float(gap))
@@ -443,83 +555,70 @@ def run_load_data(corr_system):
             angy = traj_data[(phase, gap, 'angy')]
             angx_list.append(angx)
             angy_list.append(angy)
-        
+            maxrx = traj_data[(phase, gap, 'maxrx')]
+            maxry = traj_data[(phase, gap, 'maxry')]
+            maxrx_list.append(maxrx)
+            maxry_list.append(maxry)
+
         angxa = np.array(angx_list)
         angya = np.array(angy_list)
+        maxrxa = np.array(maxrx_list)
+        maxrya = np.array(maxry_list)
 
         max_ang = get_max_ang_diff(angxa, angya)
 
-        max_results = get_max_diff(
+        max_pos = get_max_diff(
             np.array(rx_list), np.array(ry_list))
 
-        maximum_x = 1e3*max_results[0]
-        gapjumpx = max_results[1]
-        maximum_y = 1e3*max_results[2]
-        gapjumpy = max_results[3]
+        maximum_x = 1e3*max_pos[0]
+        gapjumpx = max_pos[1]
+        maximum_y = 1e3*max_pos[2]
+        gapjumpy = max_pos[3]
 
         maximum_angx = max_ang[0]
         gapjump_angx = max_ang[1]
         maximum_angy = max_ang[2]
         gapjump_angy = max_ang[3]
+
+        # generate table
+
         print('phase:' + phase)
-        print('gap jump pos', gapjumpx)
-        print('max x ', maximum_x)
-        print('gap jump ang', gapjump_angx)
-        print('max ang x ', maximum_angx)
-        print('gap jump pos ', gapjumpy)
-        print('max y ', maximum_y)
-        print('gap jump ang', gapjump_angy)
-        print('max ang y ', maximum_angy)
+        print('gap jump posx', gapjumpx)
+        print('gap jump posy ', gapjumpy)
+        print('gap jump angx', gapjump_angx)
+        print('gap jump angy', gapjump_angy)
+        txt = '{:.2f}'.format(maximum_x) + ' & ' + '{:.2f}'.format(maximum_y)
+        txt += ' & ' + '{:.2f}'.format(maximum_angx) + ' & '
+        txt += '{:.2f}'.format(maximum_angy)
+        print(txt)
+        print('gap jump 22-300:')
+        txt = '{:.2f}'.format(np.max(np.abs(maxrxa))) + ' & '
+        txt += '{:.2f}'.format(np.max(np.abs(maxrya))) + ' & '
+        txt += '{:.2f}'.format(np.max(np.abs(angxa))) + ' & '
+        txt += '{:.2f}'.format(np.max(np.abs(angya)))
+        print(txt)
         print()
 
 
-def generate_pickle(traj, angx, angy):
-    s = traj.s
-    bx, by, bz = traj.bx, traj.by, traj.bz
-    rx, ry, rz = traj.rx, traj.ry, traj.rz
-    px, py, pz = traj.px, traj.py, traj.pz
-    traj_data[(phase, gap, 's')] = s
-    traj_data[(phase, gap, 'bx')] = bx
-    traj_data[(phase, gap, 'by')] = by
-    traj_data[(phase, gap, 'bz')] = bz
-    traj_data[(phase, gap, 'rx')] = rx
-    traj_data[(phase, gap, 'ry')] = ry
-    traj_data[(phase, gap, 'rz')] = rz
-    traj_data[(phase, gap, 'bx')] = px
-    traj_data[(phase, gap, 'py')] = py
-    traj_data[(phase, gap, 'pz')] = pz
-    traj_data[(phase, gap, 'angx')] = angx
-    traj_data[(phase, gap, 'angy')] = angy
-
-
-def run_generate_data(corr_system):
-    global phase, gap
-    for phase0 in PHASES:
-        phase = phase0
-        for gap0 in GAPS:
-            gap = gap0
-            model_id, ids = create_model_ids()
-            positions = get_correctors_pos(
-                model_id, ids, corr_system=corr_system)
-            respm, idkickmap, init_rz, end_rz = calc_rk_respm(
-                positions=positions, rk_s_step=5)
-            delta_pos, *_ = calc_delta_pos(idkickmap, init_rz, end_rz, 0, 0)
-            deltapx, deltapy = calc_correction(respm, delta_pos)
-            for i in np.arange(3):
-                delta_pos, traj = calc_delta_pos(
-                    idkickmap, init_rz, end_rz, deltapx, deltapy)
-                dpx, dpy = calc_correction(respm, delta_pos)
-                deltapx += dpx
-                deltapy += dpy
-            print(deltapx, deltapy)
-            print(delta_pos)
-            angx, angy = plot_traj(traj, corr_system)
-            generate_pickle(traj, angx, angy)
-
+def compare_fofb_local():
     fpath = './results/phase-organized/'
-    save_pickle(traj_data,
-                fpath + 'rk_traj_' + corr_system + '_corr_data.pickle',
-                overwrite=True)
+    traj_data_fofb = load_pickle(
+        fpath + 'rk_traj_' + 'FOFB' + '_corr_data.pickle')
+    traj_data_local = load_pickle(
+        fpath + 'rk_traj_' + 'LOCAL' + '_corr_data.pickle')
+    for i, phase0 in enumerate(PHASES):
+        phase = phase0
+        rx_list, ry_list, gap_list = list(), list(), list()
+        angx_list, angy_list = list(), list()
+        maxrx_list, maxry_list = list(), list()
+        for j, gap0 in enumerate(GAPS):
+            gap = gap0
+            gap_list.append(float(gap))
+            rxf = traj_data_fofb[(phase, gap, 'rx')]
+            ryf = traj_data_fofb[(phase, gap, 'ry')]
+
+            rxl = traj_data_local[(phase, gap, 'rx')]
+            ryl = traj_data_local[(phase, gap, 'ry')]
 
 
 if __name__ == "__main__":
@@ -527,6 +626,6 @@ if __name__ == "__main__":
     global phase, gap
     global traj_data
     traj_data = dict()
-    corr_system = 'FOFB'
-    # run_generate_data(corr_system)
-    run_load_data(corr_system)
+    corr_system = 'LOCAL'
+    run_generate_data(corr_system)
+    # generate_table(corr_system)
