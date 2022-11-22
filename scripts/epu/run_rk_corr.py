@@ -325,7 +325,7 @@ def find_max_pos_ang(traj, corr_system):
     angx, angy = calc_avg_angle(traj, idx_initf, idx_finalf)
     angx *= 1e3
     angy *= 1e3
-    return angx, angy, maxrx, maxry, parx, pary, spos[idx_initf:idx_finalf]
+    return angx, angy, parx, pary, spos[idx_initf:idx_finalf]
 
 
 def plot_traj(traj, corr_system):
@@ -337,8 +337,10 @@ def plot_traj(traj, corr_system):
     maxpx = np.max(np.abs(px))
     maxpy = np.max(np.abs(py))
 
-    angx, angy, maxrx, maxry, parx, pary, pos_avg = find_max_pos_ang(
+    angx, angy, parx, pary, pos_avg = find_max_pos_ang(
         traj, corr_system)
+    maxrx = np.max(np.abs(parx))
+    maxry = np.max(np.abs(pary))
     # spos0 = spos[idx_initf]
     # sposf = spos[idx_finalf]
     # spos_avg = np.arange(spos0, sposf, len(parx))
@@ -352,7 +354,7 @@ def plot_traj(traj, corr_system):
     plt.figure(1)
     labely = 'Max ry = {:.2f} um'.format(maxry)
     plt.plot(1e-3*spos, ry, color='r', label=labely)
-    plt.plot(1e-3*pos_avg, pary, '--', color='r')
+    plt.plot(1e-3*pos_avg, pary, '--', color='k')
     # plt.plot(1e-3*spos_avg, avg_ry, '-.', color='k',
     #          label='Avg ang = {:.2f} urad'.format(1e3*angy))
     plt.xlabel('Distance from corrector [m]')
@@ -367,7 +369,7 @@ def plot_traj(traj, corr_system):
     plt.figure(2)
     labelx = 'Max rx = {:.2f} um'.format(maxrx)
     plt.plot(1e-3*spos, rx, color='b', label=labelx)
-    plt.plot(1e-3*pos_avg, parx, '--', color='b')
+    plt.plot(1e-3*pos_avg, parx, '--', color='k')
     # plt.plot(1e-3*spos_avg, avg_rx, '--', color='k',
     #          label='Avg ang = {:.2f} urad'.format(1e3*angx))
     plt.xlabel('Distance from corrector [m]')
@@ -404,7 +406,7 @@ def plot_traj(traj, corr_system):
     plt.close()
 
 
-def generate_pickle(traj, angx, angy, maxrx, maxry):
+def generate_pickle(traj, angx, angy, parx, pary, pos_avg):
     s = traj.s
     bx, by, bz = traj.bx, traj.by, traj.bz
     rx, ry, rz = traj.rx, traj.ry, traj.rz
@@ -421,8 +423,11 @@ def generate_pickle(traj, angx, angy, maxrx, maxry):
     traj_data[(phase, gap, 'pz')] = pz
     traj_data[(phase, gap, 'angx')] = angx
     traj_data[(phase, gap, 'angy')] = angy
-    traj_data[(phase, gap, 'maxrx')] = maxrx
-    traj_data[(phase, gap, 'maxry')] = maxry
+    traj_data[(phase, gap, 'maxrx')] = np.max(np.abs(parx))
+    traj_data[(phase, gap, 'maxry')] = np.max(np.abs(pary))
+    traj_data[(phase, gap, 'parx')] = parx
+    traj_data[(phase, gap, 'pary')] = pary
+    traj_data[(phase, gap, 's_avg')] = pos_avg
 
 
 def run_generate_data(corr_system):
@@ -453,8 +458,9 @@ def run_generate_data(corr_system):
             print(txt)
             print()
             plot_traj(traj, corr_system)
-            angx, angy, maxrx, maxry, *_ = find_max_pos_ang(traj, corr_system)
-            generate_pickle(traj, angx, angy, maxrx, maxry)
+            angx, angy, parx, pary, pos_avg = find_max_pos_ang(
+                traj, corr_system)
+            generate_pickle(traj, angx, angy, parx, pary, pos_avg)
 
     fpath = './results/phase-organized/'
     save_pickle(traj_data,
@@ -600,25 +606,120 @@ def generate_table(corr_system):
         print()
 
 
-def compare_fofb_local():
+def plot_fofb_local_traj():
     fpath = './results/phase-organized/'
     traj_data_fofb = load_pickle(
         fpath + 'rk_traj_' + 'FOFB' + '_corr_data.pickle')
     traj_data_local = load_pickle(
         fpath + 'rk_traj_' + 'LOCAL' + '_corr_data.pickle')
+    colors = ['b', 'g', 'C1', 'r', 'k']
     for i, phase0 in enumerate(PHASES):
         phase = phase0
-        rx_list, ry_list, gap_list = list(), list(), list()
-        angx_list, angy_list = list(), list()
-        maxrx_list, maxry_list = list(), list()
+        rxf_list, ryf_list, gap_list = list(), list(), list()
+        rxl_list, ryl_list = list(), list()
         for j, gap0 in enumerate(GAPS):
             gap = gap0
             gap_list.append(float(gap))
-            rxf = traj_data_fofb[(phase, gap, 'rx')]
-            ryf = traj_data_fofb[(phase, gap, 'ry')]
+            sposf = traj_data_fofb[(phase, gap, 's_avg')]
+            avg_rxfofb = traj_data_fofb[(phase, gap, 'parx')]
+            avg_ryfofb = traj_data_fofb[(phase, gap, 'pary')]
+            rx = traj_data_fofb[(phase, gap, 'rx')]
+            ry = traj_data_fofb[(phase, gap, 'ry')]
+            rxf_list.append(rx)
+            ryf_list.append(ry)
 
-            rxl = traj_data_local[(phase, gap, 'rx')]
-            ryl = traj_data_local[(phase, gap, 'ry')]
+            sposl = traj_data_local[(phase, gap, 's_avg')]
+            avg_rxlocal = traj_data_local[(phase, gap, 'parx')]
+            avg_rylocal = traj_data_local[(phase, gap, 'pary')]
+            rx = traj_data_local[(phase, gap, 'rx')]
+            ry = traj_data_local[(phase, gap, 'ry')]
+            rxl_list.append(rx)
+            ryl_list.append(ry)
+
+            label = 'Gap: {}'.format(gap)
+            plt.figure(1)
+            plt.plot(sposf, avg_rxfofb, color=colors[j], label=label)
+
+            plt.figure(2)
+            plt.plot(sposf, avg_ryfofb, color=colors[j], label=label)
+
+            plt.figure(3)
+            plt.plot(sposl, avg_rxlocal, color=colors[j], label=label)
+
+            plt.figure(4)
+            plt.plot(sposl, avg_rylocal, color=colors[j], label=label)
+
+        max_pos_fofb = get_max_diff(
+            np.array(rxf_list), np.array(ryf_list))
+        max_x_fofb = 1e3*max_pos_fofb[0]
+        gapjumpx_fofb = max_pos_fofb[1]
+        max_y_fofb = 1e3*max_pos_fofb[2]
+        gapjumpy_fofb = max_pos_fofb[3]
+
+        figpath = 'results/phase-organized/{}/'.format(phase)
+
+        plt.figure(1)
+        plt.grid()
+        title = 'Average trajectory for phase: {} - '.format(phase)
+        title = title + 'FOFB correction\nMAX diff = {:.2f}'.format(max_x_fofb)
+        title = title + ' um at gap jump '
+        title = title + gapjumpx_fofb[0] + ' - ' + gapjumpx_fofb[1]
+        plt.title(title)
+        plt.legend()
+        plt.xlabel('Distance from first corrector [m]')
+        plt.ylabel('X position [um]')
+        plt.tight_layout()
+        plt.savefig(figpath + 'horizontal-avg-traj-FOFB', dpi=300)
+        plt.close()
+
+        plt.figure(2)
+        plt.grid()
+        title = 'Average trajectory for phase: {} - '.format(phase)
+        title = title + 'FOFB correction\nMAX diff = {:.2f}'.format(max_y_fofb)
+        title = title + ' um at gap jump '
+        title = title + gapjumpy_fofb[0] + ' - ' + gapjumpy_fofb[1]
+        plt.title(title)
+        plt.legend()
+        plt.xlabel('Distance from first corrector [m]')
+        plt.ylabel('Y position [um]')
+        plt.tight_layout()
+        plt.savefig(figpath + 'vertical-avg-traj-FOFB', dpi=300)
+        plt.close()
+
+        max_pos_local = get_max_diff(
+            np.array(rxl_list), np.array(ryl_list))
+        max_x_local = 1e3*max_pos_local[0]
+        gapjumpx_local = max_pos_local[1]
+        max_y_local = 1e3*max_pos_local[2]
+        gapjumpy_local = max_pos_local[3]
+
+        plt.figure(3)
+        plt.grid()
+        title = 'Average trajectory for phase: {} - LOCAL '.format(phase)
+        title = title + 'correction\nMAX diff = {:.2f}'.format(max_x_local)
+        title = title + ' um at gap jump '
+        title = title + gapjumpx_local[0] + ' - ' + gapjumpx_local[1]
+        plt.title(title)
+        plt.legend()
+        plt.xlabel('Distance from first corrector [m]')
+        plt.ylabel('X position [um]')
+        plt.tight_layout()
+        plt.savefig(figpath + 'horizontal-avg-traj-LOCAL', dpi=300)
+        plt.close()
+
+        plt.figure(4)
+        plt.grid()
+        title = 'Average trajectory for phase: {} - LOCAL '.format(phase)
+        title = title + 'correction\nMAX diff = {:.2f}'.format(max_y_local)
+        title = title + ' um at gap jump '
+        title = title + gapjumpy_local[0] + ' - ' + gapjumpy_local[1]
+        plt.title(title)
+        plt.legend()
+        plt.xlabel('Distance from first corrector [m]')
+        plt.ylabel('Y position [um]')
+        plt.tight_layout()
+        plt.savefig(figpath + 'vertical-avg-traj-LOCAL', dpi=300)
+        plt.close()
 
 
 if __name__ == "__main__":
@@ -627,5 +728,6 @@ if __name__ == "__main__":
     global traj_data
     traj_data = dict()
     corr_system = 'LOCAL'
-    run_generate_data(corr_system)
+    # run_generate_data(corr_system)
     # generate_table(corr_system)
+    plot_fofb_local_traj()
