@@ -155,7 +155,7 @@ def plot_rk_traj(traj_data, phase, show_flag=False):
     i2bx, i2by = data['i2bx'], data['i2by']
 
     fig_path = 'results/phase-organized/' + phase + '/'
-    colors = ['b', 'g', 'C1', 'r', 'k']
+    colors = ['b', 'g', 'y', 'C1', 'r', 'k']
     dpi = 300
 
     plot_rk_traj_normalized_fields(

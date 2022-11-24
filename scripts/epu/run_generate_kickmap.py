@@ -5,11 +5,11 @@ import numpy as np
 from idanalysis import IDKickMap
 
 from utils import ID_PERIOD, ID_KMAP_LEN
+from utils import create_kmap_filename
 
 from run_rk_traj import DEF_RK_S_STEP
 from run_rk_traj import create_idkickmap
-from run_rk_traj import create_kmap_filename
-from run_rk_traj import CONFIGS, PHASES, GAPS
+from run_rk_traj import PHASES, GAPS
 
 
 def calc_kmap(phase, gap, traj_init_px, traj_init_py, posx, posy, rk_s_step):
@@ -34,9 +34,10 @@ if __name__ == "__main__":
     posx = np.linspace(-18, +18, 37) / 1000  # [m]
     posy = np.linspace(-12, +12, 3) / 1000  # [m]
     for phase in PHASES:
-        for gap in GAPS:
-            calc_kmap(
-                phase, gap,
-                traj_init_px, traj_init_py,
-                posx, posy,
-                rk_s_step=DEF_RK_S_STEP)
+        # for gap in GAPS:
+        gap = '32.5'
+        calc_kmap(
+            phase, gap,
+            traj_init_px, traj_init_py,
+            posx, posy,
+            rk_s_step=DEF_RK_S_STEP)

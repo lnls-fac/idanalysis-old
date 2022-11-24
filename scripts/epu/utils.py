@@ -109,6 +109,13 @@ ID_CONFIGS = {
     'ID4091': 'probes 133-14/gap 29.3mm/2022-10-21_EPU_gap29.3_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4091.dat',
     'ID4093': 'probes 133-14/gap 29.3mm/2022-10-21_EPU_gap29.3_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4093.dat',
 
+    # sensor 133-14 (without crosstalk) - gap 32.5 mm
+    'ID4104': 'probes 133-14/gap 32.5mm/2022-10-25_EPU_gap32.5_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4104.dat',
+    'ID4105': 'probes 133-14/gap 32.5mm/2022-10-25_EPU_gap32.5_fase16.39_X=-20_20mm_Z=-1800_1800mm_ID=4105.dat',
+    'ID4107': 'probes 133-14/gap 32.5mm/2022-10-25_EPU_gap32.5_fase25.00_X=-20_20mm_Z=-1800_1800mm_ID=4107.dat',
+    'ID4106': 'probes 133-14/gap 32.5mm/2022-10-25_EPU_gap32.5_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4106.dat',
+    'ID4108': 'probes 133-14/gap 32.5mm/2022-10-25_EPU_gap32.5_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4108.dat',
+
     # sensor 133-14 (without crosstalk) - gap 40.9 mm
     'ID4094': 'probes 133-14/gap 40.9mm/2022-10-21_EPU_gap40.9_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4094.dat',
     'ID4095': 'probes 133-14/gap 40.9mm/2022-10-21_EPU_gap40.9_fase16.39_X=-20_20mm_Z=-1800_1800mm_ID=4095.dat',
@@ -119,13 +126,13 @@ ID_CONFIGS = {
     }
 
 
-_phase25n = ['ID4083', 'ID4103', 'ID4088', 'ID4093', 'ID4098']  # phase -25
-_phase16n = ['ID4081', 'ID4101', 'ID4086', 'ID4091', 'ID4096']  # phase -16
-_phase00p = ['ID4079', 'ID4099', 'ID4084', 'ID4089', 'ID4094']  # phase  00
-_phase16p = ['ID4080', 'ID4100', 'ID4085', 'ID4090', 'ID4095']  # phase  16
-_phase25p = ['ID4082', 'ID4102', 'ID4087', 'ID4092', 'ID4097']  # phase  25
+_phase25n = ['ID4083', 'ID4103', 'ID4088', 'ID4093', 'ID4108', 'ID4098']  # phase -25
+_phase16n = ['ID4081', 'ID4101', 'ID4086', 'ID4091', 'ID4106', 'ID4096']  # phase -16
+_phase00p = ['ID4079', 'ID4099', 'ID4084', 'ID4089', 'ID4104', 'ID4094']  # phase  00
+_phase16p = ['ID4080', 'ID4100', 'ID4085', 'ID4090', 'ID4105', 'ID4095']  # phase  16
+_phase25p = ['ID4082', 'ID4102', 'ID4087', 'ID4092', 'ID4107', 'ID4097']  # phase  25
 
-GAPS = ['22.0', '23.3', '25.7', '29.3', '40.9']
+GAPS = ['22.0', '23.3', '25.7', '29.3', '32.5', '40.9']
 PHASES = ['-25.00', '-16.39', '+00.00', '+16.39', '+25.00']
 ORDERED_CONFIGS = [_phase25n, _phase16n, _phase00p, _phase16p, _phase25p]
 

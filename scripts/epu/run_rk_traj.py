@@ -7,7 +7,7 @@ from idanalysis import IDKickMap
 from idanalysis.fmap import FieldmapOnAxisAnalysis
 
 from utils import FOLDER_BASE, DATA_PATH, ID_CONFIGS
-from utils import ORDERED_CONFIGS, GAPS, PHASES
+from utils import ORDERED_CONFIGS, DEF_RK_S_STEP, GAPS, PHASES
 from utils import get_idconfig
 
 
@@ -44,7 +44,7 @@ def calc_rk_traj(
     i1bx, i2bx = dict(), dict()
     i1by, i2by = dict(), dict()
     fmapbx, fmapby, fmaprz = dict(), dict(), dict()
-    
+
     fieldtools = FieldmapOnAxisAnalysis()
     for gap in GAPS:
         print('gap: {} mm'.format(gap))
@@ -108,7 +108,7 @@ def save_rk_traj(
     rk_traj_data['data'] = data
     fpath = './results/phase-organized/'
     save_pickle(rk_traj_data, fpath + 'rk_traj_data.pickle', overwrite=True)
-    
+
 
 def load_rk_traj():
     fpath = './results/phase-organized/'

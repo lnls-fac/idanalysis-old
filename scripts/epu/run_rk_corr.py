@@ -200,11 +200,6 @@ def calc_rk_respm(positions, rk_s_step):
     respm[0, 1] = (rxf_p - rxf_n)/delta_p
     respm[1, 1] = (ryf_p - ryf_n)/delta_p
 
-    # idkickmap.fmap_calc_trajectory(
-            # traj_init_rx=traj_init_rx, traj_init_ry=traj_init_ry,
-            # traj_init_rz=traj_init_rz, traj_rk_min_rz=traj_rk_min_rz,
-            # kicks=[[0], [traj_init_px], [traj_init_py]])
-
     return respm, idkickmap, traj_init_rz, traj_rk_min_rz
 
 
@@ -238,7 +233,7 @@ def find_idx_pos(spos, sposf):
     return idx
 
 
-def find_limit_field(traj, corr_system):
+def find_idxlimit_field(traj, corr_system):
     period_len = 50
     nr_period = 56
     bx = np.array(traj.bx)
@@ -275,12 +270,7 @@ def calc_avg_angle(traj, idx_initf, idx_finalf):
     return deltax, deltay
 
 
-def avg_angle_curve(r0, ang, spos_avg):
-    avg_r = r0 + spos_avg*ang
-    return avg_r
-
-
-def fit_function_poly2(rz, a, b, c):
+def fit_function_avg_traj(rz, a, b, c):
     f = a*rz**2 + b*rz + c
     return f
 
@@ -291,8 +281,8 @@ def fit_function_ang(rz, amp1, phi1, a):
     return f
 
 
-def find_fit_poly2(rz, r):
-    opt = curve_fit(fit_function_poly2, rz, r)[0]
+def find_fit_avg_traj(rz, r):
+    opt = curve_fit(fit_function_avg_traj, rz, r)[0]
     return opt
 
 
@@ -301,26 +291,22 @@ def find_fit_ang(rz, r):
     return opt
 
 
-def find_max_pos_ang(traj, corr_system):
+def find_avg_pos_ang(traj, corr_system):
     spos = traj.s
     ry = 1e3*traj.ry
     rx = 1e3*traj.rx
     px = 1e6*traj.px
     py = 1e6*traj.py
 
-    maxpx = np.max(np.abs(px))
-    maxpy = np.max(np.abs(py))
-
-    idx_initf, idx_finalf = find_limit_field(traj, corr_system=corr_system)
-    optx = find_fit_poly2(spos[idx_initf:idx_finalf], rx[idx_initf:idx_finalf])
-    opty = find_fit_poly2(spos[idx_initf:idx_finalf], ry[idx_initf:idx_finalf])
-    parx = fit_function_poly2(
+    idx_initf, idx_finalf = find_idxlimit_field(traj, corr_system=corr_system)
+    optx = find_fit_avg_traj(
+        spos[idx_initf:idx_finalf], rx[idx_initf:idx_finalf])
+    opty = find_fit_avg_traj(
+        spos[idx_initf:idx_finalf], ry[idx_initf:idx_finalf])
+    parx = fit_function_avg_traj(
         spos[idx_initf:idx_finalf], optx[0], optx[1], optx[2])
-    pary = fit_function_poly2(
+    pary = fit_function_avg_traj(
         spos[idx_initf:idx_finalf], opty[0], opty[1], opty[2])
-
-    maxry = np.max(np.abs(pary))
-    maxrx = np.max(np.abs(parx))
 
     angx, angy = calc_avg_angle(traj, idx_initf, idx_finalf)
     angx *= 1e3
@@ -337,16 +323,10 @@ def plot_traj(traj, corr_system):
     maxpx = np.max(np.abs(px))
     maxpy = np.max(np.abs(py))
 
-    angx, angy, parx, pary, pos_avg = find_max_pos_ang(
+    angx, angy, parx, pary, pos_avg = find_avg_pos_ang(
         traj, corr_system)
     maxrx = np.max(np.abs(parx))
     maxry = np.max(np.abs(pary))
-    # spos0 = spos[idx_initf]
-    # sposf = spos[idx_finalf]
-    # spos_avg = np.arange(spos0, sposf, len(parx))
-    # pos_avg = np.arange(0, sposf-spos0, len(parx))
-    # avg_rx = avg_angle_curve(parx[0], angx, pos_avg)
-    # avg_ry = avg_angle_curve(pary[0], angy, pos_avg)
 
     figpath = 'results/phase-organized/{}/gap-{}/{}'.format(
         phase, gap, corr_system)
@@ -458,7 +438,7 @@ def run_generate_data(corr_system):
             print(txt)
             print()
             plot_traj(traj, corr_system)
-            angx, angy, parx, pary, pos_avg = find_max_pos_ang(
+            angx, angy, parx, pary, pos_avg = find_avg_pos_ang(
                 traj, corr_system)
             generate_pickle(traj, angx, angy, parx, pary, pos_avg)
 
@@ -468,7 +448,7 @@ def run_generate_data(corr_system):
                 overwrite=True)
 
 
-def get_max_diff(rx_list, ry_list):
+def get_max_pos_diff(rx_list, ry_list):
     rx_diff, ry_diff = dict(), dict()
     maxx, maxy = dict(), dict()
     for i in np.arange(0, len(rx_list)-1, 1):
@@ -573,7 +553,7 @@ def generate_table(corr_system):
 
         max_ang = get_max_ang_diff(angxa, angya)
 
-        max_pos = get_max_diff(
+        max_pos = get_max_pos_diff(
             np.array(rx_list), np.array(ry_list))
 
         maximum_x = 1e3*max_pos[0]
@@ -606,13 +586,13 @@ def generate_table(corr_system):
         print()
 
 
-def plot_fofb_local_traj():
+def plot_fofb_local_avg_traj():
     fpath = './results/phase-organized/'
     traj_data_fofb = load_pickle(
         fpath + 'rk_traj_' + 'FOFB' + '_corr_data.pickle')
     traj_data_local = load_pickle(
         fpath + 'rk_traj_' + 'LOCAL' + '_corr_data.pickle')
-    colors = ['b', 'g', 'C1', 'r', 'k']
+    colors = ['b', 'g', 'y', 'C1', 'r', 'k']
     for i, phase0 in enumerate(PHASES):
         phase = phase0
         rxf_list, ryf_list, gap_list = list(), list(), list()
@@ -649,7 +629,7 @@ def plot_fofb_local_traj():
             plt.figure(4)
             plt.plot(sposl, avg_rylocal, color=colors[j], label=label)
 
-        max_pos_fofb = get_max_diff(
+        max_pos_fofb = get_max_pos_diff(
             np.array(rxf_list), np.array(ryf_list))
         max_x_fofb = 1e3*max_pos_fofb[0]
         gapjumpx_fofb = max_pos_fofb[1]
@@ -686,7 +666,7 @@ def plot_fofb_local_traj():
         plt.savefig(figpath + 'vertical-avg-traj-FOFB', dpi=300)
         plt.close()
 
-        max_pos_local = get_max_diff(
+        max_pos_local = get_max_pos_diff(
             np.array(rxl_list), np.array(ryl_list))
         max_x_local = 1e3*max_pos_local[0]
         gapjumpx_local = max_pos_local[1]
@@ -729,5 +709,5 @@ if __name__ == "__main__":
     traj_data = dict()
     corr_system = 'LOCAL'
     # run_generate_data(corr_system)
-    # generate_table(corr_system)
-    plot_fofb_local_traj()
+    generate_table(corr_system)
+    # plot_fofb_local_avg_traj()

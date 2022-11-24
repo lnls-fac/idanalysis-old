@@ -46,6 +46,7 @@ def create_model_ids():
 
 
 def calc_dtune_betabeat(twiss0, twiss1):
+    """."""
     dtunex = (twiss1.mux[-1] - twiss0.mux[-1]) / 2 / np.pi
     dtuney = (twiss1.muy[-1] - twiss0.muy[-1]) / 2 / np.pi
     bbeatx = 100 * (twiss1.betax - twiss0.betax) / twiss0.betax
@@ -65,16 +66,22 @@ def analysis_uncorrected_perturbation(
     config_label = idconfig
     twiss, *_ = pyacc_opt.calc_twiss(model, indices='closed')
 
-    dtunex, dtuney, \
-    bbeatx, bbeaty, \
-    bbeatx_rms, bbeaty_rms, \
-    bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(twiss0, twiss)
+    results = calc_dtune_betabeat(twiss0, twiss)
+    dtunex, dtuney = results[0], results[1]
+    bbeatx, bbeaty = results[2], results[3]
+    bbeatx_rms, bbeaty_rms = results[4], results[5]
+    bbeatx_absmax, bbeaty_absmax = results[6], results[7]
 
     if plot_flag:
+
         print(f'dtunex: {dtunex:+.6f}')
         print(f'dtunex: {dtuney:+.6f}')
-        print(f'bbetax: {bbeatx_rms:04.1f} % rms, {bbeatx_absmax:04.1f} % absmax')
-        print(f'bbetay: {bbeaty_rms:04.1f} % rms, {bbeaty_absmax:04.1f} % absmax')
+        txt = f'bbetax: {bbeatx_rms:04.1f} % rms, '
+        txt += f'{bbeatx_absmax:04.1f} % absmax'
+        print(txt)
+        txt = f'bbetay: {bbeaty_rms:04.1f} % rms, '
+        txt += f'{bbeaty_absmax:04.1f} % absmax'
+        print(txt)
 
         labelx = f'X ({bbeatx_rms:.1f} % rms)'
         labely = f'Y ({bbeaty_rms:.1f} % rms)'
@@ -92,13 +99,19 @@ def analysis_uncorrected_perturbation(
 
 def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label):
     """."""
+
+    figpath = 'results/phase-organized/{}/gap-{}/'.format(phase, gap)
+
     # Compare optics between nominal value and uncorrect optics due ID
-    dtunex, dtuney, bbeatx, bbeaty, bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(
-        twiss0, twiss1)
+    results = calc_dtune_betabeat(twiss0, twiss1)
+    dtunex, dtuney = results[0], results[1]
+    bbeatx, bbeaty = results[2], results[3]
+    bbeatx_rms, bbeaty_rms = results[4], results[5]
+    bbeatx_absmax, bbeaty_absmax = results[6], results[7]
     print(config_label, '\n')
     print('Not symmetrized optics :')
     print(f'dtunex: {dtunex:+.6f}')
-    print(f'dtunex: {dtuney:+.6f}')
+    print(f'dtuney: {dtuney:+.6f}')
     print(f'bbetax: {bbeatx_rms:04.2f} % rms, {bbeatx_absmax:04.2f} % absmax')
     print(f'bbetay: {bbeaty_rms:04.2f} % rms, {bbeaty_absmax:04.2f} % absmax')
     print()
@@ -112,12 +125,18 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label):
     plt.ylabel('Beta Beat [%]')
     plt.title('Beta Beating from ID - ' + config_label)
     plt.suptitle('Not symmetrized optics')
+    plt.xlim(215, 250)
     plt.legend()
     plt.grid()
+    plt.savefig(figpath + 'uncorrected-optics', dpi=300)
+    plt.close()
 
     # Compare optics between nominal value and symmetrized optics
-    dtunex, dtuney, bbeatx, bbeaty, bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(
-        twiss0, twiss2)
+    results = calc_dtune_betabeat(twiss0, twiss2)
+    dtunex, dtuney = results[0], results[1]
+    bbeatx, bbeaty = results[2], results[3]
+    bbeatx_rms, bbeaty_rms = results[4], results[5]
+    bbeatx_absmax, bbeaty_absmax = results[6], results[7]
     print('symmetrized optics but uncorrect tunes:')
     print(f'dtunex: {dtunex:+.6f}')
     print(f'dtunex: {dtuney:+.6f}')
@@ -135,11 +154,17 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label):
     plt.title('Beta Beating from ID - ' + config_label)
     plt.suptitle('Symmetrized optics and uncorrect tunes')
     plt.legend()
+    plt.xlim(215, 250)
     plt.grid()
+    plt.savefig(figpath + 'corrected-optics', dpi=300)
+    plt.close()
 
     # Compare optics between nominal value and all corrected
-    dtunex, dtuney, bbeatx, bbeaty, bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(
-        twiss0, twiss3)
+    results = calc_dtune_betabeat(twiss0, twiss3)
+    dtunex, dtuney = results[0], results[1]
+    bbeatx, bbeaty = results[2], results[3]
+    bbeatx_rms, bbeaty_rms = results[4], results[5]
+    bbeatx_absmax, bbeaty_absmax = results[6], results[7]
     print('symmetrized optics and correct tunes:')
     print(f'dtunex: {dtunex:+.6f}')
     print(f'dtunex: {dtuney:+.6f}')
@@ -157,68 +182,74 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label):
     plt.suptitle('Symmetrized optics and correct tunes')
     plt.legend()
     plt.grid()
-    plt.show()
+    plt.xlim(215, 250)
+    plt.savefig(figpath + 'corrected-optics-tunes', dpi=300)
+    plt.close()
 
 
 def analysis_dynapt(model0, model_id, nrtheta=9, nrpts=9):
+    """."""
+    model0.vchamber_on = True
+    model_id.vchamber_on = True
 
-  model0.vchamber_on = True
-  model_id.vchamber_on = True
+    model0.cavity_on = True
+    model_id.cavity_on = True
 
-  model0.cavity_on = True
-  model_id.cavity_on = True
+    model0.radiation_on = True
+    model_id.radiation_on = True
 
-  model0.radiation_on = True
-  model_id.radiation_on = True
+    x, y = optics.calc_dynapt_xy(
+        model0, nrturns=5000, nrtheta=nrtheta, print_flag=False)
+    xID, yID = optics.calc_dynapt_xy(
+        model_id, nrturns=5000, nrtheta=nrtheta, print_flag=False)
 
+    de, xe = optics.calc_dynapt_ex(
+        model0, nrturns=5000, nrpts=nrpts, print_flag=False)
+    deID, xeID = optics.calc_dynapt_ex(
+        model_id, nrturns=5000, nrpts=nrpts, print_flag=False)
 
-  x,y = optics.calc_dynapt_xy(model0, nrturns=5000, nrtheta=nrtheta, print_flag=False)
-  xID,yID = optics.calc_dynapt_xy(model_id, nrturns=5000, nrtheta=nrtheta, print_flag=False)
+    plt.figure(1)
+    blue, red = (0.4, 0.4, 1), (1, 0.4, 0.4)
+    plt.plot(1e3*x, 1e3*y, color=blue, label='without ID')
+    plt.plot(1e3*xID, 1e3*yID, color=red, label='with ID')
+    plt.xlabel('x [mm]')
+    plt.ylabel('y [mm]')
+    plt.title('Dynamic Aperture XY')
+    plt.legend()
+    plt.grid()
+    plt.show()
 
-
-  de, xe = optics.calc_dynapt_ex(model0, nrturns=5000, nrpts=nrpts, print_flag=False)
-  deID, xeID = optics.calc_dynapt_ex(model_id, nrturns=5000, nrpts=nrpts, print_flag=False)
-
-  plt.figure(1)
-  blue, red = (0.4,0.4,1), (1,0.4,0.4)
-  plt.plot(1e3*x,1e3*y, color=blue, label='without ID')
-  plt.plot(1e3*xID,1e3*yID, color=red, label='with ID')
-  plt.xlabel('x [mm]')
-  plt.ylabel('y [mm]')
-  plt.title('Dynamic Aperture XY')
-  plt.legend()
-  plt.grid()
-  plt.show()
-
-  plt.figure(2)
-  blue, red = (0.4,0.4,1), (1,0.4,0.4)
-  plt.plot(1e2*de,1e3*xe, color=blue, label='without ID')
-  plt.plot(1e2*deID,1e3*xeID, color=red, label='with ID')
-  plt.xlabel('de [%]')
-  plt.ylabel('x [mm]')
-  plt.title('Dynamic Aperture')
-  plt.grid()
-  plt.legend()
-  plt.show()
+    plt.figure(2)
+    blue, red = (0.4, 0.4, 1), (1, 0.4, 0.4)
+    plt.plot(1e2*de, 1e3*xe, color=blue, label='without ID')
+    plt.plot(1e2*deID, 1e3*xeID, color=red, label='with ID')
+    plt.xlabel('de [%]')
+    plt.ylabel('x [mm]')
+    plt.title('Dynamic Aperture')
+    plt.grid()
+    plt.legend()
+    plt.show()
 
 
 def analysis_energy_acceptance(model0, model_id, spos=None):
+    """."""
+    accep_neg, accep_pos = calc_touschek_energy_acceptance(
+        accelerator=model0, check_tune=True)
+    accep_neg_id, accep_pos_id = calc_touschek_energy_acceptance(
+        accelerator=model_id, check_tune=True)
 
-  accep_neg, accep_pos = calc_touschek_energy_acceptance(accelerator=model0, check_tune=True)
-  accep_neg_id, accep_pos_id = calc_touschek_energy_acceptance(accelerator=model_id, check_tune=True)
-
-  plt.figure(3)
-  blue, red = (0.4,0.4,1), (1,0.4,0.4)
-  plt.plot(spos, accep_neg, color=blue, label='Without ID')
-  plt.plot(spos, accep_pos, color=blue)
-  plt.plot(spos, accep_neg_id, color=red, label='With ID')
-  plt.plot(spos, accep_pos_id, color=red)
-  plt.title('Energy acceptance')
-  plt.ylabel('de [%]')
-  plt.xlabel('s [m]')
-  plt.grid()
-  plt.legend()
-  plt.show()
+    plt.figure(3)
+    blue, red = (0.4, 0.4, 1), (1, 0.4, 0.4)
+    plt.plot(spos, accep_neg, color=blue, label='Without ID')
+    plt.plot(spos, accep_pos, color=blue)
+    plt.plot(spos, accep_neg_id, color=red, label='With ID')
+    plt.plot(spos, accep_pos_id, color=red)
+    plt.title('Energy acceptance')
+    plt.ylabel('de [%]')
+    plt.xlabel('s [m]')
+    plt.grid()
+    plt.legend()
+    plt.show()
 
 
 def analysis(plot_flag=True):
@@ -249,14 +280,18 @@ def analysis(plot_flag=True):
     print(goal_beta)
 
     # correct orbit
-    orb_results = orbcorr.correct_orbit_fb(
-        model0, model1, 'EPU50', corr_system='FOFB')
+    orbcorr.correct_orbit_local(
+        model0, model1, 'EPU50', correction_plane='both', plot=False)
 
-    raise ValueError
+    # orb_results = orbcorr.correct_orbit_fb(
+    # model0, model1, 'EPU50', corr_system='FOFB')
+
     # calculate beta beating and tune delta tunes
     twiss1 = analysis_uncorrected_perturbation(
         model1, idconfig=idconfig, twiss0=twiss0, plot_flag=False)
 
+    model1.cavity_on = False
+    model1.radiation_on = 0
     # symmetrize optics (local quad fam knobs)
     dk_tot = np.zeros(len(knobs))
     for i in range(7):
@@ -266,8 +301,7 @@ def analysis(plot_flag=True):
         dk_tot += dk
     for i, fam in enumerate(knobs):
         print('{:<9s} dK: {:+9.6f} 1/m²'.format(fam, dk_tot[i]))
-    model2 = model1[:]
-    twiss2, *_ = pyacc_opt.calc_twiss(model2, indices='closed')
+    twiss2, *_ = pyacc_opt.calc_twiss(model1, indices='closed')
     print()
 
     # correct tunes
@@ -279,8 +313,7 @@ def analysis(plot_flag=True):
         tunes = twiss.mux[-1]/np.pi/2, twiss.muy[-1]/np.pi/2
         print('iter #{} tunes: {:.9f} {:.9f}'.format(i+1, tunes[0], tunes[1]))
     print('goal    tunes: {:.9f} {:.9f}'.format(goal_tunes[0], goal_tunes[1]))
-    model3 = model1[:]
-    twiss3, *_ = pyacc_opt.calc_twiss(model3, indices='closed')
+    twiss3, *_ = pyacc_opt.calc_twiss(model1, indices='closed')
     print()
 
     plot_beta_beating(
@@ -293,6 +326,6 @@ def analysis(plot_flag=True):
 if __name__ == '__main__':
 
     global phase, gap
-    phase, gap = PHASES[0], GAPS[0]
+    phase, gap = PHASES[2], GAPS[-2]
     print(phase, gap)
     analysis()

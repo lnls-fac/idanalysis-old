@@ -19,7 +19,7 @@ def table_b_vs_gap(ax, bx, ay, by):
     rows.append(['Gap [mm]', 'Bx [T]', 'By [T]'])
     gaps = [float(gap) for gap in GAPS]
     g0 = min(gaps)
-    gaps2 = np.array(sorted([float(gap) for gap in GAPS] + [32.5, 37.5]))
+    gaps2 = np.array(sorted([float(gap) for gap in GAPS]))
     beffx = function_field_vs_gap(
         np.pi * (gaps2 - g0)/ID_PERIOD, ax, bx)
     beffy = function_field_vs_gap(
@@ -37,9 +37,11 @@ def table_b_vs_gap(ax, bx, ay, by):
 
 if __name__ == "__main__":
     """."""
-    data, traj_init_rx, traj_init_ry, rk_s_step = load_rk_traj()
+    rk_traj_res = load_rk_traj()
+    traj_data, rk_s_step = rk_traj_res[0], rk_traj_res[1]
+    traj_init_rx, traj_init_ry = rk_traj_res[2], rk_traj_res[3]
+    traj_init_px, traj_init_py = rk_traj_res[4], rk_traj_res[5]
     for phase in PHASES:
         ax, bx, ay, by, *_ = calc_field_vs_gap_coeffs(
-            data, phase, datatype='fmap')
+            traj_data, phase, datatype='fmap')
         table_b_vs_gap(ax, bx, ay, by)
-    

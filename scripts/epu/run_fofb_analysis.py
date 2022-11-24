@@ -303,8 +303,8 @@ def load_current_data():
     currents_data = load_pickle(fpath + 'corr_currents.pickle')
     spos_ch = currents_data[('spos', 'x')]
     spos_cv = currents_data[('spos', 'y')]
-    colors = ['b', 'g', 'C1', 'r', 'k']
-    alplist = [1, 0.8, 0.6, 0.4, 0.2]
+    colors = ['b', 'g', 'y', 'C1', 'r', 'k']
+    alplist = [1, 0.8, 0.6, 0.4, 0.2, 0.1]
     plt.figure(100)
     plt.figure(101)
     for i, phase0 in enumerate(PHASES):
@@ -412,5 +412,5 @@ def load_current_data():
 
 
 if __name__ == '__main__':
-    # generate_current_data()
+    generate_current_data()
     load_current_data()
