@@ -326,6 +326,6 @@ def analysis(plot_flag=True):
 if __name__ == '__main__':
 
     global phase, gap
-    phase, gap = PHASES[2], GAPS[-2]
+    phase, gap = PHASES[2], GAPS[0]
     print(phase, gap)
     analysis()
