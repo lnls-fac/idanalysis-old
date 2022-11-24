@@ -50,7 +50,7 @@ def symm_get_locs_beta(knobs):
 
 
 def symm_get_knobs(tr, straight_nr, allquads=False):
-    
+
     idx1, idx2 = get_id_straigh_index_interval(tr, straight_nr)
 
     knobs, knobs_in, knobs_out = dict(), dict(), dict()
@@ -61,7 +61,7 @@ def symm_get_knobs(tr, straight_nr, allquads=False):
         quadfams = ['QFA', 'QFB', 'QFP', 'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2']
 
     for fam in quadfams:
-        
+
         # indices of all fam quad elements
         idx = np.array(pyaccel.lattice.find_indices(tr, 'fam_name', fam))
 
@@ -87,7 +87,7 @@ def symm_get_knobs(tr, straight_nr, allquads=False):
     knobs['QFB'] += knobs['QFP']; knobs.pop('QFP')
     knobs['QDB1'] += knobs['QDP1']; knobs.pop('QDP1')
     knobs['QDB2'] += knobs['QDP2']; knobs.pop('QDP2')
-    
+
 
     return knobs, knobs_in, knobs_out
 
@@ -117,9 +117,10 @@ def symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha):
     return residue
 
 
-def correct_symmetry_withbeta(tr, straight_nr, goal_beta, goal_alpha, delta_k=1e-5):
+def correct_symmetry_withbeta(
+        tr, straight_nr, goal_beta, goal_alpha, delta_k=1e-5):
     """."""
-    
+
     # get symmetry point indices
     locs = symm_get_locs(tr)
     nrlocs = len(locs)
@@ -135,9 +136,11 @@ def correct_symmetry_withbeta(tr, straight_nr, goal_beta, goal_alpha, delta_k=1e
         inds = knobs[fam]
         k0 = pyaccel.lattice.get_attribute(tr, 'polynom_b', inds, 1)
         pyaccel.lattice.set_attribute(tr, 'polynom_b', inds, k0 + delta_k/2, 1)
-        res1 = symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha)
+        res1 = symm_calc_residue_withbeta(
+            tr, locs, locs_beta, goal_beta, goal_alpha)
         pyaccel.lattice.set_attribute(tr, 'polynom_b', inds, k0 - delta_k/2, 1)
-        res2 = symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha)
+        res2 = symm_calc_residue_withbeta(
+            tr, locs, locs_beta, goal_beta, goal_alpha)
         pyaccel.lattice.set_attribute(tr, 'polynom_b', inds, k0, 1)
         respm[:, i] = (res1 - res2)/delta_k
 
@@ -152,9 +155,10 @@ def correct_symmetry_withbeta(tr, straight_nr, goal_beta, goal_alpha, delta_k=1e
     invmat = -1 * np.dot(np.dot(vmat.T, ismat), umat.T)
 
     # calc dk
-    alpha = symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha)
+    alpha = symm_calc_residue_withbeta(
+        tr, locs, locs_beta, goal_beta, goal_alpha)
     dk = np.dot(invmat, alpha.flatten())
-    
+
     # apply correction
     for i, fam in enumerate(knobs):
         inds = knobs[fam]
@@ -164,8 +168,10 @@ def correct_symmetry_withbeta(tr, straight_nr, goal_beta, goal_alpha, delta_k=1e
     return dk
 
 
-def calc_dynapt_xy(ring, nrturns, nrtheta=9, mindeltar=0.1e-3, r1=0, r2=30e-3, print_flag=False):
-    
+def calc_dynapt_xy(
+                   ring, nrturns, nrtheta=9, mindeltar=0.1e-3,
+                   r1=0, r2=30e-3, print_flag=False):
+
     ang = np.linspace(0, np.pi, nrtheta)
     ang[0] += 0.0001
     ang[-1] -= 0.0001
@@ -192,7 +198,9 @@ def calc_dynapt_xy(ring, nrturns, nrtheta=9, mindeltar=0.1e-3, r1=0, r2=30e-3, p
     return np.array(vx), np.array(vy)
 
 
-def calc_dynapt_ex(ring, nrturns, demax=0.05, nrpts=33, mindeltax=0.1e-3, xmin=-30e-3, y=1e-3, print_flag=False):
+def calc_dynapt_ex(
+                   ring, nrturns, demax=0.05, nrpts=33,
+                   mindeltax=0.1e-3, xmin=-30e-3, y=1e-3, print_flag=False):
 
     denergies = np.linspace(-demax, demax, nrpts)
     x = []
@@ -209,7 +217,7 @@ def calc_dynapt_ex(ring, nrturns, demax=0.05, nrpts=33, mindeltax=0.1e-3, xmin=-
                 print('ene:{:+4.1f} % xmin:{:+6.2f} xmax:{:+6.2f}'.format(denergy*100, xmin_*1e3, xmax_*1e3))
         xm = (xmin_ + xmax_) / 2
         x.append(xm)
-        
+
     return denergies, np.array(x)
 
 
@@ -245,10 +253,10 @@ def save_dynapt_xy(models,
 
 def save_dynapt_ex(models,
     nrturns=4000,
-    demax=0.05, 
-    nrpts=33, 
-    mindeltax=0.1e-3, 
-    xmin=-30e-3, 
+    demax=0.05,
+    nrpts=33,
+    mindeltax=0.1e-3,
+    xmin=-30e-3,
     y=1e-3):
 
     # nominal_ring = si.create_accelerator(ids=None)
@@ -274,6 +282,6 @@ def save_dynapt_ex(models,
         print()
 
 
-def load_models(folder='./results/', modelsname = 'models'):
+def load_models(folder='./results/', modelsname='models'):
     models = pickle.load(open(folder + modelsname + '.pickle', 'rb'))
     return models

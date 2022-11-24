@@ -8,6 +8,8 @@ from idanalysis import IDKickMap
 
 
 ID_PERIOD = 50.0  # [mm]
+ID_KMAP_LEN = 2.770  # [m]
+DEF_RK_S_STEP = 2  # [mm] seems converged for the measurement fieldmap grids
 
 FOLDER_BASE = '/home/gabriel/repos-dev/'
 # FOLDER_BASE = '/home/ximenes/repos-dev/'
@@ -107,6 +109,13 @@ ID_CONFIGS = {
     'ID4091': 'probes 133-14/gap 29.3mm/2022-10-21_EPU_gap29.3_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4091.dat',
     'ID4093': 'probes 133-14/gap 29.3mm/2022-10-21_EPU_gap29.3_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4093.dat',
 
+    # sensor 133-14 (without crosstalk) - gap 32.5 mm
+    'ID4104': 'probes 133-14/gap 32.5mm/2022-10-25_EPU_gap32.5_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4104.dat',
+    'ID4105': 'probes 133-14/gap 32.5mm/2022-10-25_EPU_gap32.5_fase16.39_X=-20_20mm_Z=-1800_1800mm_ID=4105.dat',
+    'ID4107': 'probes 133-14/gap 32.5mm/2022-10-25_EPU_gap32.5_fase25.00_X=-20_20mm_Z=-1800_1800mm_ID=4107.dat',
+    'ID4106': 'probes 133-14/gap 32.5mm/2022-10-25_EPU_gap32.5_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4106.dat',
+    'ID4108': 'probes 133-14/gap 32.5mm/2022-10-25_EPU_gap32.5_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4108.dat',
+
     # sensor 133-14 (without crosstalk) - gap 40.9 mm
     'ID4094': 'probes 133-14/gap 40.9mm/2022-10-21_EPU_gap40.9_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4094.dat',
     'ID4095': 'probes 133-14/gap 40.9mm/2022-10-21_EPU_gap40.9_fase16.39_X=-20_20mm_Z=-1800_1800mm_ID=4095.dat',
@@ -117,52 +126,43 @@ ID_CONFIGS = {
     }
 
 
-EXCDATA = {
+_phase25n = ['ID4083', 'ID4103', 'ID4088', 'ID4093', 'ID4108', 'ID4098']  # phase -25
+_phase16n = ['ID4081', 'ID4101', 'ID4086', 'ID4091', 'ID4106', 'ID4096']  # phase -16
+_phase00p = ['ID4079', 'ID4099', 'ID4084', 'ID4089', 'ID4104', 'ID4094']  # phase  00
+_phase16p = ['ID4080', 'ID4100', 'ID4085', 'ID4090', 'ID4105', 'ID4095']  # phase  16
+_phase25p = ['ID4082', 'ID4102', 'ID4087', 'ID4092', 'ID4107', 'ID4097']  # phase  25
 
-    '45.00' : {
-        'FILE':
-            ('# https://github.com/lnls-ima/wiggler-2T-STI/blob/main/'
-             'measurement/magnetic/hallprobe/gap%20045.00mm/current_test/'
-             'gap45.00mm_curent_test.xlsx'),
-        'I_UP' : np.array([
-            0.0, -0.5, -1.0, -2.0, 0.0, 0.0, 0.0, 0.0, ]),
-        'I_DOWN': np.array([
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 2.0, ]),
-        'IBY': np.array([
-            103.63, -29.59, -187.09, -583.29, 107.54, 236.31, 389.82, 744.03,])
-            },
-    '59.60' : {
-        'FILE':
-            ('# https://github.com/lnls-ima/wiggler-2T-STI/blob/main/'
-             'measurement/magnetic/hallprobe/gap%20059.60mm/current_test/'
-             'gap59.60mm_curent_test.xlsx'),
-        'I_UP' : np.array([
-            0, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1]),
-        'I_DOWN': np.array([
-            0, 0, 1, -1, -2, -1.25,
-            -1.15, -1.15, -1.1, -1, -0.9, -0.9]),
-        'IBY': np.array([
-            103.93, 455.53, 743.42, 82, -289.7, -90.2,
-            -63.68, -65.43, -50.8, -21.88, 8.12, 3.35])
-            },
-    }
+GAPS = ['22.0', '23.3', '25.7', '29.3', '32.5', '40.9']
+PHASES = ['-25.00', '-16.39', '+00.00', '+16.39', '+25.00']
+ORDERED_CONFIGS = [_phase25n, _phase16n, _phase00p, _phase16p, _phase25p]
+
+
+def get_idconfig(phase, gap):
+    """."""
+    phase_idx = PHASES.index(phase)
+    gap_idx = GAPS.index(gap)
+    idconfig = ORDERED_CONFIGS[phase_idx][gap_idx]
+    return idconfig
+
+
+def create_kmap_filename(phase, gap):
+    phase_ = phase.replace('-', 'n').replace('+', 'p').replace('.', 'p')
+    gap_ = gap.replace('-', 'n').replace('+', 'p').replace('.', 'p')
+    fname = f'./results/phase-organized/{phase}/kickmap-phase_{phase_}-gap_{gap_}.txt'
+    return fname
 
 
 def create_ids(
-        idconfig, nr_steps=None, rescale_kicks=None,
+        phase, gap, nr_steps=None, rescale_kicks=None,
         rescale_length=None):
     # create IDs
     nr_steps = nr_steps or 40
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
     rescale_length = \
         rescale_length if rescale_length is not None else 1
-    fname = FOLDER_BASE + \
-        'idanalysis/scripts/epu/results/{}/'.format(idconfig)
-    fname += 'kickmap-' + idconfig + '.txt'
-    print(fname)
+    fname = create_kmap_filename(phase, gap)
+
     idkmap = IDKickMap(kmap_fname=fname)
-    # idkmap.load()
     kickx_up = rescale_kicks * idkmap.kickx_upstream  # [T².m²]
     kicky_up = rescale_kicks * idkmap.kicky_upstream  # [T².m²]
     kickx_down = rescale_kicks * idkmap.kickx_downstream  # [T².m²]

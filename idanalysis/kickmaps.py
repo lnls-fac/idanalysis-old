@@ -125,7 +125,7 @@ class IDKickMap:
             self, traj_init_rx, traj_init_ry,
             traj_init_px=0, traj_init_py=0,
             traj_init_rz=None, traj_rk_min_rz=None,
-            rk_s_step=None):
+            rk_s_step=None, **kwargs):
         """."""
         if rk_s_step is not None:
             self.rk_s_step = rk_s_step
@@ -139,7 +139,7 @@ class IDKickMap:
             self.fmap_config.traj_init_rz = traj_init_rz
         if traj_rk_min_rz is not None:
             self.fmap_config.traj_rk_min_rz = traj_rk_min_rz
-        fmap_config = IDKickMap._fmap_calc_traj(self.fmap_config)
+        fmap_config = IDKickMap._fmap_calc_traj(self.fmap_config, **kwargs)
         return fmap_config
 
     def fmap_calc_kickmap(
@@ -255,23 +255,15 @@ class IDKickMap:
         return rz_center
 
     def calc_id_termination_kicks(
-            self, fmap_fname, period_len=None, kmap_idlen=None,
-            beam_energy=None, rk_s_step=None):
+            self, period_len=None, kmap_idlen=None, plot_flag=False):
         """."""
         # get parameters
-        beam_energy = beam_energy or IDKickMap.DEF_BEAM_ENERGY
-        rk_s_step = rk_s_step or IDKickMap.DEF_RK_S_STEP
-        # set kickmap ID length and ID period length
         kmap_idlen = kmap_idlen or self.kmap_idlen
         self.kmap_idlen = kmap_idlen
         period_len = period_len or self.period_len
         self.period_len = period_len
         nr_central_periods = int(kmap_idlen*1e3/period_len) - 4
 
-        # calc trajectory from nominal initial conditions
-        self.fmap_fname = fmap_fname
-        self.beam_energy = beam_energy
-        self.rk_s_step = rk_s_step
         self.fmap_calc_trajectory(traj_init_rx=0, traj_init_ry=0)
 
         # get indices for central part of ID
@@ -293,10 +285,11 @@ class IDKickMap:
             linefit = self._linear_function(rz, opt[2], opt[3])
             kick_begin = linefit[idx_begin_ID] - pxy[0]
             kick_end = pxy[-1] - linefit[idx_end_ID]
-            # _plt.plot(rz,pxy)
-            # _plt.plot(rz_sample,p_sample,'.')
-            # _plt.plot(rz,linefit)
-            # _plt.show()
+            if plot_flag:
+                _plt.plot(rz,pxy)
+                _plt.plot(rz_sample,p_sample,'.')
+                _plt.plot(rz,linefit)
+                _plt.show()
             if idx == 0:
                 self.kickx_upstream = kick_begin * self.brho**2
                 self.kickx_downstream = kick_end * self.brho**2
@@ -560,7 +553,7 @@ class IDKickMap:
         return config
 
     @staticmethod
-    def _fmap_calc_traj(config):
+    def _fmap_calc_traj(config, **kwargs):
         """Calcs trajectory."""
         config.beam = _fmaptrack.Beam(energy=config.beam_energy)
         config.traj = _fmaptrack.Trajectory(
@@ -580,11 +573,11 @@ class IDKickMap:
         else:
             config.traj_init_rz = init_rz = 0.0
         if hasattr(config, 'traj_init_px'):
-            init_px = config.traj_init_px * (_np.pi/180.0)
+            init_px = config.traj_init_px  # * 180/_np.pi
         else:
             config.traj_init_px = init_px = 0.0
         if hasattr(config, 'traj_init_py'):
-            init_py = config.traj_init_py * (_np.pi/180.0)
+            init_py = config.traj_init_py  # * 180/_np.pi
         else:
             config.traj_init_py = init_py = 0.0
         init_pz = _np.sqrt(1.0 - init_px**2 - init_py**2)
@@ -602,7 +595,8 @@ class IDKickMap:
             s_length=config.traj_rk_length,
             s_nrpts=config.traj_rk_nrpts,
             min_rz=rk_min_rz,
-            force_midplane=config.traj_force_midplane_flag)
+            force_midplane=config.traj_force_midplane_flag,
+            **kwargs)
 
         return config
 
