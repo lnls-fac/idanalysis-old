@@ -2,6 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import utils
 
 from pyaccel.optics import twiss
 from pyaccel import optics as pyacc_opt
@@ -12,67 +13,34 @@ from idanalysis import optics as optics
 from idanalysis import model as model
 from idanalysis import optics as optics
 from idanalysis import EPUData
+from run_rk_traj import PHASES, GAPS
+
 import idanalysis
+import pymodels
 import pyaccel
 idanalysis.FOLDER_BASE = '/home/gabriel/repos-dev/'
 
 
-def create_epudata():
-    folder = idanalysis.FOLDER_BASE + EPUData.FOLDER_EPU_MAPS
-    configs = EPUData.EPU_CONFIGS
-    epudata = EPUData(folder=folder, configs=configs)
-    return epudata
-
-
-def create_model(epu_config_idx=None, rescale_kicks=1.0, **kwargs):
-    """Create pyaccel model."""
-
-    vchamber_on = kwargs.get('vchamber_on', False)
-    straight_nr = kwargs.get('straight_nr', None)
-
-    if epu_config_idx is None:
-      # create model withou IDs, if the case
-      model_ = model.create_model(ids=None, vchamber_on=vchamber_on)
-      config_label = None
-    else:
-
-      # create object with list of all possible EPU50 configurations
-      configs = create_epudata()
-
-      # get config label
-      config_label = configs.get_config_label(configs[epu_config_idx])
-
-      # list of IDs
-      nr_steps = kwargs.get('nr_steps', 40)
-      kmap_fname = configs.get_kickmap_filename(configs[epu_config_idx])
-      ids = model.get_id_epu_list(
-        kmap_fname, ids=None, nr_steps=nr_steps, rescale_kicks=rescale_kicks,
-        straight_nr=straight_nr)
-
-      # create model
-      model_ = model.create_model(ids=ids, vchamber_on=False)
-
+def create_model_ids():
+    """."""
+    print('--- model with kickmap ---')
+    ids = utils.create_ids(phase, gap, rescale_kicks=20)
+    model = pymodels.si.create_accelerator(ids=ids)
+    model.cavity_on = True
+    model.radiation_on = 1
+    twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
+    print('length : {:.4f} m'.format(model.length))
+    print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/np.pi))
+    print('tuney  : {:.6f}'.format(twiss.muy[-1]/2/np.pi))
+    straight_nr = int(ids[0].subsec[2:4])
     # get knobs and beta locations
     if straight_nr is not None:
-      _, knobs, _ = optics.symm_get_knobs(model_, straight_nr)
-      locs_beta = optics.symm_get_locs_beta(knobs)
+        _, knobs, _ = optics.symm_get_knobs(model, straight_nr)
+        locs_beta = optics.symm_get_locs_beta(knobs)
     else:
-      knobs, locs_beta = None, None
+        knobs, locs_beta = None, None
 
-    return model_, config_label, knobs, locs_beta
-
-
-def create_model_with_id(id_config_idx, rescale_kicks=1.0, straight_nr=None):
-    if straight_nr is None:
-        straight_nr = 10
-    kwargs = {
-        'vchmaber_on': False,
-        'nr_steps': 40,
-        'straight_nr': straight_nr,
-    }
-    model1, config_label, *_ = \
-    create_model(epu_config_idx=id_config_idx, rescale_kicks=rescale_kicks, **kwargs)
-    return model1, config_label, straight_nr
+    return model, knobs, locs_beta
 
 
 def get_locs(model):
@@ -80,7 +48,8 @@ def get_locs(model):
     _, knobs, _ = optics.symm_get_knobs(model, straight_nr)
     locs_beta = optics.symm_get_locs_beta(knobs)
     locs = optics.symm_get_locs(model)
-    idx_begin, idx_end = optics.get_id_straigh_index_interval(model, straight_nr)
+    idx_begin, idx_end = optics.get_id_straigh_index_interval(
+        model, straight_nr)
     for loc in locs:
         if loc > idx_begin and loc < idx_end:
             sym_idx = loc
@@ -256,8 +225,7 @@ def run():
     loc_init, loc_mid, loc_end, knobs = get_locs(model0)
 
     # create model with id
-    model_id, *_ = create_model_with_id(id_config_idx=2,
-                 rescale_kicks=1.0, straight_nr=10)
+    model_id, *_ = create_model_ids()
     twiss1, *_ = pyacc_opt.calc_twiss(model_id, indices='closed')
 
     # calc optics for each model
@@ -282,4 +250,7 @@ def run():
 
 
 if __name__ == '__main__':
+
+    global phase, gap
+    phase, gap = PHASES[2], GAPS[-2]
     run()
