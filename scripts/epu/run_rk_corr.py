@@ -333,11 +333,12 @@ def plot_traj(traj, corr_system):
 
     plt.figure(1)
     labely = 'Max ry = {:.2f} um'.format(maxry)
-    plt.plot(1e-3*spos, ry, color='r', label=labely)
-    plt.plot(1e-3*pos_avg, pary, '--', color='k')
+    plt.plot(1e-3*(spos-spos[int(len(spos)/2)]), ry, color='r', label=labely)
+    plt.plot(
+        1e-3*(pos_avg-pos_avg[int(len(pos_avg)/2)]), pary, '--', color='k')
     # plt.plot(1e-3*spos_avg, avg_ry, '-.', color='k',
     #          label='Avg ang = {:.2f} urad'.format(1e3*angy))
-    plt.xlabel('Distance from corrector [m]')
+    plt.xlabel('Distance from IDs center [m]')
     plt.ylabel('Vertical position [um]')
     plt.title('Vertical traj - ' + corr_system + ' correction')
     plt.legend()
@@ -348,11 +349,12 @@ def plot_traj(traj, corr_system):
 
     plt.figure(2)
     labelx = 'Max rx = {:.2f} um'.format(maxrx)
-    plt.plot(1e-3*spos, rx, color='b', label=labelx)
-    plt.plot(1e-3*pos_avg, parx, '--', color='k')
+    plt.plot(1e-3*(spos-spos[int(len(spos)/2)]), rx, color='b', label=labelx)
+    plt.plot(
+        1e-3*(pos_avg-pos_avg[int(len(pos_avg)/2)]), parx, '--', color='k')
     # plt.plot(1e-3*spos_avg, avg_rx, '--', color='k',
     #          label='Avg ang = {:.2f} urad'.format(1e3*angx))
-    plt.xlabel('Distance from corrector [m]')
+    plt.xlabel('Distance from IDs center [m]')
     plt.ylabel('Horizontal position [um]')
     plt.title('Horizontal traj - ' + corr_system + ' correction')
     plt.legend()
@@ -363,8 +365,8 @@ def plot_traj(traj, corr_system):
 
     plt.figure(3)
     labelx = 'Max px = {:.2f} urad'.format(maxpx)
-    plt.plot(1e-3*spos, px, color='b', label=labelx)
-    plt.xlabel('Distance from corrector [m]')
+    plt.plot(1e-3*(spos-spos[int(len(spos)/2)]), px, color='b', label=labelx)
+    plt.xlabel('Distance from IDs center [m]')
     plt.ylabel('Horizontal angle [urad]')
     plt.title('Horizontal traj ang - ' + corr_system + ' correction')
     plt.legend()
@@ -375,8 +377,8 @@ def plot_traj(traj, corr_system):
 
     plt.figure(4)
     labely = 'Max py = {:.2f} urad'.format(maxpy)
-    plt.plot(1e-3*spos, py, color='r', label=labely)
-    plt.xlabel('Distance from corrector [m]')
+    plt.plot(1e-3*(spos-spos[int(len(spos)/2)]), py, color='r', label=labely)
+    plt.xlabel('Distance from IDs center [m]')
     plt.ylabel('Horizontal angle [urad]')
     plt.title('Horizontal traj ang - ' + corr_system + ' correction')
     plt.legend()
@@ -398,7 +400,7 @@ def generate_pickle(traj, angx, angy, parx, pary, pos_avg):
     traj_data[(phase, gap, 'rx')] = rx
     traj_data[(phase, gap, 'ry')] = ry
     traj_data[(phase, gap, 'rz')] = rz
-    traj_data[(phase, gap, 'bx')] = px
+    traj_data[(phase, gap, 'px')] = px
     traj_data[(phase, gap, 'py')] = py
     traj_data[(phase, gap, 'pz')] = pz
     traj_data[(phase, gap, 'angx')] = angx
@@ -450,38 +452,46 @@ def run_generate_data(corr_system):
 
 def get_max_pos_diff(rx_list, ry_list):
     rx_diff, ry_diff = dict(), dict()
-    maxx, maxy = dict(), dict()
     for i in np.arange(0, len(rx_list)-1, 1):
         gapi = GAPS[i]
+
+        maxx_i = np.max(rx_list[i])
+        minx_i = np.min(rx_list[i])
+        if np.abs(minx_i) >= maxx_i:
+            maxx_i = minx_i
+        elif np.argmin(maxx_i) == 0:
+            maxx_i = minx_i
+        maxy_i = np.max(ry_list[i])
+        miny_i = np.min(ry_list[i])
+        if np.abs(miny_i) >= maxy_i:
+            maxy_i = miny_i
+
         for j in np.arange(i+1, len(rx_list), 1):
             gapf = GAPS[j]
-            diffx = np.abs(rx_list[i] - rx_list[j])
-            diffy = np.abs(ry_list[i] - ry_list[j])
+
+            maxx_j = np.max(rx_list[j])
+            minx_j = np.min(rx_list[j])
+            if np.abs(minx_j) >= maxx_j:
+                maxx_j = minx_j
+            maxy_j = np.max(ry_list[j])
+            miny_j = np.min(ry_list[j])
+            if np.abs(miny_j) >= maxy_j:
+                maxy_j = miny_j
+
+            diffx = maxx_i - maxx_j
+            diffy = maxy_i - maxy_j
             rx_diff[(gapi, gapf)] = diffx
             ry_diff[(gapi, gapf)] = diffy
-    for key in rx_diff.keys():
-        maxx[key] = np.max(rx_diff[key])
-        maxy[key] = np.max(ry_diff[key])
 
     # get maximum diff for x
-    max_list = []
-    key_list = []
-    max_list = list(maxx.values())
-    maximum_x = np.max(np.array(max_list))
-    key_idx = np.where(np.array(max_list) == maximum_x)[0][0]
-    key_list = list(rx_diff.keys())
-    gapjumpx = key_list[key_idx]
+    max_list = list(rx_diff.values())
+    maximum_x = np.max(np.abs((np.array(max_list))))
 
     # get maximum diff for y
-    max_list = []
-    key_list = []
-    max_list = list(maxy.values())
-    maximum_y = np.max(np.array(max_list))
-    key_idx = np.where(np.array(max_list) == maximum_y)[0][0]
-    key_list = list(ry_diff.keys())
-    gapjumpy = key_list[key_idx]
+    max_list = list(ry_diff.values())
+    maximum_y = np.max(np.abs((np.array(max_list))))
 
-    return maximum_x, gapjumpx, maximum_y, gapjumpy
+    return maximum_x, maximum_y
 
 
 def get_max_ang_diff(angx_list, angy_list):
@@ -533,8 +543,8 @@ def generate_table(corr_system):
         for j, gap0 in enumerate(GAPS):
             gap = gap0
             gap_list.append(float(gap))
-            rx = traj_data[(phase, gap, 'rx')]
-            ry = traj_data[(phase, gap, 'ry')]
+            rx = traj_data[(phase, gap, 'parx')]
+            ry = traj_data[(phase, gap, 'pary')]
             rx_list.append(rx)
             ry_list.append(ry)
             angx = traj_data[(phase, gap, 'angx')]
@@ -556,9 +566,9 @@ def generate_table(corr_system):
         max_pos = get_max_pos_diff(
             np.array(rx_list), np.array(ry_list))
 
-        maximum_x = 1e3*max_pos[0]
+        maximum_x = max_pos[0]
         gapjumpx = max_pos[1]
-        maximum_y = 1e3*max_pos[2]
+        maximum_y = max_pos[2]
         gapjumpy = max_pos[3]
 
         maximum_angx = max_ang[0]
@@ -605,48 +615,52 @@ def plot_fofb_local_avg_traj():
             avg_ryfofb = traj_data_fofb[(phase, gap, 'pary')]
             rx = traj_data_fofb[(phase, gap, 'rx')]
             ry = traj_data_fofb[(phase, gap, 'ry')]
-            rxf_list.append(rx)
-            ryf_list.append(ry)
+            rxf_list.append(avg_rxfofb)
+            ryf_list.append(avg_ryfofb)
 
             sposl = traj_data_local[(phase, gap, 's_avg')]
             avg_rxlocal = traj_data_local[(phase, gap, 'parx')]
             avg_rylocal = traj_data_local[(phase, gap, 'pary')]
             rx = traj_data_local[(phase, gap, 'rx')]
             ry = traj_data_local[(phase, gap, 'ry')]
-            rxl_list.append(rx)
-            ryl_list.append(ry)
+            rxl_list.append(avg_rxlocal)
+            ryl_list.append(avg_rylocal)
 
             label = 'Gap: {}'.format(gap)
             plt.figure(1)
-            plt.plot(sposf, avg_rxfofb, color=colors[j], label=label)
+            plt.plot(
+                sposf-sposf[int(len(sposf)/2)], avg_rxfofb,
+                color=colors[j], label=label)
 
             plt.figure(2)
-            plt.plot(sposf, avg_ryfofb, color=colors[j], label=label)
+            plt.plot(
+                sposf-sposf[int(len(sposf)/2)], avg_ryfofb,
+                color=colors[j], label=label)
 
             plt.figure(3)
-            plt.plot(sposl, avg_rxlocal, color=colors[j], label=label)
+            plt.plot(
+                sposl-sposl[int(len(sposl)/2)], avg_rxlocal,
+                color=colors[j], label=label)
 
             plt.figure(4)
-            plt.plot(sposl, avg_rylocal, color=colors[j], label=label)
+            plt.plot(
+                sposl-sposl[int(len(sposl)/2)], avg_rylocal,
+                color=colors[j], label=label)
 
         max_pos_fofb = get_max_pos_diff(
             np.array(rxf_list), np.array(ryf_list))
-        max_x_fofb = 1e3*max_pos_fofb[0]
-        gapjumpx_fofb = max_pos_fofb[1]
-        max_y_fofb = 1e3*max_pos_fofb[2]
-        gapjumpy_fofb = max_pos_fofb[3]
+        max_x_fofb = max_pos_fofb[0]
+        max_y_fofb = max_pos_fofb[1]
 
         figpath = 'results/phase-organized/{}/'.format(phase)
 
         plt.figure(1)
         plt.grid()
-        title = 'Average trajectory for phase: {} - '.format(phase)
-        title = title + 'FOFB correction\nMAX diff = {:.2f}'.format(max_x_fofb)
-        title = title + ' um at gap jump '
-        title = title + gapjumpx_fofb[0] + ' - ' + gapjumpx_fofb[1]
+        title = 'FOFB correction - Avg traj for phase: {}'.format(phase)
+        # title = title + '\nMAX diff = {:.2f}'.format(max_x_fofb)
         plt.title(title)
         plt.legend()
-        plt.xlabel('Distance from first corrector [m]')
+        plt.xlabel("Distance from ID's center [mm]")
         plt.ylabel('X position [um]')
         plt.tight_layout()
         plt.savefig(figpath + 'horizontal-avg-traj-FOFB', dpi=300)
@@ -654,13 +668,11 @@ def plot_fofb_local_avg_traj():
 
         plt.figure(2)
         plt.grid()
-        title = 'Average trajectory for phase: {} - '.format(phase)
-        title = title + 'FOFB correction\nMAX diff = {:.2f}'.format(max_y_fofb)
-        title = title + ' um at gap jump '
-        title = title + gapjumpy_fofb[0] + ' - ' + gapjumpy_fofb[1]
+        title = 'FOFB correction - Avg traj for phase: {}'.format(phase)
+        # title = title + '\nMAX diff = {:.2f}'.format(max_y_fofb)
         plt.title(title)
         plt.legend()
-        plt.xlabel('Distance from first corrector [m]')
+        plt.xlabel("Distance from ID's center [mm]")
         plt.ylabel('Y position [um]')
         plt.tight_layout()
         plt.savefig(figpath + 'vertical-avg-traj-FOFB', dpi=300)
@@ -668,20 +680,16 @@ def plot_fofb_local_avg_traj():
 
         max_pos_local = get_max_pos_diff(
             np.array(rxl_list), np.array(ryl_list))
-        max_x_local = 1e3*max_pos_local[0]
-        gapjumpx_local = max_pos_local[1]
-        max_y_local = 1e3*max_pos_local[2]
-        gapjumpy_local = max_pos_local[3]
+        max_x_local = max_pos_local[0]
+        max_y_local = max_pos_local[1]
 
         plt.figure(3)
         plt.grid()
-        title = 'Average trajectory for phase: {} - LOCAL '.format(phase)
-        title = title + 'correction\nMAX diff = {:.2f}'.format(max_x_local)
-        title = title + ' um at gap jump '
-        title = title + gapjumpx_local[0] + ' - ' + gapjumpx_local[1]
+        title = 'LOCAL correction - Avg traj for phase: {}'.format(phase)
+        # title = title + '\nMAX diff = {:.2f}'.format(max_x_local)
         plt.title(title)
         plt.legend()
-        plt.xlabel('Distance from first corrector [m]')
+        plt.xlabel("Distance from ID's center [mm]")
         plt.ylabel('X position [um]')
         plt.tight_layout()
         plt.savefig(figpath + 'horizontal-avg-traj-LOCAL', dpi=300)
@@ -689,17 +697,341 @@ def plot_fofb_local_avg_traj():
 
         plt.figure(4)
         plt.grid()
-        title = 'Average trajectory for phase: {} - LOCAL '.format(phase)
-        title = title + 'correction\nMAX diff = {:.2f}'.format(max_y_local)
-        title = title + ' um at gap jump '
-        title = title + gapjumpy_local[0] + ' - ' + gapjumpy_local[1]
+        title = 'LOCAL correction - Avg traj for phase: {}'.format(phase)
+        # title = title + '\nMAX diff = {:.2f}'.format(max_y_local)
         plt.title(title)
         plt.legend()
-        plt.xlabel('Distance from first corrector [m]')
+        plt.xlabel("Distance from ID's center [mm]")
         plt.ylabel('Y position [um]')
         plt.tight_layout()
         plt.savefig(figpath + 'vertical-avg-traj-LOCAL', dpi=300)
         plt.close()
+
+
+def plot_global_traj():
+    fpath = './results/phase-organized/'
+    traj_data_fofb = load_pickle(
+        fpath + 'rk_traj_' + 'FOFB' + '_corr_data.pickle')
+    traj_data_local = load_pickle(
+        fpath + 'rk_traj_' + 'LOCAL' + '_corr_data.pickle')
+    colors = ['b', 'g', 'y', 'C1', 'r', 'k']
+
+    figpath = './results/'
+    for i, phase0 in enumerate(PHASES):
+        phase = phase0
+        gap_list = list()
+        rxf_list, ryf_list = list(), list()
+        rxf_elist, ryf_elist = list(), list()
+        angxf_list, angyf_list = list(), list()
+        angxf_elist, angyf_elist = list(), list()
+
+        rxl_list, ryl_list = list(), list()
+        rxl_elist, ryl_elist = list(), list()
+        angxl_list, angyl_list = list(), list()
+        angxl_elist, angyl_elist = list(), list()
+        for j, gap0 in enumerate(GAPS):
+            gap = gap0
+            gap_list.append(float(gap))
+
+            # fofb
+            sposf = traj_data_fofb[(phase, gap, 's_avg')]
+            rxfofb = traj_data_fofb[(phase, gap, 'parx')]
+            ryfofb = traj_data_fofb[(phase, gap, 'pary')]
+            angxfofb = traj_data_fofb[(phase, gap, 'angx')]
+            angyfofb = traj_data_fofb[(phase, gap, 'angy')]
+
+            rxf_list.append(np.average(rxfofb))
+            ryf_list.append(np.average(ryfofb))
+            rxf_elist.append(np.std(rxfofb))
+            ryf_elist.append(np.std(ryfofb))
+
+            angxf_list.append(angxfofb)
+            angyf_list.append(angyfofb)
+
+            # local
+            sposl = traj_data_local[(phase, gap, 's_avg')]
+            rxlocal = traj_data_local[(phase, gap, 'parx')]
+            rylocal = traj_data_local[(phase, gap, 'pary')]
+            angxlocal = traj_data_local[(phase, gap, 'angx')]
+            angylocal = traj_data_local[(phase, gap, 'angy')]
+
+            rxl_list.append(np.average(rxlocal))
+            ryl_list.append(np.average(rylocal))
+            rxl_elist.append(np.std(rxlocal))
+            ryl_elist.append(np.std(rylocal))
+
+            angxl_list.append(angxlocal)
+            angyl_list.append(angylocal)
+
+        label = 'Phase {}'.format(phase)
+        plt.figure(1)
+        plt.errorbar(
+            gap_list, rxf_list, rxf_elist, marker='.', color=colors[i],
+            label=label, uplims=True, lolims=True)
+
+        plt.figure(2)
+        plt.errorbar(
+            gap_list, rxl_list, rxl_elist, marker='.', color=colors[i],
+            label=label, uplims=True, lolims=True)
+
+        plt.figure(3)
+        plt.errorbar(
+            gap_list, ryf_list, ryf_elist, marker='.', color=colors[i],
+            label=label, uplims=False, lolims=False)
+
+        plt.figure(4)
+        plt.errorbar(
+            gap_list, ryl_list, ryl_elist, marker='.', color=colors[i],
+            label=label, uplims=False, lolims=False)
+
+        plt.figure(5)
+        plt.plot(
+            gap_list, angxf_list, marker='.', color=colors[i],
+            label=label)
+
+        plt.figure(6)
+        plt.plot(
+            gap_list, angxl_list, marker='.', color=colors[i],
+            label=label)
+
+        plt.figure(7)
+        plt.plot(
+            gap_list, angyf_list, marker='.', color=colors[i],
+            label=label)
+
+        plt.figure(8)
+        plt.plot(
+            gap_list, angyl_list, marker='.', color=colors[i],
+            label=label)
+
+    plt.figure(1)
+    plt.legend()
+    plt.title('FOFB correction - Avg traj')
+    plt.ylabel('Pos x [um]')
+    plt.xlabel('Gap [mm]')
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig(fpath + 'FOFB-avg-trajx', dpi=300)
+
+    plt.figure(2)
+    plt.legend()
+    plt.title('LOCAL correction - Avg traj')
+    plt.ylabel('Pos x [um]')
+    plt.xlabel('Gap [mm]')
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig(fpath + 'LOCAL-avg-trajx', dpi=300)
+
+    plt.figure(3)
+    plt.legend()
+    plt.title('FOFB correction - Avg traj')
+    plt.ylabel('Pos y [um]')
+    plt.xlabel('Gap [mm]')
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig(fpath + 'FOFB-avg-trajy', dpi=300)
+
+    plt.figure(4)
+    plt.legend()
+    plt.title('LOCAL correction - Avg traj')
+    plt.ylabel('Pos y [um]')
+    plt.xlabel('Gap [mm]')
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig(fpath + 'LOCAL-avg-trajy', dpi=300)
+
+    plt.figure(5)
+    plt.legend()
+    plt.title('FOFB correction - Avg traj')
+    plt.ylabel('Ang x [urad]')
+    plt.xlabel('Gap [mm]')
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig(fpath + 'FOFB-avg-angx', dpi=300)
+
+    plt.figure(6)
+    plt.legend()
+    plt.title('LOCAL correction - Avg traj')
+    plt.ylabel('Ang x [urad]')
+    plt.xlabel('Gap [mm]')
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig(fpath + 'LOCAL-avg-angx', dpi=300)
+
+    plt.figure(7)
+    plt.legend()
+    plt.title('FOFB correction - Avg traj')
+    plt.ylabel('Ang y [urad]')
+    plt.xlabel('Gap [mm]')
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig(fpath + 'FOFB-avg-angy', dpi=300)
+
+    plt.figure(8)
+    plt.legend()
+    plt.title('LOCAL correction - Avg traj')
+    plt.ylabel('Ang y [urad]')
+    plt.xlabel('Gap [mm]')
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig(fpath + 'LOCAL-avg-angy', dpi=300)
+    plt.show()
+
+
+def plot_global_corr():
+    fpath = './results/phase-organized/'
+    traj_data_fofb = load_pickle(
+        fpath + 'rk_traj_' + 'FOFB' + '_corr_data.pickle')
+    traj_data_local = load_pickle(
+        fpath + 'rk_traj_' + 'LOCAL' + '_corr_data.pickle')
+    colors = ['b', 'g', 'y', 'C1', 'r', 'k']
+
+    figpath = './results/'
+    for i, phase0 in enumerate(PHASES):
+        phase = phase0
+        gap_list = list()
+        pxf1_list, pyf1_list = list(), list()
+        pxf2_list, pyf2_list = list(), list()
+
+        pxl1_list, pyl1_list = list(), list()
+        pxl2_list, pyl2_list = list(), list()
+        for j, gap0 in enumerate(GAPS):
+            gap = gap0
+            gap_list.append(float(gap))
+
+            # fofb
+            sposf = traj_data_fofb[(phase, gap, 's_avg')]
+            pxfofb = traj_data_fofb[(phase, gap, 'px')]
+            pyfofb = traj_data_fofb[(phase, gap, 'py')]
+
+            pxf1_list.append(1e6*pxfofb[0])
+            pxf2_list.append(-1e6*pxfofb[-1])
+            pyf1_list.append(1e6*pyfofb[0])
+            pyf2_list.append(-1e6*pyfofb[-1])
+
+            # local
+            sposl = traj_data_local[(phase, gap, 's_avg')]
+            pxlocal = traj_data_local[(phase, gap, 'px')]
+            pylocal = traj_data_local[(phase, gap, 'py')]
+
+            pxl1_list.append(1e6*pxlocal[0])
+            pxl2_list.append(-1e6*pxlocal[-1])
+            pyl1_list.append(1e6*pylocal[0])
+            pyl2_list.append(-1e6*pylocal[-1])
+
+        label = 'Phase {}'.format(phase)
+        plt.figure(1)
+        plt.plot(
+            gap_list, pxf1_list, 'o-', label=label, color=colors[i])
+
+        plt.figure(2)
+        plt.plot(
+            gap_list, pxf2_list, 'o-', label=label, color=colors[i])
+
+        plt.figure(3)
+        plt.plot(
+            gap_list, pyf1_list, 'o-', label=label, color=colors[i])
+
+        plt.figure(4)
+        plt.plot(
+            gap_list, pyf2_list, 'o-', label=label, color=colors[i])
+
+        plt.figure(5)
+        plt.plot(
+            gap_list, pxl1_list, 'o-', label=label, color=colors[i])
+
+        plt.figure(6)
+        plt.plot(
+            gap_list, pxl2_list, 'o-', label=label, color=colors[i])
+
+        plt.figure(7)
+        plt.plot(
+            gap_list, pyl1_list, 'o-', label=label, color=colors[i])
+
+        plt.figure(8)
+        plt.plot(
+            gap_list, pyl2_list, 'o-', label=label, color=colors[i])
+
+    plt.figure(1)
+    plt.legend()
+    plt.title('FOFB correction - Upstream horizontal kicks')
+    plt.ylabel('Kick [urad]')
+    plt.xlabel('Gap [mm]')
+    plt.grid()
+    plt.ylim(-14, 14)
+    plt.tight_layout()
+    plt.savefig(figpath + 'FOFB-up-kickx', dpi=300)
+
+    plt.figure(2)
+    plt.legend()
+    plt.title('FOFB correction - Downstream horizontal kicks')
+    plt.ylabel('Kick [urad]')
+    plt.xlabel('Gap [mm]')
+    plt.grid()
+    plt.ylim(-14, 14)
+    plt.tight_layout()
+    plt.savefig(figpath + 'FOFB-down-kickx', dpi=300)
+
+    plt.figure(3)
+    plt.legend()
+    plt.title('FOFB correction - Upstream vertical kicks')
+    plt.ylabel('Kick [urad]')
+    plt.xlabel('Gap [mm]')
+    plt.grid()
+    plt.ylim(-14, 14)
+    plt.tight_layout()
+    plt.savefig(figpath + 'FOFB-up-kicky', dpi=300)
+
+    plt.figure(4)
+    plt.legend()
+    plt.title('FOFB correction - Downstream vertical kicks')
+    plt.ylabel('Kick [urad]')
+    plt.xlabel('Gap [mm]')
+    plt.grid()
+    plt.ylim(-14, 14)
+    plt.tight_layout()
+    plt.savefig(figpath + 'FOFB-down-kicky', dpi=300)
+
+    plt.figure(5)
+    plt.legend()
+    plt.title('LOCAL correction - Upstream horizontal kicks')
+    plt.ylabel('Kick [urad]')
+    plt.xlabel('Gap [mm]')
+    plt.grid()
+    plt.ylim(-14, 14)
+    plt.tight_layout()
+    plt.savefig(figpath + 'LOCAL-up-kickx', dpi=300)
+
+    plt.figure(6)
+    plt.legend()
+    plt.title('LOCAL correction - Downstream horizontal kicks')
+    plt.ylabel('Kick [urad]')
+    plt.xlabel('Gap [mm]')
+    plt.grid()
+    plt.ylim(-14, 14)
+    plt.tight_layout()
+    plt.savefig(figpath + 'LOCAL-down-kickx', dpi=300)
+
+    plt.figure(7)
+    plt.legend()
+    plt.title('LOCAL correction - Upstream vertical kicks')
+    plt.ylabel('Kick [urad]')
+    plt.xlabel('Gap [mm]')
+    plt.grid()
+    plt.ylim(-14, 14)
+    plt.tight_layout()
+    plt.savefig(figpath + 'LOCAL-up-kicky', dpi=300)
+
+    plt.figure(8)
+    plt.legend()
+    plt.title('LOCAL correction - Downstream vertical kicks')
+    plt.ylabel('Kick [urad]')
+    plt.xlabel('Gap [mm]')
+    plt.grid()
+    plt.ylim(-14, 14)
+    plt.tight_layout()
+    plt.savefig(figpath + 'LOCAL-down-kicky', dpi=300)
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -707,7 +1039,9 @@ if __name__ == "__main__":
     global phase, gap
     global traj_data
     traj_data = dict()
-    corr_system = 'LOCAL'
+    corr_system = 'FOFB'
     # run_generate_data(corr_system)
-    generate_table(corr_system)
+    # generate_table(corr_system)
     # plot_fofb_local_avg_traj()
+    plot_global_traj()
+    # plot_global_corr()

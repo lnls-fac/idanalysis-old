@@ -28,8 +28,8 @@ def create_model_ids():
     print('--- model with kickmap ---')
     ids = utils.create_ids(phase, gap, rescale_kicks=1)
     model = pymodels.si.create_accelerator(ids=ids)
-    model.cavity_on = True
-    model.radiation_on = 1
+    model.cavity_on = False
+    model.radiation_on = 0
     twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
     print('length : {:.4f} m'.format(model.length))
     print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/np.pi))
@@ -108,7 +108,7 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label):
     bbeatx, bbeaty = results[2], results[3]
     bbeatx_rms, bbeaty_rms = results[4], results[5]
     bbeatx_absmax, bbeaty_absmax = results[6], results[7]
-    print(config_label, '\n')
+    print('phase: {} gap: {} \n'.format(phase, gap))
     print('Not symmetrized optics :')
     print(f'dtunex: {dtunex:+.6f}')
     print(f'dtuney: {dtuney:+.6f}')
@@ -259,8 +259,8 @@ def analysis(plot_flag=True):
 
     # create unperturbed model for reference
     model0 = pymodels.si.create_accelerator()
-    model0.cavity_on = True
-    model0.radiation_on = 1
+    model0.cavity_on = False
+    model0.radiation_on = 0
     twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
 
     # create model with id
@@ -290,8 +290,6 @@ def analysis(plot_flag=True):
     twiss1 = analysis_uncorrected_perturbation(
         model1, idconfig=idconfig, twiss0=twiss0, plot_flag=False)
 
-    model1.cavity_on = False
-    model1.radiation_on = 0
     # symmetrize optics (local quad fam knobs)
     dk_tot = np.zeros(len(knobs))
     for i in range(7):
@@ -326,6 +324,10 @@ def analysis(plot_flag=True):
 if __name__ == '__main__':
 
     global phase, gap
-    phase, gap = PHASES[2], GAPS[0]
-    print(phase, gap)
-    analysis()
+    for phase0 in PHASES:
+        phase = phase0
+        for gap0 in GAPS:
+            gap = gap0
+    # phase, gap = PHASES[2], GAPS[-1]
+            print(phase, gap)
+            analysis()

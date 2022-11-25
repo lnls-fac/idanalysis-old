@@ -144,10 +144,7 @@ def create_ids(
     fname += 'kickmap-' + idconfig + '.txt'
     print(fname)
     idkmap = IDKickMap(kmap_fname=fname)
-<<<<<<< HEAD
     # idkmap.load()
-=======
->>>>>>> add-epu-ximenes
     kickx_up = rescale_kicks * idkmap.kickx_upstream  # [T².m²]
     kicky_up = rescale_kicks * idkmap.kicky_upstream  # [T².m²]
     kickx_down = rescale_kicks * idkmap.kickx_downstream  # [T².m²]

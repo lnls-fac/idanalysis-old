@@ -96,7 +96,8 @@ def correct_tunes_twoknobs(tr, goal_tunes):
 
     tunecorr = TuneCorr(tr, 'SI', method='Proportional', grouping='TwoKnobs')
     tunemat = tunecorr.calc_jacobian_matrix()
-    tunecorr.correct_parameters(model=tr, goal_parameters=goal_tunes, jacobian_matrix=tunemat)
+    tunecorr.correct_parameters(
+        model=tr, goal_parameters=goal_tunes, jacobian_matrix=tunemat)
 
 
 def symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha):

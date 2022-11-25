@@ -15,7 +15,7 @@ def correct_orbit_local(
     delta_kick = 1e-6  # [rad]
     tol_svals = 1e-5
 
-    orb0 = pyaccel.tracking.find_orbit6(model0, indices='open')
+    orb0 = pyaccel.tracking.find_orbit4(model0, indices='open')
     orb0_pos = orb0[[0, 2], :]
     orb0_ang = orb0[[1, 3], :]
 
@@ -87,7 +87,7 @@ def correct_orbit_local(
     ismat = np.diag(ismat)
     invmat = -1 * np.dot(np.dot(vmat.T, ismat), umat.T)
 
-    orb1 = pyaccel.tracking.find_orbit6(model1, indices='open')
+    orb1 = pyaccel.tracking.find_orbit4(model1, indices='open')
     cod_u = orb1 - orb0
     cod0_pos = cod_u[[0, 2], :]
     cod0_ang = cod_u[[1, 3], :]
@@ -103,7 +103,7 @@ def correct_orbit_local(
         for i in range(nrcors):
             model1[cors[i]].hkick_polynom += dk[i]
             model1[cors[i]].vkick_polynom += dk[nrcors + i]
-        orb1 = pyaccel.tracking.find_orbit6(model1, indices='open')
+        orb1 = pyaccel.tracking.find_orbit4(model1, indices='open')
 
     print("Correctors's kicks: ")
     txt = 'IDC1 x: {:.2f} urad   IDC2 x: {:.2f} urad'.format(

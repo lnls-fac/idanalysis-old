@@ -123,8 +123,8 @@ def create_model_ids(idconfig):
     print('--- model with kick-model wiggler ---')
     ids = utils.create_ids(idconfig=idconfig, rescale_kicks=1)
     model = pymodels.si.create_accelerator(ids=ids)
-    model.cavity_on = True
-    model.radiation_on = 1
+    model.cavity_on = False
+    model.radiation_on = 0
     twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
     print('length : {:.4f} m'.format(model.length))
     print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/np.pi))
@@ -137,8 +137,8 @@ def run(idconfig):
     # bare lattice
     ring0, twiss0 = create_model_bare()
     print()
-    ring0.cavity_on = True
-    ring0.radiation_on = 1
+    ring0.cavity_on = False
+    ring0.radiation_on = 0
     # lattice with IDs
     ring1, twiss1, ids = create_model_ids(idconfig=idconfig)
     subsec = str(ids[0].subsec)[2:4]
@@ -166,8 +166,6 @@ def run(idconfig):
         # ring0, ring1, 'WIG180')
     twiss1, *_ = pyacc_opt.calc_twiss(ring1, indices='closed')
 
-    ring1.cavity_on = False
-    ring1.radiation_on = 0
     # symmetrize optics (local quad fam knobs)
     dk_tot = np.zeros(len(knobs))
     for i in range(7):
