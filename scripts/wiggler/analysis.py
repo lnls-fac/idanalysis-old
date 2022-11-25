@@ -67,7 +67,7 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, idconfig, plot_flag=True):
     plt.suptitle('Symmetrized optics and uncorrect tunes')
     plt.legend()
     plt.grid()
-  
+
 
     #Compare optics between nominal value and symmetrized optics with tune correction
     dtunex, dtuney, bbeatx, bbeaty, bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax = calc_dtune_betabeat(twiss0,twiss3)
@@ -123,6 +123,8 @@ def create_model_ids(idconfig):
     print('--- model with kick-model wiggler ---')
     ids = utils.create_ids(idconfig=idconfig, rescale_kicks=1)
     model = pymodels.si.create_accelerator(ids=ids)
+    model.cavity_on = True
+    model.radiation_on = 1
     twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
     print('length : {:.4f} m'.format(model.length))
     print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/np.pi))
@@ -135,7 +137,8 @@ def run(idconfig):
     # bare lattice
     ring0, twiss0 = create_model_bare()
     print()
-
+    ring0.cavity_on = True
+    ring0.radiation_on = 1
     # lattice with IDs
     ring1, twiss1, ids = create_model_ids(idconfig=idconfig)
     subsec = str(ids[0].subsec)[2:4]
@@ -148,24 +151,28 @@ def run(idconfig):
     goal_tunes = np.array([twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
     goal_beta = np.array([twiss0.betax[locs_beta], twiss0.betay[locs_beta]])
     goal_alpha = np.array([twiss0.alphax[locs_beta], twiss0.alphay[locs_beta]])
-   
+
     # correct orbit locally with ID correctors
     print('--- local orbit correction ---')
     ret = orbcorr.correct_orbit_local(
-        model1=ring1, id_famname='WIG180', correction_plane='x', plot=False)
-    dkickx1, dkickx2, dkicky1, dkicky2 =  ret[0]
+        ring0, ring1, 'WIG180',
+        correction_plane='x', plot=False)
+    dkickx1, dkickx2, dkicky1, dkicky2 = ret[0]
     fmts = 'correctors dk {:<10s} : {:+06.1f} {:+06.1f} urad'
     print(fmts.format('horizontal', dkickx1*1e6, dkickx2*1e6))
     print(fmts.format('vertical', dkicky1*1e6, dkicky2*1e6))
     # correct orbit residual globally with SOFB
-    orbcorr.correct_orbit_sofb(
-        model0=ring0, model1=ring1, id_famname='WIG180', nr_steps=5)
+    # orbcorr.correct_orbit_sofb(
+        # ring0, ring1, 'WIG180')
     twiss1, *_ = pyacc_opt.calc_twiss(ring1, indices='closed')
 
+    ring1.cavity_on = False
+    ring1.radiation_on = 0
     # symmetrize optics (local quad fam knobs)
     dk_tot = np.zeros(len(knobs))
     for i in range(7):
-        dk = optics.correct_symmetry_withbeta(ring1, straight_nr, goal_beta, goal_alpha)
+        dk = optics.correct_symmetry_withbeta(
+            ring1, straight_nr, goal_beta, goal_alpha)
         print('iteration #{}, dK: {}'.format(i+1, dk))
         dk_tot += dk
     for i, fam in enumerate(knobs):
@@ -193,4 +200,3 @@ if __name__ == '__main__':
     # run(idconfig='ID3979')  # gap 59.6 mm, correctors with zero current
     # run(idconfig = 'ID4017')  # gap 59.6 mm, correctors with best current
     run(idconfig = 'ID4020')  # gap 45.0 mm, correctors with zero current
-
