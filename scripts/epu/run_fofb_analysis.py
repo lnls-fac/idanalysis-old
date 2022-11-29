@@ -187,7 +187,7 @@ def orbit_distortion_analysis(
     plt.xlim(180, 280)
     plt.legend()
     plt.tight_layout()
-    plt.savefig(figpath + 'COD-horizontal', dpi=300)
+    plt.savefig(figpath + corr_system + '-COD-horizontal', dpi=300)
     plt.close()
     labely_cod = 'COD rms: @bpms {:.2f} um @ring {:.2f} um'.format(
         codybpms_rms, cody_rms)
@@ -208,7 +208,7 @@ def orbit_distortion_analysis(
     plt.xlim(180, 280)
     plt.legend()
     plt.tight_layout()
-    plt.savefig(figpath + 'COD-vertical', dpi=300)
+    plt.savefig(figpath + corr_system + '-COD-vertical', format='pdf', dpi=300)
     plt.close()
 
 

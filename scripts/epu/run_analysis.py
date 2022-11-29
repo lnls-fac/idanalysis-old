@@ -110,8 +110,8 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label):
     bbeatx_absmax, bbeaty_absmax = results[6], results[7]
     print('phase: {} gap: {} \n'.format(phase, gap))
     print('Not symmetrized optics :')
-    print(f'dtunex: {dtunex:+.6f}')
-    print(f'dtuney: {dtuney:+.6f}')
+    print(f'dtunex: {dtunex:+.0e}')
+    print(f'dtuney: {dtuney:+.0e}')
     print(f'bbetax: {bbeatx_rms:04.2f} % rms, {bbeatx_absmax:04.2f} % absmax')
     print(f'bbetay: {bbeaty_rms:04.2f} % rms, {bbeaty_absmax:04.2f} % absmax')
     print()
@@ -138,8 +138,8 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label):
     bbeatx_rms, bbeaty_rms = results[4], results[5]
     bbeatx_absmax, bbeaty_absmax = results[6], results[7]
     print('symmetrized optics but uncorrect tunes:')
-    print(f'dtunex: {dtunex:+.6f}')
-    print(f'dtunex: {dtuney:+.6f}')
+    print(f'dtunex: {dtunex:+.0e}')
+    print(f'dtuney: {dtuney:+.0e}')
     print(f'bbetax: {bbeatx_rms:04.2f} % rms, {bbeatx_absmax:04.2f} % absmax')
     print(f'bbetay: {bbeaty_rms:04.2f} % rms, {bbeaty_absmax:04.2f} % absmax')
     print()
@@ -166,8 +166,8 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label):
     bbeatx_rms, bbeaty_rms = results[4], results[5]
     bbeatx_absmax, bbeaty_absmax = results[6], results[7]
     print('symmetrized optics and correct tunes:')
-    print(f'dtunex: {dtunex:+.6f}')
-    print(f'dtunex: {dtuney:+.6f}')
+    print(f'dtunex: {dtunex:+.0e}')
+    print(f'dtuney: {dtuney:+.0e}')
     print(f'bbetax: {bbeatx_rms:04.2f} % rms, {bbeatx_absmax:04.2f} % absmax')
     print(f'bbetay: {bbeaty_rms:04.2f} % rms, {bbeaty_absmax:04.2f} % absmax')
 
