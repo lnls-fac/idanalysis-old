@@ -765,14 +765,14 @@ def plot_global_traj():
 
         label = 'Phase {}'.format(phase)
         plt.figure(1)
-        plt.errorbar(
-            gap_list, rxf_list, rxf_elist, marker='.', color=colors[i],
-            label=label, uplims=True, lolims=True)
+        plt.plot(
+            gap_list, rxf_list, '.-', color=colors[i],
+            label=label)
 
         plt.figure(2)
-        plt.errorbar(
-            gap_list, rxl_list, rxl_elist, marker='.', color=colors[i],
-            label=label, uplims=True, lolims=True)
+        plt.plot(
+            gap_list, rxl_list, '.-', color=colors[i],
+            label=label)
 
         plt.figure(3)
         plt.errorbar(
@@ -807,74 +807,82 @@ def plot_global_traj():
     plt.figure(1)
     plt.legend()
     plt.title('FOFB correction - Avg traj')
+    plt.ylim(-3, 3)
     plt.ylabel('Pos x [um]')
     plt.xlabel('Gap [mm]')
     plt.grid()
     plt.tight_layout()
-    plt.savefig(fpath + 'FOFB-avg-trajx', dpi=300)
+    plt.savefig(figpath + 'FOFB-avg-trajx', dpi=300)
 
     plt.figure(2)
     plt.legend()
     plt.title('LOCAL correction - Avg traj')
+    plt.ylim(-3, 3)
     plt.ylabel('Pos x [um]')
     plt.xlabel('Gap [mm]')
     plt.grid()
     plt.tight_layout()
-    plt.savefig(fpath + 'LOCAL-avg-trajx', dpi=300)
+    plt.savefig(figpath + 'LOCAL-avg-trajx', dpi=300)
 
     plt.figure(3)
     plt.legend()
     plt.title('FOFB correction - Avg traj')
+    plt.ylim(-23, 18)
     plt.ylabel('Pos y [um]')
     plt.xlabel('Gap [mm]')
     plt.grid()
     plt.tight_layout()
-    plt.savefig(fpath + 'FOFB-avg-trajy', dpi=300)
+    plt.savefig(figpath + 'FOFB-avg-trajy', dpi=300)
 
     plt.figure(4)
     plt.legend()
     plt.title('LOCAL correction - Avg traj')
+    plt.ylim(-23, 18)
     plt.ylabel('Pos y [um]')
     plt.xlabel('Gap [mm]')
     plt.grid()
     plt.tight_layout()
-    plt.savefig(fpath + 'LOCAL-avg-trajy', dpi=300)
+    plt.savefig(figpath + 'LOCAL-avg-trajy', dpi=300)
 
     plt.figure(5)
     plt.legend()
     plt.title('FOFB correction - Avg traj')
+    plt.ylim(-3, 1)
     plt.ylabel('Ang x [urad]')
     plt.xlabel('Gap [mm]')
     plt.grid()
     plt.tight_layout()
-    plt.savefig(fpath + 'FOFB-avg-angx', dpi=300)
+    plt.savefig(figpath + 'FOFB-avg-angx', dpi=300)
 
     plt.figure(6)
     plt.legend()
     plt.title('LOCAL correction - Avg traj')
+    plt.ylim(-3, 1)
     plt.ylabel('Ang x [urad]')
     plt.xlabel('Gap [mm]')
     plt.grid()
     plt.tight_layout()
-    plt.savefig(fpath + 'LOCAL-avg-angx', dpi=300)
+    plt.savefig(figpath + 'LOCAL-avg-angx', dpi=300)
 
     plt.figure(7)
     plt.legend()
     plt.title('FOFB correction - Avg traj')
+    plt.ylim(-4, 1)
     plt.ylabel('Ang y [urad]')
     plt.xlabel('Gap [mm]')
     plt.grid()
     plt.tight_layout()
-    plt.savefig(fpath + 'FOFB-avg-angy', dpi=300)
+    plt.savefig(figpath + 'FOFB-avg-angy', dpi=300)
 
     plt.figure(8)
     plt.legend()
     plt.title('LOCAL correction - Avg traj')
+    plt.ylim(-4, 1)
     plt.ylabel('Ang y [urad]')
     plt.xlabel('Gap [mm]')
     plt.grid()
     plt.tight_layout()
-    plt.savefig(fpath + 'LOCAL-avg-angy', dpi=300)
+    plt.savefig(figpath + 'LOCAL-avg-angy', dpi=300)
     plt.show()
 
 

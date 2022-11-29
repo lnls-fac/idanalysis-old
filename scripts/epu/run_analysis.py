@@ -26,7 +26,8 @@ from utils import get_idconfig
 def create_model_ids():
     """."""
     print('--- model with kickmap ---')
-    ids = utils.create_ids(phase, gap, rescale_kicks=1)
+    # ids = utils.create_ids(phase, gap, rescale_kicks=1)
+    ids = utils.create_ids_test(rescale_kicks=1)
     model = pymodels.si.create_accelerator(ids=ids)
     model.cavity_on = False
     model.radiation_on = 0

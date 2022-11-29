@@ -60,7 +60,7 @@ class RadiaModelCalibration:
     @property
     def bx_meas(self):
         """Measured on-axis horizontal field."""
-        return self._bx_meas    
+        return self._bx_meas
 
     @property
     def by_meas(self):
@@ -90,10 +90,10 @@ class RadiaModelCalibration:
         self._by_model = field[:, 1]
         fmap = self._fmap
         self._rz_meas = fmap.rz
-        self._bx_meas = fmap.bx[fmap.ry_zero, fmap.rx_zero, :]
-        self._by_meas = fmap.by[fmap.ry_zero, fmap.rx_zero, :]
-        self._bz_meas = fmap.bz[fmap.ry_zero, fmap.rx_zero, :]
-        
+        self._bx_meas = fmap.bx[fmap.ry_zero][fmap.rx_zero][:]
+        self._by_meas = fmap.by[fmap.ry_zero][fmap.rx_zero][:]
+        self._bz_meas = fmap.bz[fmap.ry_zero][fmap.rx_zero][:]
+
     def shiftscale_calc_residue(self, shift):
         """Calculate correction scale and residue for a given shift in data."""
         if self.by_model is None:
@@ -126,7 +126,7 @@ class RadiaModelCalibration:
         plt.xlabel('rz [mm]')
         plt.ylabel('By [T]')
         plt.legend()
-        plt.show()    
+        plt.show()
 
     def shiftscale_set(self, scale):
         """Incorporate fitted scale as effective remanent magnetization."""
@@ -146,7 +146,7 @@ class RadiaModelCalibration:
         _random.shuffle(inds_cie)
         _random.shuffle(inds_cid)
         inds = dict(csd=inds_csd[:self._nrselblocks], cse=inds_cse[:self._nrselblocks], cie=inds_cie[:self._nrselblocks], cid=inds_cid[:self._nrselblocks])
-        return inds 
+        return inds
 
     def get_selected_blocks_mags(self, blocks_inds):
         mags = dict()
@@ -168,7 +168,7 @@ class RadiaModelCalibration:
                 mag_delta = mag_step *2*(_np.random.random(3) -0.5)
                 mag_delta_inv = -1*mag_delta
                 mags_delta.append(mag_delta.tolist())
-                mags_delta_inv.append(mag_delta_inv.tolist()) 
+                mags_delta_inv.append(mag_delta_inv.tolist())
             mags_dif_dic[cas] = mags_delta
             mags_dif_inverted[cas] = mags_delta_inv
         return mags_dif_dic, mags_dif_inverted
@@ -207,32 +207,32 @@ class RadiaModelCalibration:
 
     def update_model_field(self, block_inds, mags_dif):
         """Update By on-axis with new blocks magnetizations."""
-        
+
         field_dif = _np.zeros((len(self.rz_model), 3))
         for cas_name in block_inds:
             cas = self._epu.cassettes_ref[cas_name]
             for idx_mag, idx in enumerate(block_inds[cas.name]):
                 cas.blocks[idx].magnetization = mags_dif[cas.name][idx_mag]
-                # cas.blocks[idx].create_radia_object(magnetization=mags_dif[cas.name][idx_mag])  
+                # cas.blocks[idx].create_radia_object(magnetization=mags_dif[cas.name][idx_mag])
                 field_dif += cas.blocks[idx].get_field(x=0, y=0, z=self.rz_model)
-               
+
         self._by_model += field_dif[:,1]
         return field_dif[:,1]
-    
+
     def retrogress_model_field(self, block_inds, mags_dif, field_dif):
-       
+
         for cas_name in block_inds:
             cas = self._epu.cassettes_ref[cas_name]
             for idx_mag, idx in enumerate(block_inds[cas.name]):
                 cas.blocks[idx].magnetization = mags_dif[cas.name][idx_mag]
-                # cas.blocks[idx].create_radia_object(magnetization=mags_dif[cas.name][idx_mag])  
-        self._by_model -= field_dif            
+                # cas.blocks[idx].create_radia_object(magnetization=mags_dif[cas.name][idx_mag])
+        self._by_model -= field_dif
 
     def simulated_annealing(self,initial_residue=None, by_meas_fit=None):
-        
+
         obj_function_old = initial_residue
         for i in _np.arange(10*1500):
-            
+
             blocks_inds = self.get_blocks_indices()
             delta_mags, delta_mags_inv = self.gen_mags_dif(blocks_inds=blocks_inds, mag_step=0.2*obj_function_old)
             by_dif = self.update_model_field(block_inds=blocks_inds, mags_dif=delta_mags)
@@ -241,12 +241,12 @@ class RadiaModelCalibration:
                 obj_function_old = obj_function
             else:
                 self.retrogress_model_field(block_inds=blocks_inds, mags_dif=delta_mags_inv, field_dif=by_dif)
-            
+
             if i%25 ==0:
                 print('residue:',obj_function_old)
                 print('iteraction:',i)
 
-        self.plot_fields(by_meas_fit=by_meas_fit)        
+        self.plot_fields(by_meas_fit=by_meas_fit)
 
 
 def init_objects(phase, gap):
@@ -305,10 +305,10 @@ if __name__ == "__main__":
             minshift, minscale, minresidue = shift, scale, residue
 
     # plot best solution and calibrates model
-    
+
     cm.shiftscale_set(scale=minscale)
     by_meas_fit = cm.shiftscale_plot_fields(shift=minshift)
-   
+
     cm._by_model = minscale*cm._by_model
     cm.simulated_annealing(
         initial_residue=minresidue*len(cm.rz_model), by_meas_fit=by_meas_fit)
