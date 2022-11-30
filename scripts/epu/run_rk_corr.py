@@ -714,7 +714,7 @@ def plot_global_traj():
         fpath + 'rk_traj_' + 'FOFB' + '_corr_data.pickle')
     traj_data_local = load_pickle(
         fpath + 'rk_traj_' + 'LOCAL' + '_corr_data.pickle')
-    colors = ['b', 'g', 'y', 'C1', 'r', 'k']
+    colors = ['C1', 'y', 'b', 'g', 'r', 'k']
 
     figpath = './results/'
     for i, phase0 in enumerate(PHASES):
