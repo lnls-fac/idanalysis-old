@@ -123,6 +123,12 @@ ID_CONFIGS = {
     'ID4096': 'probes 133-14/gap 40.9mm/2022-10-24_EPU_gap40.9_fase-16.39_X=-20_20mm_Z=-1800_1800mm_ID=4096.dat',
     'ID4098': 'probes 133-14/gap 40.9mm/2022-10-24_EPU_gap40.9_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4098.dat',
 
+    # fieldmaps y=-0.5 to y=0.5 for gap 22.0 mm
+    'FAC01': 'probes 133-14/gap 22.0mm/fieldmaps/fieldmap_EPU_gap22.0_fase00.00_ID=FAC01.dat',
+    'FAC02': 'probes 133-14/gap 22.0mm/fieldmaps/fieldmap_EPU_gap22.0_fase16.39_ID=FAC02.dat',
+    'FAC03': 'probes 133-14/gap 22.0mm/fieldmaps/fieldmap_EPU_gap22.0_fase25.00_ID=FAC03.dat',
+    'FAC04': 'probes 133-14/gap 22.0mm/fieldmaps/fieldmap_EPU_gap22.0_fase-16.39_ID=FAC04.dat',
+    'FAC05': 'probes 133-14/gap 22.0mm/fieldmaps/fieldmap_EPU_gap22.0_fase-25.00_ID=FAC05.dat',
     }
 
 

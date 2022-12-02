@@ -26,8 +26,8 @@ def create_model_ids():
     print('--- model with kickmap ---')
     ids = utils.create_ids(phase, gap, rescale_kicks=20)
     model = pymodels.si.create_accelerator(ids=ids)
-    model.cavity_on = True
-    model.radiation_on = 1
+    model.cavity_on = False
+    model.radiation_on = 0
     twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
     print('length : {:.4f} m'.format(model.length))
     print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/np.pi))
@@ -218,14 +218,16 @@ def plot_betas(model, twiss0, twiss1, locs_beta):
     plt.legend()
     plt.grid()
     pyaccel.graphics.draw_lattice(model, offset=-2, height=2, gca=True)
-    plt.savefig('betas', dpi=300)
+    # plt.savefig('betas', dpi=300)
     plt.show()
-    plt.clf()
+    # plt.clf()
 
 
 def run():
     model0 = si.create_accelerator()
     model0.vchamber_on = False
+    model0.cavity_on = False
+    model0.radiation_on = 0
 
     # get beta locations
     loc_init, loc_mid, loc_end, knobs = get_locs(model0)
@@ -239,7 +241,7 @@ def run():
     opt1 = calc_opt(model_id, loc_init, loc_end)
 
     dk_tot = np.zeros(len(knobs))
-    for i in range(5):
+    for i in range(25):
         respm = calc_respm(model_id, knobs, loc_init, loc_end)
         dk = apply_corretion(respm, knobs, opt0, opt1, model_id)
         print('iteration #{}, dK: {}'.format(i+1, dk))
@@ -258,5 +260,5 @@ def run():
 if __name__ == '__main__':
 
     global phase, gap
-    phase, gap = PHASES[2], GAPS[-2]
+    phase, gap = PHASES[2], GAPS[-1]
     run()
