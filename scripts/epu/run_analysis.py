@@ -26,7 +26,7 @@ from utils import get_idconfig
 def create_model_ids():
     """."""
     print('--- model with kickmap ---')
-    ids = utils.create_ids_test(rescale_kicks=1)
+    ids = utils.create_ids_test(phase, gap, rescale_kicks=1)
     # ids = utils.create_ids(phase, gap, rescale_kicks=1)
     model = pymodels.si.create_accelerator(ids=ids)
     model.cavity_on = False
@@ -98,7 +98,7 @@ def analysis_uncorrected_perturbation(
     return twiss
 
 
-def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label):
+def plot_beta_beating(model, twiss0, twiss1, twiss2, twiss3, config_label):
     """."""
 
     figpath = 'results/phase-organized/{}/gap-{}/'.format(phase, gap)
@@ -111,8 +111,8 @@ def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label):
     bbeatx_absmax, bbeaty_absmax = results[6], results[7]
     print('phase: {} gap: {} \n'.format(phase, gap))
     print('Not symmetrized optics :')
-    print(f'dtunex: {dtunex:+.0e}')
-    print(f'dtuney: {dtuney:+.0e}')
+    print(f'dtunex: {dtunex:+.2e}')
+    print(f'dtuney: {dtuney:+.2e}')
     print(f'bbetax: {bbeatx_rms:04.2f} % rms, {bbeatx_absmax:04.2f} % absmax')
     print(f'bbetay: {bbeaty_rms:04.2f} % rms, {bbeaty_absmax:04.2f} % absmax')
     print()
@@ -316,7 +316,7 @@ def analysis(plot_flag=True):
     print()
 
     plot_beta_beating(
-        twiss0, twiss1, twiss2, twiss3, idconfig)
+        model0, twiss0, twiss1, twiss2, twiss3, idconfig)
 
     # analysis_dynapt(model0, model3)
     # analysis_energy_acceptance(model0, model3, twiss0.spos)
@@ -329,6 +329,6 @@ if __name__ == '__main__':
         phase = phase0
         for gap0 in GAPS:
             gap = gap0
-    phase, gap = PHASES[2], GAPS[0]
+    phase, gap = PHASES[2], GAPS[2]
     print(phase, gap)
     analysis()

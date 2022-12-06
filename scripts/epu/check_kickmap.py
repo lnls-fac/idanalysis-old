@@ -51,7 +51,7 @@ def create_model_ids(phase, gap):
 
 
 if __name__ == '__main__':
-    fname = "results/kickmap-IDFAC04.txt"
+    fname = "results/kickmap-IDFAC01.txt"
     phase, gap = PHASES[2], GAPS[0]
     id_kickmap = IDKickMap(fname)
     rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(

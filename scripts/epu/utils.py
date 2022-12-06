@@ -157,6 +157,9 @@ def create_kmap_filename(phase, gap):
     fname = f'./results/phase-organized/{phase}/kickmap-phase_{phase_}-gap_{gap_}.txt'
     return fname
 
+def create_kmap_filename_model(phase, gap):
+    fname = f'kickmap_model{gap}.txt'
+    return fname
 
 def create_ids(
         phase, gap, nr_steps=None, rescale_kicks=None,
@@ -186,13 +189,13 @@ def create_ids(
 
 
 def create_ids_test(
-    nr_steps=None, rescale_kicks=None, rescale_length=None):
+    phase, gap, nr_steps=None, rescale_kicks=None, rescale_length=None):
     # create IDs
     nr_steps = nr_steps or 40
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
     rescale_length = \
         rescale_length if rescale_length is not None else 1
-    fname = 'kickmap_model.txt'
+    fname = create_kmap_filename_model(phase, gap)
 
     idkmap = IDKickMap(kmap_fname=fname)
     kickx_up = rescale_kicks * idkmap.kickx_upstream  # [T².m²]

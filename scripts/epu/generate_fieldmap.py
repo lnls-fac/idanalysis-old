@@ -105,12 +105,12 @@ def generate_fieldmap(phase):
     my_file.write('X[mm]\tY[mm]\tZ[mm]\tBx[T]\tBy[T]\tBz[T]\n')
     my_file.write('-------------------------------------------------------\n')
     for i in np.arange(len(x_col1)):
-        my_file.write("{:.1f}\t{:.1f}\t{:.1f}\t{:.5e}\t{:.5e}\t{:.5e}\n".format(x_col1[i], y_col2[i], z_col3[i], b_col5[i], b_col4[i], b_col5[i]))
+        my_file.write("{:.1f}\t{:.1f}\t{:.1f}\t{:.5e}\t{:.5e}\t{:.5e}\n".format(x_col1[i], y_col2[i], z_col3[i], b_col4[i], b_col5[i], b_col6[i]))
     my_file.close()
 
 
 if __name__ == "__main__":
     """."""
-    phase_list = ['16.39']
+    phase_list = ['00.00', '-16.39', '16.39', '-25.00', '25.00']
     for phase in phase_list:
         generate_fieldmap(phase)
