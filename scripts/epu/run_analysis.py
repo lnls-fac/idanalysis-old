@@ -329,6 +329,6 @@ if __name__ == '__main__':
         phase = phase0
         for gap0 in GAPS:
             gap = gap0
-    phase, gap = PHASES[2], GAPS[2]
+    phase, gap = PHASES[2], GAPS[-1]
     print(phase, gap)
     analysis()

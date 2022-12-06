@@ -158,7 +158,7 @@ def create_kmap_filename(phase, gap):
     return fname
 
 def create_kmap_filename_model(phase, gap):
-    fname = f'kickmap_model{gap}.txt'
+    fname = f'./results/model/kickmap_model{gap}.txt'
     return fname
 
 def create_ids(
