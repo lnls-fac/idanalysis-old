@@ -192,7 +192,7 @@ def create_ids_test(
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
     rescale_length = \
         rescale_length if rescale_length is not None else 1
-    fname = 'kickmap_test.txt'
+    fname = 'kickmap_model.txt'
 
     idkmap = IDKickMap(kmap_fname=fname)
     kickx_up = rescale_kicks * idkmap.kickx_upstream  # [T².m²]

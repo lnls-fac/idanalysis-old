@@ -11,6 +11,7 @@ from idanalysis import IDKickMap
 import utils
 from idanalysis import IDKickMap
 from pyaccel import lattice as pyacc_lat
+from run_rk_traj import PHASES, GAPS
 
 
 def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
@@ -25,8 +26,8 @@ def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
     pxf = (idkmap.kickx[0, :] + kickx_end) / brho**2
     pyf = (idkmap.kicky[0, :] + kicky_end) / brho**2
     if plot_flag:
-        plt.plot(1e3*rx0, 1e6*pxf, label='Kick X', color='C1')
-        plt.plot(1e3*rx0, 1e6*pyf, label='Kick Y', color='b')
+        plt.plot(1e3*rx0, 1e6*pxf, '.-', label='Kick X', color='C1')
+        plt.plot(1e3*rx0, 1e6*pyf, '.-', label='Kick Y', color='b')
         plt.xlabel('init rx [mm]')
         plt.ylabel('final px [urad]')
         plt.title('Kicks')
@@ -37,10 +38,10 @@ def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
     return rx0, ry0, pxf, pyf, rxf, ryf
 
 
-def create_model_ids(idconfig):
+def create_model_ids(phase, gap):
     """."""
     print('--- model with kickmap ---')
-    ids = utils.create_ids(idconfig=idconfig, rescale_kicks=1)
+    ids = utils.create_ids_test(rescale_kicks=1)
     model = pymodels.si.create_accelerator(ids=ids)
     twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
     print('length : {:.4f} m'.format(model.length))
@@ -50,14 +51,14 @@ def create_model_ids(idconfig):
 
 
 if __name__ == '__main__':
-    fname = "results/ID4079/kickmap-ID4079.txt"
-    idconfig = fname[8:14]
+    fname = "results/kickmap-IDFAC04.txt"
+    phase, gap = PHASES[2], GAPS[0]
     id_kickmap = IDKickMap(fname)
     rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(
       idkmap=id_kickmap, plane_idx=0, plot_flag=True)
 
     # lattice with IDs
-    model, twiss, ids = create_model_ids(idconfig=idconfig)
+    model, twiss, ids = create_model_ids(phase, gap)
 
     famdata = pymodels.si.get_family_data(model)
     idx = famdata['EPU50']['index']
@@ -103,8 +104,8 @@ if __name__ == '__main__':
     pxf_array = np.array(pxf_list)
     pyf_array = np.array(pyf_list)
 
-    plt.plot(1e3*rx0, 1e6*pxf, '-', color='C1', label='Kick X  kickmap')
-    plt.plot(1e3*rx0, 1e6*pyf, '-', color='b', label='Kick Y  kickmap')
+    plt.plot(1e3*rx0, 1e6*pxf, '.-', color='C1', label='Kick X  kickmap')
+    plt.plot(1e3*rx0, 1e6*pyf, '.-', color='b', label='Kick Y  kickmap')
     plt.plot(1e3*rx0, 1e6*pxf_array, 'o', color='C1', label='Kick X  tracking')
     plt.plot(1e3*rx0, 1e6*pyf_array, 'o', color='b', label='Kick Y  tracking')
     plt.xlabel('x0 [mm]')

@@ -35,15 +35,16 @@ def readfield(file_name):
         for i, line in enumerate(my_file):
             if i >= init:
                 list_data = line.split('\t')  # returns a list
-                try:
-                    data_col1.append(float(list_data[0]))
-                    data_col2.append(float(list_data[1]))
-                    data_col3.append(float(list_data[2]))
-                    data_col4.append(float(list_data[3]))
-                    data_col5.append(float(list_data[4]))
-                    data_col6.append(float(list_data[5]))
-                except ValueError:
-                    print('Error')
+                if len(list_data) > 1:
+                    try:
+                        data_col1.append(float(list_data[0]))
+                        data_col2.append(float(list_data[1]))
+                        data_col3.append(float(list_data[2]))
+                        data_col4.append(float(list_data[3]))
+                        data_col5.append(float(list_data[4]))
+                        data_col6.append(float(list_data[5]))
+                    except ValueError:
+                        print('Error')
 
     my_file.close()
     x = np.array(data_col1)
@@ -110,6 +111,6 @@ def generate_fieldmap(phase):
 
 if __name__ == "__main__":
     """."""
-    phase_list = ['00.00', '-16.39', '16.39', '-25.00', '25.00']
+    phase_list = ['16.39']
     for phase in phase_list:
         generate_fieldmap(phase)

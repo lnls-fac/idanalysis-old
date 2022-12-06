@@ -26,8 +26,8 @@ from utils import get_idconfig
 def create_model_ids():
     """."""
     print('--- model with kickmap ---')
+    ids = utils.create_ids_test(rescale_kicks=1)
     # ids = utils.create_ids(phase, gap, rescale_kicks=1)
-    ids = utils.create_ids(phase, gap, rescale_kicks=1)
     model = pymodels.si.create_accelerator(ids=ids)
     model.cavity_on = False
     model.radiation_on = 0
@@ -284,8 +284,8 @@ def analysis(plot_flag=True):
     orbcorr.correct_orbit_local(
         model0, model1, 'EPU50', correction_plane='both', plot=False)
 
-    # orb_results = orbcorr.correct_orbit_fb(
-    # model0, model1, 'EPU50', corr_system='FOFB')
+    orb_results = orbcorr.correct_orbit_fb(
+        model0, model1, 'EPU50', corr_system='FOFB')
 
     # calculate beta beating and tune delta tunes
     twiss1 = analysis_uncorrected_perturbation(
@@ -329,6 +329,6 @@ if __name__ == '__main__':
         phase = phase0
         for gap0 in GAPS:
             gap = gap0
-    # phase, gap = PHASES[2], GAPS[-1]
-            print(phase, gap)
-            analysis()
+    phase, gap = PHASES[2], GAPS[0]
+    print(phase, gap)
+    analysis()
