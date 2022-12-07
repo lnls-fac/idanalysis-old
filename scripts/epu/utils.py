@@ -196,6 +196,7 @@ def create_ids_test(
     rescale_length = \
         rescale_length if rescale_length is not None else 1
     fname = create_kmap_filename_model(phase, gap)
+    # fname = './results/model/kickmap_model36.0.txt'
 
     idkmap = IDKickMap(kmap_fname=fname)
     kickx_up = rescale_kicks * idkmap.kickx_upstream  # [T².m²]

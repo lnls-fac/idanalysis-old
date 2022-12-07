@@ -13,7 +13,14 @@ import idanalysis
 idanalysis.FOLDER_BASE = '/home/gabriel/repos-dev/'
 
 from idanalysis.fmap import EPUOnAxisFieldMap as _EPUOnAxisFieldMap
+from idanalysis import IDKickMap
 
+from utils import FOLDER_BASE
+from utils import DATA_PATH
+from utils import ID_CONFIGS
+from utils import get_idconfig
+
+from run_rk_traj import PHASES, GAPS
 
 class RadiaModelCalibration:
     """."""
@@ -87,7 +94,9 @@ class RadiaModelCalibration:
         """Initialize model and measurement field arrays"""
         self.set_rz_model(nr_pts_period=nr_pts_period)
         field = self._epu.get_field(0, 0, self.rz_model)  # On-axis
+        self._bz_model = field[:, 2]
         self._by_model = field[:, 1]
+        self._bx_model = field[:, 0]
         fmap = self._fmap
         self._rz_meas = fmap.rz
         self._bx_meas = fmap.bx[fmap.ry_zero][fmap.rx_zero][:]
@@ -118,7 +127,7 @@ class RadiaModelCalibration:
         plt.show()
         return by_meas_fit
 
-    def plot_fields(self,by_meas_fit=None):
+    def plot_fields(self, by_meas_fit=None):
         #dif = self.by_meas - self.by_model
         plt.plot(self.rz_model, by_meas_fit, label='meas')
         plt.plot(self.rz_model, self.by_model, label='model')
@@ -249,8 +258,25 @@ class RadiaModelCalibration:
         self.plot_fields(by_meas_fit=by_meas_fit)
 
 
+def get_fmap(phase, gap):
+    """."""
+    idconfig = get_idconfig(phase, gap)
+    MEAS_FILE = ID_CONFIGS[idconfig]
+    _, meas_id = MEAS_FILE.split('ID=')
+    meas_id = meas_id.replace('.dat', '')
+    idkickmap = IDKickMap()
+    fmap_fname = FOLDER_BASE + DATA_PATH + MEAS_FILE
+    idkickmap.fmap_fname = fmap_fname
+    fmap = idkickmap.fmap_config.fmap
+
+    return fmap
+
+
 def init_objects(phase, gap):
     """."""
+    fmap = get_fmap(phase, gap)
+    phase = float(phase)
+    gap = float(gap)
     nr_periods = 54
     period_length = 50
     block_shape = [[[0.1, 0], [40, 0], [40, -40], [0.1, -40]]]
@@ -262,39 +288,24 @@ def init_objects(phase, gap):
     end_distances = start_distances[-2::-1] # Tirar último elemento e inverter
     epu = _AppleIISabia(
         gap=gap, nr_periods=nr_periods, period_length=period_length,
-        mr=1.25, block_shape=block_shape, block_subdivision=[[1, 1, 1]],
-        start_blocks_length=start_lengths, start_blocks_distance=start_distances,
-        end_blocks_length=end_lenghts, end_blocks_distance=end_distances)
-    # print(epu.cassettes_ref['csd'].blocks[0])
+        mr=1.25, block_shape=block_shape, block_subdivision=[[1, 1, 1]])#,
+        # start_blocks_length=start_lengths, start_blocks_distance=start_distances,
+        # end_blocks_length=end_lenghts, end_blocks_distance=end_distances)
 
-    # TODO: we must shift the EPU according to 'phase' before
-    # returning the model!
 
-    configs = {
-        (0, 22.0) : _EPUOnAxisFieldMap.CONFIGS.HP_G22P0,
-        (0, 25.7) : _EPUOnAxisFieldMap.CONFIGS.HP_G25P7,
-        (0, 29.3) : _EPUOnAxisFieldMap.CONFIGS.HP_G29P3,
-        (0, 40.9) : _EPUOnAxisFieldMap.CONFIGS.HP_G40P9,
-        (25,22.0) : _EPUOnAxisFieldMap.CONFIGS.VP_G22P0_P,
-    }
-    try:
-        config = configs[(phase, gap)]
-    except KeyError:
-        raise NotImplementedError
-    fmap = _EPUOnAxisFieldMap(folder=idanalysis.FOLDER_BASE, config=config)
+    epu.dp = phase
+    print(phase)
+
     return epu, fmap
 
 
 if __name__ == "__main__":
 
     # create objects and init fields
-    phase, gap = 0.0, 22.0  # [mm], [mm]
-    epu, fmap = init_objects(phase=0, gap=gap)
+    phase, gap = PHASES[2], GAPS[0]  # [mm], [mm]
+    epu, fmap = init_objects(phase=phase, gap=gap)
     cm = RadiaModelCalibration(fmap, epu)
-    # cm.update_model_field(blocks_inds={'csd': [0, ]})
-    # raise ValueError
     cm.init_fields()
-
     # search for best shift and calc scale
     shifts = _np.linspace(-0.25, 0.25, 31) * epu.period_length
     minshift, minscale, minresidue = shifts[0], 1.0, float('inf')
@@ -307,8 +318,20 @@ if __name__ == "__main__":
     # plot best solution and calibrates model
 
     cm.shiftscale_set(scale=minscale)
+    mag_dict = epu.magnetization_dict
     by_meas_fit = cm.shiftscale_plot_fields(shift=minshift)
 
-    cm._by_model = minscale*cm._by_model
-    cm.simulated_annealing(
-        initial_residue=minresidue*len(cm.rz_model), by_meas_fit=by_meas_fit)
+    fmap = get_fmap(PHASES[0], gap)
+    epu.create_radia_object(magnetization_dict=mag_dict)
+    epu.dg = 25
+    cm = RadiaModelCalibration(fmap, epu)
+    cm.init_fields()
+    plt.plot(cm.rz_model, cm.by_model)
+    plt.plot(cm.rz_model, by_meas_fit)
+    plt.show()
+
+
+
+    # cm._by_model = minscale*cm._by_model
+    # cm.simulated_annealing(
+        # initial_residue=minresidue*len(cm.rz_model), by_meas_fit=by_meas_fit)

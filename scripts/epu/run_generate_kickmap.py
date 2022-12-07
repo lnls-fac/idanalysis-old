@@ -34,6 +34,6 @@ if __name__ == "__main__":
     posx = np.arange(-10, +11, 1) / 1000  # [m]
     posy = np.linspace(-0.49, +0.49, 3) / 1000  # [m]
 
-    idconfig_list = ['FAC01', 'FAC02', 'FAC03', 'FAC04', 'FAC05']
+    idconfig_list = ['FAC01']
     for idconfig in idconfig_list:
         run(idconfig, posx, posy)

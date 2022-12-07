@@ -19,7 +19,6 @@ from calibrate_model import RadiaModelCalibration
 
 def init_objects(phase, gap, mr=1.25, compare=None):
     """."""
-
     if compare == True:
         idconfig = get_idconfig(phase, gap)
         MEAS_FILE = ID_CONFIGS[idconfig]
@@ -54,9 +53,10 @@ def init_objects(phase, gap, mr=1.25, compare=None):
     return epu, fmap
 
 
-def run_fieldmap(gap):
+def run(posx, posy, gap, phase):
 
     epu, fmap = init_objects(phase='+00.00', gap='32.5', mr=1.25, compare=True)
+    dp = float(phase)
     cm = RadiaModelCalibration(fmap, epu)
     cm.init_fields()
 
@@ -72,38 +72,20 @@ def run_fieldmap(gap):
 
     scale = minscale
     gap = str(gap)
-    epu, _ = init_objects(phase='+00.00', gap=gap, mr=1.25*-1*scale)
-    z = np.arange(-1800, 1802, 3).tolist()
-    y = np.linspace(-4, 4, 3).tolist()
-    x = np.linspace(-6, 6, 3).tolist()
-    filename = './results/model/fieldmap_model' + gap + '.dat'
-    field = epu.save_fieldmap(
-        filename=filename, x_list=x, y_list=y, z_list=z)
-
-
-def generate_kickmap(posx, posy, gap):
-    gap = str(gap)
-    idkickmap = IDKickMap()
-    fmap_fname = './results/model/fieldmap_model' + gap + '.dat'
-    idkickmap.fmap_fname = fmap_fname
-    idkickmap.beam_energy = 3.0  # [GeV]
-    idkickmap.rk_s_step = 3  # [mm]
-    idkickmap.fmap_config.traj_init_px = 0
-    idkickmap.fmap_config.traj_init_py = 0
-    print(idkickmap.fmap_config)
-    idkickmap.calc_id_termination_kicks(
-        period_len=50, kmap_idlen=2.773)
-    print(idkickmap.fmap_config)
-    idkickmap.fmap_calc_kickmap(posx=posx, posy=posy)
-    fname = './results/model/kickmap_model' + gap + '.txt'
-    idkickmap.save_kickmap_file(kickmap_filename=fname)
+    epu, _ = init_objects(phase=phase, gap=gap, mr=1.25*-1*scale)
+    epu.dp = dp
+    filename = './results/model/kickmap' + 'p' + phase + 'g' + gap + '.dat'
+    epu.save_kickmap(
+        filename, 3e6, posx, posy, zmin=-1800, zmax=1800, rkstep=3)
 
 
 if __name__ == "__main__":
     """."""
-    posx = np.arange(-5, +6, 1) / 1000  # [m]
-    posy = np.arange(-4, +5, 1) / 1000  # [m]
-    gap_list = [36.0, 22.0, 23.3, 25.7, 29.3, 32.5, 40.9]
-    for gap in gap_list:
-        run_fieldmap(gap)
-        generate_kickmap(posx, posy, gap)
+    posx = np.arange(-12, +13, 1)  # [mm]
+    posy = np.arange(-5, +6, 1)  # [mm]
+    gap_list = [22.0, 23.3, 25.7, 29.3, 32.5, 40.9]
+    # phase_list = ['-25.00', '-16.39', '+00.00','+16.39', '+25.00']
+    phase_list = ['+00.00']
+    for phase in phase_list:
+        for gap in gap_list:
+            run(posx, posy, gap, phase)
