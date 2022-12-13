@@ -1,6 +1,7 @@
 #!/usr/bin/env python-sirius
 
 import numpy as np
+import utils
 
 from idanalysis import IDKickMap
 
@@ -8,9 +9,12 @@ from utils import FOLDER_BASE
 from utils import DATA_PATH
 from utils import ID_CONFIGS
 
+from run_rk_traj import PHASES, GAPS
+
 
 def run(idconfig, posx, posy):
 
+    idconfig = utils.get_idconfig(phase, gap)
     MEAS_FILE = ID_CONFIGS[idconfig]
 
     _, meas_id = MEAS_FILE.split('ID=')
@@ -31,9 +35,7 @@ def run(idconfig, posx, posy):
 
 if __name__ == "__main__":
     """."""
-    posx = np.arange(-10, +11, 1) / 1000  # [m]
-    posy = np.linspace(-0.49, +0.49, 3) / 1000  # [m]
-
-    idconfig_list = ['FAC01']
-    for idconfig in idconfig_list:
-        run(idconfig, posx, posy)
+    global phase, gap
+    phase, gap = PHASES[0], GAPS[0]
+    posx = np.arange(-18, +19, 1) / 1000  # [m]
+    posy = np.linspace(-12, +12, 3) / 1000  # [m]

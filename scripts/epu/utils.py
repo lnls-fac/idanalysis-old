@@ -188,15 +188,14 @@ def create_ids(
     return ids
 
 
-def create_ids_test(
-    phase, gap, nr_steps=None, rescale_kicks=None, rescale_length=None):
+def create_ids_model(
+        phase, gap, nr_steps=None, rescale_kicks=None, rescale_length=None):
     # create IDs
     nr_steps = nr_steps or 40
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
     rescale_length = \
         rescale_length if rescale_length is not None else 1
-    fname = create_kmap_filename_model(phase, gap)
-    # fname = './results/model/kickmap_model36.0.txt'
+    fname = './results/model/kickmap-ID-p{}-g{}.txt'.format(phase, gap)
 
     idkmap = IDKickMap(kmap_fname=fname)
     kickx_up = rescale_kicks * idkmap.kickx_upstream  # [T².m²]

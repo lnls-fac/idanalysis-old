@@ -26,7 +26,7 @@ from utils import get_idconfig
 def create_model_ids():
     """."""
     print('--- model with kickmap ---')
-    ids = utils.create_ids_test(phase, gap, rescale_kicks=1)
+    ids = utils.create_ids_model(phase, gap, rescale_kicks=1)
     # ids = utils.create_ids(phase, gap, rescale_kicks=1)
     model = pymodels.si.create_accelerator(ids=ids)
     model.cavity_on = False
@@ -123,7 +123,7 @@ def plot_beta_beating(model, twiss0, twiss1, twiss2, twiss3, config_label):
     plt.plot(twiss0.spos, bbeatx, color='b', alpha=1.0, label=labelx)
     plt.plot(twiss0.spos, bbeaty, color='r', alpha=0.8, label=labely)
     plt.xlabel('spos [m]')
-    plt.ylabel('Beta Beat [%]')
+    plt.ylabel('Beta Beating [%]')
     plt.title('Beta Beating from ID - ' + config_label)
     plt.suptitle('Not symmetrized optics')
     plt.xlim(215, 250)
@@ -151,7 +151,7 @@ def plot_beta_beating(model, twiss0, twiss1, twiss2, twiss3, config_label):
     plt.plot(twiss0.spos, bbeatx, color='b', alpha=1.0, label=labelx)
     plt.plot(twiss0.spos, bbeaty, color='r', alpha=0.8, label=labely)
     plt.xlabel('spos [m]')
-    plt.ylabel('Beta Beat [%]')
+    plt.ylabel('Beta Beating [%]')
     plt.title('Beta Beating from ID - ' + config_label)
     plt.suptitle('Symmetrized optics and uncorrect tunes')
     plt.legend()
@@ -178,7 +178,7 @@ def plot_beta_beating(model, twiss0, twiss1, twiss2, twiss3, config_label):
     plt.plot(twiss0.spos, bbeatx, color='b', alpha=1.0, label=labelx)
     plt.plot(twiss0.spos, bbeaty, color='r', alpha=0.8, label=labely)
     plt.xlabel('spos [m]')
-    plt.ylabel('Beta Beat [%]')
+    plt.ylabel('Beta Beating [%]')
     plt.title('Beta Beating from ID - ' + config_label)
     plt.suptitle('Symmetrized optics and correct tunes')
     plt.legend()
@@ -265,7 +265,8 @@ def analysis(plot_flag=True):
     twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
 
     # create model with id
-    idconfig = get_idconfig(phase, gap)
+    # idconfig = get_idconfig(phase, gap)
+    idconfig = 'Gap 36.0 mm model'
     model1, knobs, locs_beta = create_model_ids()
 
     print('local quadrupole fams: ', knobs)
@@ -329,6 +330,8 @@ if __name__ == '__main__':
         phase = phase0
         for gap0 in GAPS:
             gap = gap0
-    phase, gap = PHASES[2], GAPS[5]
-    print(phase, gap)
-    analysis()
+            print(phase, gap)
+            analysis()
+
+    # phase, gap = PHASES[2], GAPS[0]
+    # gap = '36.0'
