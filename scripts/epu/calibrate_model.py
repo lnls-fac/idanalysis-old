@@ -399,5 +399,5 @@ def run_calibrated_kickmap(phase, gap):
 
 if __name__ == "__main__":
     phase = PHASES[2]
-    gap = '36.0'
+    gap = GAPS[0]
     run_calibrated_kickmap(phase, gap)
