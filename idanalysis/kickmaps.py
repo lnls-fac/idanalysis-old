@@ -156,6 +156,11 @@ class IDKickMap:
             self._radia_model_config.traj_init_rz = value
 
     @property
+    def radia_model_config(self):
+        """Return Radia Model Config."""
+        return self._radia_model_config
+
+    @property
     def fmap_config(self):
         """Return fieldmap Config."""
         return self._fmap_config
@@ -168,7 +173,8 @@ class IDKickMap:
     @property
     def traj(self):
         """Return RK Trajectory."""
-        return self._fmap_config.traj
+        config = self._fmap_config or self._radia_model_config
+        return config.traj
 
     def fmap_calc_trajectory(
             self, traj_init_rx, traj_init_ry,
