@@ -50,7 +50,7 @@ def create_model_ids(width):
 
 
 if __name__ == '__main__':
-    width = 68
+    width = 43
     fname = utils.get_kmap_filename(width)
     id_kickmap = IDKickMap(fname)
     rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(

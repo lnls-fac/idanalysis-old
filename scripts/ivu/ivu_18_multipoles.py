@@ -278,7 +278,7 @@ def run_generate_data(fpath, widths, rx, rz):
 
 
 def run_plot_data(fpath, widths, rx, rz):
-    data = load_pickle(fpath + 'rk_traj_data2_filter.pickle')
+    data = load_pickle(fpath + 'rk_traj_data_filter.pickle')
     plot_rk_traj(widths, data)
     plot_field_roll_off(data=data, widths=widths, rx=rx, filter='on')
     plot_field_on_axis(data, widths, rz)
@@ -288,7 +288,11 @@ if __name__ == "__main__":
 
     fpath = './results/model/'
     widths = ['32', '35', '38', '41', '44', '47']
-    rx = np.linspace(-40, 40, 4*81)
-    rz = np.linspace(-100, 100, 200)
+    # widths = ['43', '48', '53', '58', '63', '68']
+    # rx = np.linspace(-40, 40, 4*81)
+    # rz = np.linspace(-100, 100, 200)
     # run_generate_data(fpath, widths, rx, rz)
-    run_plot_data(fpath, widths, rx, rz)
+    # run_plot_data(fpath, widths, rx, rz)
+    for width_s in widths:
+        width = int(width_s)
+        run_kickmap(width)
