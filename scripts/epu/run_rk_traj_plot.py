@@ -12,23 +12,24 @@ def plot_rk_traj_normalized_fields(
         fig_path, colors, dpi, show_flag, rz, bx, by, bz):
     """."""
     title_fld_sufix = ' for phase {} mm'.format(phase)
+    title_fld_sufix = ''
 
-    # plot bx
-    plt.figure(1)
-    for i in range(len(GAPS)):
-        gap = GAPS[i]
-        rz_, bx_ = rz[gap], bx[gap]
-        label = GAPS[i] + ' mm'
-        plt.plot(rz_, bx_/np.max(np.abs(bx_)), colors[i], label=label)
-    plt.xlabel('rz [mm]')
-    plt.ylabel('Field [a.u.]')
-    plt.grid()
-    plt.legend()
-    plt.title('Normalized horizontal field' + title_fld_sufix)
-    plt.savefig(fig_path + 'field-bx.png', dpi=dpi)
-    if show_flag:
-        plt.show()
-    plt.close()
+    # # plot bx
+    # plt.figure(1)
+    # for i in range(len(GAPS)):
+    #     gap = GAPS[i]
+    #     rz_, bx_ = rz[gap], bx[gap]
+    #     label = GAPS[i] + ' mm'
+    #     plt.plot(rz_, bx_/np.max(np.abs(bx_)), colors[i], label=label)
+    # plt.xlabel('rz [mm]')
+    # plt.ylabel('Field [a.u.]')
+    # plt.grid()
+    # plt.legend()
+    # plt.title('Normalized horizontal field' + title_fld_sufix)
+    # plt.savefig(fig_path + 'field-bx.png', dpi=dpi)
+    # if show_flag:
+    #     plt.show()
+    # plt.close()
 
     # plot by
     plt.figure(2)
@@ -36,33 +37,34 @@ def plot_rk_traj_normalized_fields(
         gap = GAPS[i]
         rz_, by_ = rz[gap], by[gap]
         label = GAPS[i] + ' mm'
-        plt.plot(rz_, by_/np.max(np.abs(by_)), colors[i], label=label)
-    plt.xlabel('rz [mm]')
-    plt.ylabel('Field [a.u.]')
+        # plt.plot(rz_, by_/np.max(np.abs(by_)), colors[i], label=label)
+        plt.plot(rz_[:int(len(rz_)/4)], by_[:int(len(rz_)/4)], colors[i], label=label)
+    plt.xlabel('z [mm]')
+    plt.ylabel('B [T]')
     plt.grid()
     plt.legend()
-    plt.title('Normalized vertical field' + title_fld_sufix)
+    plt.title('Campo Vertical do EPU50 (Polarização Horizontal)' + title_fld_sufix)
     plt.savefig(fig_path + 'field-by.png', dpi=dpi)
     if show_flag:
         plt.show()
     plt.close()
 
-    # plot bz
-    plt.figure(3)
-    for i in range(len(GAPS)):
-        gap = GAPS[i]
-        rz_, bz_ = rz[gap], bz[gap]
-        label = GAPS[i] + ' mm'
-        plt.plot(rz_, bz_/np.max(np.abs(bz_)), colors[i], label=label)
-    plt.xlabel('rz [mm]')
-    plt.ylabel('Field [a.u.]')
-    plt.grid()
-    plt.legend()
-    plt.title('Normalized longitudinal field' + title_fld_sufix)
-    plt.savefig(fig_path + 'field-bz.png', dpi=dpi)
-    if show_flag:
-        plt.show()
-    plt.close()
+    # # plot bz
+    # plt.figure(3)
+    # for i in range(len(GAPS)):
+    #     gap = GAPS[i]
+    #     rz_, bz_ = rz[gap], bz[gap]
+    #     label = GAPS[i] + ' mm'
+    #     plt.plot(rz_, bz_/np.max(np.abs(bz_)), colors[i], label=label)
+    # plt.xlabel('rz [mm]')
+    # plt.ylabel('Field [a.u.]')
+    # plt.grid()
+    # plt.legend()
+    # plt.title('Normalized longitudinal field' + title_fld_sufix)
+    # plt.savefig(fig_path + 'field-bz.png', dpi=dpi)
+    # if show_flag:
+    #     plt.show()
+    # plt.close()
 
 
 def plot_rk_traj_pos(fig_path, colors, dpi, show_flag, rz, rx, ry):
@@ -160,6 +162,9 @@ def plot_rk_traj(traj_data, phase, show_flag=False):
 
     plot_rk_traj_normalized_fields(
         fig_path, colors, dpi, show_flag, rz, bx, by, bz)
+    
+    return
+
     plot_rk_traj_pos(fig_path, colors, dpi, show_flag, rz, rx, ry)
     plot_rk_traj_ang(fig_path, colors, dpi, show_flag, rz, px, py)
 
@@ -228,6 +233,6 @@ if __name__ == "__main__":
     """."""
     traj_data, *_ = load_rk_traj()
 
-    for phase in PHASES:
+    for phase in [PHASES[2]]:
         print(phase)
         plot_rk_traj(traj_data[phase], phase, show_flag=False)

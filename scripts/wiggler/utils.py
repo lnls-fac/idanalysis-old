@@ -9,8 +9,8 @@ from idanalysis import IDKickMap
 
 ID_PERIOD = 180.0  # [mm]
 
-FOLDER_BASE = '/home/gabriel/repos-dev/'
-# FOLDER_BASE = '/home/ximenes/repos-dev/'
+# FOLDER_BASE = '/home/gabriel/repos-dev/'
+FOLDER_BASE = '/home/ximenes/repos-dev/'
 
 
 DATA_PATH = 'wiggler-2T-STI/measurement/magnetic/hallprobe/'

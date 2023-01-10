@@ -21,7 +21,7 @@ def calc_beff(z,B):
 
 
 def fit_function(x, a, b, c):
-        return a*np.exp(b*-1*x) + c
+        return a*np.exp(-b*x) + c
 
 
 def fit_measurement(gap,beff):
@@ -99,31 +99,49 @@ def run():
         gap_list.append(gap)
 
     gap_array = np.array(gap_list)
-    gap_array = gap_array/period
+    # gap_array = gap_array/period
     curve_fit = fit_measurement(gap_array, beff_list)
     a=curve_fit[0]
     b=curve_fit[1]
     c = curve_fit[2]
     gaps = np.arange(23,300,1)
-    gaps = gaps/period
+    # gaps = gaps/period
     fitted_curve = fit_function(gaps,a,b,c)
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
-    ax1.plot(gaps,fitted_curve, '--', color='C1', label='Fit')
-    ax1.plot(gap_array,beff_list, 'o', color='b', label='Measurement')
+    label = 'B = {:.2f} exp(- {:.3f} * Gap / 180)'.format(a, 180*b)
+    ax1.plot(gaps,fitted_curve, '--', color='C1', label=label)
+    ax1.plot(gap_array,beff_list, 'o', color='b', label='Medida')
     ax2.plot(gap_array,keff_list, 'o', color='b')
-    ax1.set_xlabel('gap/period')
-    ax1.set_ylabel('Beff [T]')
-    ax2.set_ylabel('Keff')
+    
+    print(a,b,c)
+    
+    b_fit = fit_function(49.73,a,b,c)
+    b_fit = fit_function(23,a,b,c)
+    print(b_fit)
+    k_fit = ima_utils.calc_deflection_parameter(b_fit, 0.18)
+    print(k_fit)
+
+    # curve_fit = fit_measurement(gap_array, keff_list)
+    # a=curve_fit[0]
+    # b=curve_fit[1]
+    # c = curve_fit[2]
+    # fitted_curve = fit_function(23,a,b,c)
+    # print(fitted_curve)
+
+    ax1.set_xlabel('Gap [mm]')
+    ax1.set_ylabel('B [T]')
+    ax2.set_ylabel('K')
     ax1.legend()
     ax1.grid()
+    plt.title('Campo Magnético do WIG180')
     plt.show()
     gaps2 = np.linspace(23,300,1000)
     beff = fit_function(gaps2/180,a,b,c)
-    for i, gap in enumerate(gaps2):
-        gap = format(gap, '03.2f')
-        beff[i] = format(beff[i], '03.2f')
-        print(gap,'&', beff[i])
+    # for i, gap in enumerate(gaps2):
+    #     gap = format(gap, '03.2f')
+    #     beff[i] = format(beff[i], '03.2f')
+    #     print(gap,'&', beff[i])
 
     # fig.savefig('results/b_vs_gap.png', dpi=300)
 
@@ -137,9 +155,9 @@ def plot_field(idconfig):
 
 if __name__ == '__main__':
     """."""
-    # run()
+    run()
     # idconfig = 'ID4020' # gap 045.00mm/2022-09-01_WigglerSTI_45mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4020.dat',
     idconfig = 'ID4019' # gap 049.73mm/2022-09-01_WigglerSTI_49.73mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=4019.dat',
     # idconfig = 'ID3979' # gap 059.60mm/2022-08-25_WigglerSTI_059.60mm_U+0.00_D+0.00_Fieldmap_X=-20_20mm_Z=-1650_1650mm_ID=3979.dat',
 
-    plot_field(idconfig=idconfig)
+    # plot_field(idconfig=idconfig)

@@ -11,8 +11,8 @@ ID_PERIOD = 50.0  # [mm]
 ID_KMAP_LEN = 2.770  # [m]
 DEF_RK_S_STEP = 2  # [mm] seems converged for the measurement fieldmap grids
 
-FOLDER_BASE = '/home/gabriel/repos-dev/'
-# FOLDER_BASE = '/home/ximenes/repos-dev/'
+# FOLDER_BASE = '/home/gabriel/repos-dev/'
+FOLDER_BASE = '/home/ximenes/repos-dev/'
 
 
 DATA_PATH = 'epu-uvx/measurement/magnetic/hallprobe/'

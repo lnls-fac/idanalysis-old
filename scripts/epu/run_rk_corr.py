@@ -1047,9 +1047,7 @@ if __name__ == "__main__":
     global phase, gap
     global traj_data
     traj_data = dict()
-    corr_system = 'FOFB'
-    # run_generate_data(corr_system)
-    # generate_table(corr_system)
-    # plot_fofb_local_avg_traj()
-    plot_global_traj()
-    # plot_global_corr()
+    corr_system = 'LOCAL'
+    run_generate_data(corr_system)
+    generate_table(corr_system)
+    plot_fofb_local_avg_traj()

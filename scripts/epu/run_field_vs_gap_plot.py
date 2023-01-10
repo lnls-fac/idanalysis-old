@@ -27,6 +27,7 @@ def function_field_vs_gap(gap_over_lambda, a, b):
 def calc_field_vs_gap_coeffs(traj_data, phase, datatype='fmap'):
     """."""
     data = traj_data[phase]
+    rz = data['fmaprz']
     if datatype == 'fmap':
         bx, by = data['fmapbx'], data['fmapby']
         rz = data['fmaprz']
@@ -107,11 +108,18 @@ def plot_field_vs_gap(traj_data, phase, show_flag=False, datatype='fmap'):
     # configure plot
     fig_path = 'results/phase-organized/' + phase + '/'
     ax1.set_xlabel('Gap [mm]')
-    ax1.set_ylabel('Beff [T]')
-    ax2.set_ylabel('Keff')
+    ax1.set_ylabel('B [T]')
+    ax2.set_ylabel('K')
     ax1.legend()
     ax1.grid()
     title = 'Field amplitudes for phase ' + phase + ' mm'
+    if phase == '-25.00':
+        title = 'Campo magnético do EPU 50 (Polarização Horizontal)'
+    elif phase == '+00.00':
+        title = 'Campo magnético do EPU 50 (Polarização Vertical)'
+    elif phase == '-16.39':
+        title = 'Campo magnético do EPU 50 (Polarização Circular)'
+
     plt.title(title)
     plt.savefig(fig_path + 'field-amplitude-vs-gap.png', dpi=300)
     if show_flag:
@@ -124,6 +132,7 @@ if __name__ == "__main__":
     traj_data, *_ = load_rk_traj()
 
     for phase in PHASES:
-        print(phase)
         plot_field_vs_gap(traj_data, phase, show_flag=False)
+    
+
     
