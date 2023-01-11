@@ -16,13 +16,13 @@ FOLDER_BASE = '/home/gabriel/repos-dev/'
 
 
 def get_kmap_filename(width):
-    fname = f'./results/model/kickmap-ID-{width}.txt'
+    fname = f'./results/model/kickmap-ID-{width}t.txt'
     return fname
 
 
 def create_ids(
-        width, nr_steps=None, rescale_kicks=1/17.24138*17.24138,
-        rescale_length=1):
+        width, nr_steps=None, rescale_kicks=15.3846,
+        rescale_length=15.3846):
     # create IDs
     nr_steps = nr_steps or 40
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
@@ -31,10 +31,10 @@ def create_ids(
     fname = get_kmap_filename(width)
 
     idkmap = IDKickMap(kmap_fname=fname)
-    kickx_up = rescale_kicks * idkmap.kickx_upstream  # [T².m²]
-    kicky_up = rescale_kicks * idkmap.kicky_upstream  # [T².m²]
-    kickx_down = rescale_kicks * idkmap.kickx_downstream  # [T².m²]
-    kicky_down = rescale_kicks * idkmap.kicky_downstream  # [T².m²]
+    kickx_up = 1/rescale_kicks * idkmap.kickx_upstream  # [T².m²]
+    kicky_up = 1/rescale_kicks * idkmap.kicky_upstream  # [T².m²]
+    kickx_down = 1/rescale_kicks * idkmap.kickx_downstream  # [T².m²]
+    kicky_down = 1/rescale_kicks * idkmap.kicky_downstream  # [T².m²]
     termination_kicks = [kickx_up, kicky_up, kickx_down, kicky_down]
     IDModel = pymodels.si.IDModel
     ivu18 = IDModel(

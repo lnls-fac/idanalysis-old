@@ -37,21 +37,21 @@ def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
 
 
 if __name__ == '__main__':
-    widths = [20, 43, 48, 53, 58, 63, 68]
+    widths = [68]
     for i, width in enumerate(widths):
-        fname = './results/model/kickmap-ID-{}.txt'.format(width)
+        fname = './results/model/kickmap-ID-{}t.txt'.format(width)
         id_kickmap = IDKickMap(fname)
         rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(
           idkmap=id_kickmap, plane_idx=2, plot_flag=False)
         labelx = 'Kick x - width {}'.format(width)
         labely = 'Kick y - width {}'.format(width)
-        alph = 0.3 + 0.1*i
+        alph = 0.3 + 0.3*i
         plt.figure(1)
         plt.plot(
-            1e3*rx0, 17.25*1e6*pxf, '.-', color='b', label=labelx, alpha=alph)
+            1e3*rx0, 15.384*1e6*pxf, '.-', color='b', label=labelx, alpha=alph)
         plt.figure(2)
         plt.plot(
-            1e3*rx0, 17.25*1e6*pyf, '.-', color='r', label=labely, alpha=alph)
+            1e3*rx0, 15.384*1e6*pyf, '.-', color='r', label=labely, alpha=alph)
     for i in [1, 2]:
         plt.figure(i)
         # plt.ylim(-0.5, 0.5)

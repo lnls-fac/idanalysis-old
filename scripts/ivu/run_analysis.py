@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from pyaccel import lattice as pyacc_lat
 from pyaccel import optics as pyacc_opt
 from pyaccel.optics import calc_touschek_energy_acceptance
+from mathphys.functions import save_pickle, load_pickle
+from apsuite.dynap import DynapXY, DynapEX, PhaseSpace
 
 import pyaccel
 import pymodels
@@ -92,10 +94,10 @@ def analysis_uncorrected_perturbation(
     return twiss
 
 
-def plot_beta_beating(model, twiss0, twiss1, twiss2, twiss3, width):
+def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, width):
     """."""
     config_label = 'width = {} mm'.format(width)
-    figpath = 'results/model/width-{}'.format(width)
+    figpath = './results/width_{}/'.format(width)
 
     # Compare optics between nominal value and uncorrect optics due ID
     results = calc_dtune_betabeat(twiss0, twiss1)
@@ -119,10 +121,9 @@ def plot_beta_beating(model, twiss0, twiss1, twiss2, twiss3, width):
     plt.ylabel('Beta Beating [%]')
     plt.title('Beta Beating from ID - ' + config_label)
     plt.suptitle('Not symmetrized optics')
-    plt.xlim(215, 250)
     plt.legend()
     plt.grid()
-    # plt.savefig(figpath + 'uncorrected-optics', dpi=300)
+    plt.savefig(figpath + 'uncorrected-optics', dpi=300)
     plt.close()
 
     # Compare optics between nominal value and symmetrized optics
@@ -148,9 +149,8 @@ def plot_beta_beating(model, twiss0, twiss1, twiss2, twiss3, width):
     plt.title('Beta Beating from ID - ' + config_label)
     plt.suptitle('Symmetrized optics and uncorrect tunes')
     plt.legend()
-    plt.xlim(215, 250)
     plt.grid()
-    # plt.savefig(figpath + 'corrected-optics', dpi=300)
+    plt.savefig(figpath + 'corrected-optics', dpi=300)
     plt.close()
 
     # Compare optics between nominal value and all corrected
@@ -176,90 +176,29 @@ def plot_beta_beating(model, twiss0, twiss1, twiss2, twiss3, width):
     plt.suptitle('Symmetrized optics and correct tunes')
     plt.legend()
     plt.grid()
-    plt.xlim(215, 250)
-    # plt.savefig(figpath + 'corrected-optics-tunes', dpi=300)
+    plt.savefig(figpath + 'corrected-optics-tunes', dpi=300)
     plt.close()
 
 
-def analysis_dynapt(model0, model_id, nrtheta=9, nrpts=9):
-    """."""
-    model0.vchamber_on = True
-    model_id.vchamber_on = True
-
-    model0.cavity_on = True
-    model_id.cavity_on = True
-
-    model0.radiation_on = True
-    model_id.radiation_on = True
-
-    x, y = optics.calc_dynapt_xy(
-        model0, nrturns=5000, nrtheta=nrtheta, print_flag=False)
-    xID, yID = optics.calc_dynapt_xy(
-        model_id, nrturns=5000, nrtheta=nrtheta, print_flag=False)
-
-    de, xe = optics.calc_dynapt_ex(
-        model0, nrturns=5000, nrpts=nrpts, print_flag=False)
-    deID, xeID = optics.calc_dynapt_ex(
-        model_id, nrturns=5000, nrpts=nrpts, print_flag=False)
-
-    plt.figure(1)
-    blue, red = (0.4, 0.4, 1), (1, 0.4, 0.4)
-    plt.plot(1e3*x, 1e3*y, color=blue, label='without ID')
-    plt.plot(1e3*xID, 1e3*yID, color=red, label='with ID')
-    plt.xlabel('x [mm]')
-    plt.ylabel('y [mm]')
-    plt.title('Dynamic Aperture XY')
-    plt.legend()
-    plt.grid()
-    plt.show()
-
-    plt.figure(2)
-    blue, red = (0.4, 0.4, 1), (1, 0.4, 0.4)
-    plt.plot(1e2*de, 1e3*xe, color=blue, label='without ID')
-    plt.plot(1e2*deID, 1e3*xeID, color=red, label='with ID')
-    plt.xlabel('de [%]')
-    plt.ylabel('x [mm]')
-    plt.title('Dynamic Aperture')
-    plt.grid()
-    plt.legend()
-    plt.show()
-
-
-def analysis_energy_acceptance(model0, model_id, spos=None):
-    """."""
-    accep_neg, accep_pos = calc_touschek_energy_acceptance(
-        accelerator=model0, check_tune=True)
-    accep_neg_id, accep_pos_id = calc_touschek_energy_acceptance(
-        accelerator=model_id, check_tune=True)
-
-    plt.figure(3)
-    blue, red = (0.4, 0.4, 1), (1, 0.4, 0.4)
-    plt.plot(spos, accep_neg, color=blue, label='Without ID')
-    plt.plot(spos, accep_pos, color=blue)
-    plt.plot(spos, accep_neg_id, color=red, label='With ID')
-    plt.plot(spos, accep_pos_id, color=red)
-    plt.title('Energy acceptance')
-    plt.ylabel('de [%]')
-    plt.xlabel('s [m]')
-    plt.grid()
-    plt.legend()
-    plt.show()
-
-
-def analysis(width, plot_flag=True):
-    """."""
-    # select where IVU will be installed
-    straight_nr = 8
+def create_models(width):
 
     # create unperturbed model for reference
     model0 = pymodels.si.create_accelerator()
     model0.cavity_on = False
     model0.radiation_on = 0
-    twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
 
     # create model with id
     model1, knobs, locs_beta = create_model_ids(width)
 
+    return model0, model1, knobs, locs_beta
+
+
+def analysis_twiss(width, plot_flag=True):
+    """."""
+    # select where IVU will be installed
+    straight_nr = 8
+    model0, model1, knobs, locs_beta = create_models(width)
+    twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
     print('local quadrupole fams: ', knobs)
     print('element indices for straight section begin and end: ', locs_beta)
 
@@ -308,13 +247,43 @@ def analysis(width, plot_flag=True):
     print()
 
     plot_beta_beating(
-        model0, twiss0, twiss1, twiss2, twiss3, width)
+        twiss0, twiss1, twiss2, twiss3, width)
 
-    # analysis_dynapt(model0, model3)
-    # analysis_energy_acceptance(model0, model3, twiss0.spos)
+
+def analysis_dynapt(width):
+
+    model0, model1, *_ = create_models(width)
+    model0.radiation_on = 0
+    model0.cavity_on = False
+    model0.vchamber_on = True
+
+    model1.radiation_on = 0
+    model1.cavity_on = False
+    model1.vchamber_on = True
+
+    # dynapxy = DynapXY(model0)
+    # dynapxy.params.x_nrpts = 20
+    # dynapxy.params.y_nrpts = 10
+    # dynapxy.params.nrturns = 1024
+    # print(dynapxy)
+    # dynapxy.do_tracking()
+    # dynapxy.process_data()
+    # fig1, *ax = dynapxy.make_figure_diffusion(orders=(1, 2, 3, 4))
+    # fig1.show()
+
+    dynapxy = DynapXY(model1)
+    dynapxy.params.x_nrpts = 20
+    dynapxy.params.y_nrpts = 10
+    dynapxy.params.nrturns = 1024
+    print(dynapxy)
+    dynapxy.do_tracking()
+    dynapxy.process_data()
+    fig2, *ax = dynapxy.make_figure_diffusion(orders=(1, 2, 3, 4))
+    fig2.show()
 
 
 if __name__ == '__main__':
 
     width = 68
-    analysis(width=width)
+    analysis_twiss(width=width)
+    # analysis_dynapt(width)

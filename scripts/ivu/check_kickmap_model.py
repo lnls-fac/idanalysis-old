@@ -50,7 +50,7 @@ def create_model_ids(width):
 
 
 if __name__ == '__main__':
-    width = 43
+    width = 68
     fname = utils.get_kmap_filename(width)
     id_kickmap = IDKickMap(fname)
     rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(
@@ -71,6 +71,8 @@ if __name__ == '__main__':
 
     pxf_list = []
     pyf_list = []
+    xf_list = []
+    yf_list = []
 
     inds = pyacc_lat.find_indices(model, 'fam_name', 'IVU18')
     model = pyacc_lat.shift(model, start=idx_begin)
@@ -90,19 +92,19 @@ if __name__ == '__main__':
         pyf_t = py[idx_dif+1]
 
 
-        # xf_list.append(xf_t)
-        # yf_list.append(yf_t)
+        xf_list.append(xf_t)
+        yf_list.append(yf_t)
 
         pxf_list.append(pxf_t)
         pyf_list.append(pyf_t)
 
-    # xf_array = np.array(xf_list)
-    # yf_array = np.array(yf_list)
+    xf_array = np.array(xf_list)
+    yf_array = np.array(yf_list)
     pxf_array = np.array(pxf_list)
     pyf_array = np.array(pyf_list)
 
-    plt.plot(1e3*rx0, 17.25*1e6*pxf, '.-', color='C1', label='Kick X  kickmap')
-    plt.plot(1e3*rx0, 17.25*1e6*pyf, '.-', color='b', label='Kick Y  kickmap')
+    plt.plot(1e3*rx0, 15.38*1e6*pxf, '.-', color='C1', label='Kick X  kickmap')
+    plt.plot(1e3*rx0, 15.38*1e6*pyf, '.-', color='b', label='Kick Y  kickmap')
     plt.plot(1e3*rx0, 1e6*pxf_array, 'o', color='C1', label='Kick X  tracking')
     plt.plot(1e3*rx0, 1e6*pyf_array, 'o', color='b', label='Kick Y  tracking')
     plt.xlabel('x0 [mm]')

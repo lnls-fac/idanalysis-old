@@ -52,8 +52,17 @@ def generate_model(width):
     block_subdivision = [8, 4, 3]
     pole_subdivision = [12, 12, 3]
 
-    lengths = [4.52, 2.18, 1.45]
-    distances = [1.77, 1.77, 0]
+    # block_subdivision = [3, 3, 3]
+    # pole_subdivision = [3, 3, 3]
+
+    b1t = 6.35/2 #- 0.104
+    b2t = 2.9/2 #- 0.149
+    b3t = 6.35 #- 0.317
+    dist1 = 2.9 #- 1.108
+    dist2 = 2.9 #- 1.108
+
+    lengths = [b1t, b2t, b3t]
+    distances = [dist1, dist2, 0]
     start_blocks_length = lengths
     start_blocks_distance = distances
     end_blocks_length = lengths[0:-1][::-1]
@@ -63,6 +72,10 @@ def generate_model(width):
                  longitudinal_distance=0, block_shape=block_shape,
                  pole_shape=pole_shape, block_subdivision=block_subdivision,
                  pole_subdivision=pole_subdivision, pole_length=pole_length,
+                 start_blocks_length=start_blocks_length,
+                 start_blocks_distance=start_blocks_distance,
+                 end_blocks_length=end_blocks_length,
+                 end_blocks_distance=end_blocks_distance,
                  trf_on_blocks=True)
     ivu.solve()
 
@@ -78,10 +91,11 @@ def generate_kickmap(posx, posy, width, radia_model):
     idkickmap._radia_model_config.traj_init_px = 0
     idkickmap._radia_model_config.traj_init_py = 0
     idkickmap.traj_init_rz = -100
-    idkickmap.calc_id_termination_kicks(period_len=18.5, kmap_idlen=0.116)
+    idkickmap.calc_id_termination_kicks(period_len=18.5, kmap_idlen=0.130,
+                                        plot_flag=False)
     print(idkickmap._radia_model_config)
     idkickmap.fmap_calc_kickmap(posx=posx, posy=posy)
-    fname = './results/model/kickmap-ID-{}.txt'.format(width)
+    fname = './results/model/kickmap-ID-{}t.txt'.format(width)
     idkickmap.save_kickmap_file(kickmap_filename=fname)
 
 
@@ -274,11 +288,12 @@ def run_generate_data(fpath, widths, rx, rz):
         models=models, widths=widths, rx=rx,
         peak_idx=0, data=data, filter='on')
     data = get_field_on_axis(models=models, widths=widths, rz=rz, data=data)
-    save_pickle(data, fpath + 'rk_traj_data2_filter.pickle', overwrite=True)
+    save_pickle(data, fpath + 'rk_traj_data_filter_test.pickle',
+                overwrite=True)
 
 
 def run_plot_data(fpath, widths, rx, rz):
-    data = load_pickle(fpath + 'rk_traj_data_filter.pickle')
+    data = load_pickle(fpath + 'rk_traj_data_filter_test.pickle')
     plot_rk_traj(widths, data)
     plot_field_roll_off(data=data, widths=widths, rx=rx, filter='on')
     plot_field_on_axis(data, widths, rz)
@@ -287,12 +302,12 @@ def run_plot_data(fpath, widths, rx, rz):
 if __name__ == "__main__":
 
     fpath = './results/model/'
-    widths = ['32', '35', '38', '41', '44', '47']
-    # widths = ['43', '48', '53', '58', '63', '68']
-    # rx = np.linspace(-40, 40, 4*81)
-    # rz = np.linspace(-100, 100, 200)
-    # run_generate_data(fpath, widths, rx, rz)
-    # run_plot_data(fpath, widths, rx, rz)
+    # widths = ['32', '35', '38', '41', '44', '47']
+    widths = ['68']
+    rx = np.linspace(-40, 40, 4*81)
+    rz = np.linspace(-100, 100, 200)
+    run_generate_data(fpath, widths, rx, rz)
+    run_plot_data(fpath, widths, rx, rz)
     for width_s in widths:
         width = int(width_s)
         run_kickmap(width)
