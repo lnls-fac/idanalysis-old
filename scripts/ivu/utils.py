@@ -31,10 +31,10 @@ def create_ids(
     fname = get_kmap_filename(width)
 
     idkmap = IDKickMap(kmap_fname=fname)
-    kickx_up = 1/rescale_kicks * idkmap.kickx_upstream  # [T².m²]
-    kicky_up = 1/rescale_kicks * idkmap.kicky_upstream  # [T².m²]
-    kickx_down = 1/rescale_kicks * idkmap.kickx_downstream  # [T².m²]
-    kicky_down = 1/rescale_kicks * idkmap.kicky_downstream  # [T².m²]
+    kickx_up = idkmap.kickx_upstream  # [T².m²]
+    kicky_up = idkmap.kicky_upstream  # [T².m²]
+    kickx_down = idkmap.kickx_downstream  # [T².m²]
+    kicky_down = idkmap.kicky_downstream  # [T².m²]
     termination_kicks = [kickx_up, kicky_up, kickx_down, kicky_down]
     IDModel = pymodels.si.IDModel
     ivu18 = IDModel(

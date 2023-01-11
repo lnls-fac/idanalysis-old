@@ -19,10 +19,10 @@ from idanalysis import optics as optics
 import utils
 
 
-def create_model_ids(width):
+def create_model_ids(width, rescale_kicks):
     """."""
     print('--- model with kickmap ---')
-    ids = utils.create_ids(width=width)
+    ids = utils.create_ids(width=width, rescale_kicks=rescale_kicks)
     # ids = utils.create_ids(phase, gap, rescale_kicks=1)
     model = pymodels.si.create_accelerator(ids=ids)
     model.cavity_on = False
@@ -187,8 +187,22 @@ def create_models(width):
     model0.cavity_on = False
     model0.radiation_on = 0
 
+    # print(model0.length)
+    # print(twiss0.mux[-1]/2/np.pi)
+    # print(twiss0.muy[-1]/2/np.pi)
+
     # create model with id
-    model1, knobs, locs_beta = create_model_ids(width)
+    model1, knobs, locs_beta = create_model_ids(width, rescale_kicks=rescale_kicks)
+
+    
+    twiss1, *_ = pyacc_opt.calc_twiss(model1, indices='closed')
+    plt.plot(1e6 * twiss1.rx)
+    plt.show()
+    # print(model1.length)
+    # print(twiss1.mux[-1]/2/np.pi)
+    # print(twiss1.muy[-1]/2/np.pi)
+
+    # return
 
     return model0, model1, knobs, locs_beta
 

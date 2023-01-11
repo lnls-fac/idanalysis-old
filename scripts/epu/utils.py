@@ -157,35 +157,10 @@ def create_kmap_filename(phase, gap):
     fname = f'./results/phase-organized/{phase}/kickmap-phase_{phase_}-gap_{gap_}.txt'
     return fname
 
+
 def create_kmap_filename_model(phase, gap):
     fname = f'./results/model/kickmap_model{gap}.txt'
     return fname
-
-def create_ids(
-        phase, gap, nr_steps=None, rescale_kicks=None,
-        rescale_length=None):
-    # create IDs
-    nr_steps = nr_steps or 40
-    rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
-    rescale_length = \
-        rescale_length if rescale_length is not None else 1
-    fname = create_kmap_filename(phase, gap)
-
-    idkmap = IDKickMap(kmap_fname=fname)
-    kickx_up = rescale_kicks * idkmap.kickx_upstream  # [T².m²]
-    kicky_up = rescale_kicks * idkmap.kicky_upstream  # [T².m²]
-    kickx_down = rescale_kicks * idkmap.kickx_downstream  # [T².m²]
-    kicky_down = rescale_kicks * idkmap.kicky_downstream  # [T².m²]
-    termination_kicks = [kickx_up, kicky_up, kickx_down, kicky_down]
-    IDModel = pymodels.si.IDModel
-    epu50 = IDModel(
-        subsec=IDModel.SUBSECTIONS.ID10SB,
-        file_name=fname,
-        fam_name='EPU50', nr_steps=nr_steps,
-        rescale_kicks=rescale_kicks, rescale_length=rescale_length,
-        termination_kicks=termination_kicks)
-    ids = [epu50, ]
-    return ids
 
 
 def create_ids_model(
