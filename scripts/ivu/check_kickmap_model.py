@@ -37,10 +37,10 @@ def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
     return rx0, ry0, pxf, pyf, rxf, ryf
 
 
-def create_model_ids(width):
+def create_model_ids(width, rk, shift_kicks):
     """."""
     print('--- model with kickmap ---')
-    ids = utils.create_ids(width)
+    ids = utils.create_ids(width, rescale_kicks=rk, shift_kicks=shift_kicks)
     model = pymodels.si.create_accelerator(ids=ids)
     twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
     print('length : {:.4f} m'.format(model.length))
@@ -54,10 +54,22 @@ if __name__ == '__main__':
     fname = utils.get_kmap_filename(width)
     id_kickmap = IDKickMap(fname)
     rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(
-      idkmap=id_kickmap, plane_idx=2, plot_flag=True)
+      idkmap=id_kickmap, plane_idx=2, plot_flag=False)
+
+
+    rk = 15.3846
+    pxf *= rk
+    pyf *= rk
+
+    shiftkx = 1e-6*16.825
+    shiftky = 0.0
+    shift_kicks = [shiftkx, shiftky]
+    pxf += shiftkx
+    pyf += shiftky
+
 
     # lattice with IDs
-    model, twiss, ids = create_model_ids(width)
+    model, twiss, ids = create_model_ids(width, rk, shift_kicks)
 
     famdata = pymodels.si.get_family_data(model)
     idx = famdata['IVU18']['index']
@@ -103,12 +115,23 @@ if __name__ == '__main__':
     pxf_array = np.array(pxf_list)
     pyf_array = np.array(pyf_list)
 
-    plt.plot(1e3*rx0, 15.38*1e6*pxf, '.-', color='C1', label='Kick X  kickmap')
-    plt.plot(1e3*rx0, 15.38*1e6*pyf, '.-', color='b', label='Kick Y  kickmap')
+    plt.plot(1e3*rx0, 1e6*pxf, '.-', color='C1', label='Kick X  kickmap')
+    plt.plot(1e3*rx0, 1e6*pyf, '.-', color='b', label='Kick Y  kickmap')
     plt.plot(1e3*rx0, 1e6*pxf_array, 'o', color='C1', label='Kick X  tracking')
     plt.plot(1e3*rx0, 1e6*pyf_array, 'o', color='b', label='Kick Y  tracking')
     plt.xlabel('x0 [mm]')
     plt.ylabel('final px [urad]')
+    plt.title('Kicks')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    plt.plot(1e3*rx0, 1e3*rxf, '.-', color='C1', label='rx  kickmap')
+    plt.plot(1e3*rx0, 1e3*ryf, '.-', color='b', label='ry  kickmap')
+    plt.plot(1e3*rx0, 1e3*xf_array, 'o', color='C1', label='rx  tracking')
+    plt.plot(1e3*rx0, 1e3*yf_array, 'o', color='b', label='ry  tracking')
+    plt.xlabel('x0 [mm]')
+    plt.ylabel('final r [mm]')
     plt.title('Kicks')
     plt.legend()
     plt.grid()

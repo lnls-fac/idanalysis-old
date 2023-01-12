@@ -198,7 +198,7 @@ if __name__ == "__main__":
 
     fpath = './results/model/'
     # widths = ['32', '35', '38', '41', '44', '47']
-    widths = ['48', '68']
+    widths = ['20', '43', '48', '68']
     rx = np.linspace(-40, 40, 4*81)
     rz = np.linspace(-100, 100, 200)
     # run_generate_data(fpath, widths, rx, rz)

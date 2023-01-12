@@ -38,20 +38,33 @@ def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
 
 if __name__ == '__main__':
     widths = [68]
+    colors = ['b', 'g', 'y', 'C1', 'r', 'k']
     for i, width in enumerate(widths):
-        fname = './results/model/kickmap-ID-{}t.txt'.format(width)
+        fname = './results/model/kickmap-ID-{}test.txt'.format(width)
         id_kickmap = IDKickMap(fname)
-        rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(
-          idkmap=id_kickmap, plane_idx=2, plot_flag=False)
-        labelx = 'Kick x - width {}'.format(width)
-        labely = 'Kick y - width {}'.format(width)
-        alph = 0.3 + 0.3*i
-        plt.figure(1)
-        plt.plot(
-            1e3*rx0, 15.384*1e6*pxf, '.-', color='b', label=labelx, alpha=alph)
-        plt.figure(2)
-        plt.plot(
-            1e3*rx0, 15.384*1e6*pyf, '.-', color='r', label=labely, alpha=alph)
+        for i in np.arange(3):
+            rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(
+            idkmap=id_kickmap, plane_idx=i, plot_flag=False)
+
+
+            rk = 15.3846
+            pxf *= rk
+            pyf *= rk
+
+            shiftkx = 1e-6*16.825
+            shiftky = 0.0
+            shift_kicks = [shiftkx, shiftky]
+            pxf += shiftkx
+            pyf += shiftky
+            labelx = 'Kick x - width {}'.format(width)
+            labely = 'Kick y - width {}'.format(width)
+            label = 'y = {} mm'.format(i*3-6)
+            plt.figure(1)
+            plt.plot(
+                1e3*rx0, 1e6*pxf, '.-', color=colors[i], label=label)
+            plt.figure(2)
+            plt.plot(
+                1e3*rx0, 1e6*pyf, '.-', color=colors[i], label=label)
     for i in [1, 2]:
         plt.figure(i)
         # plt.ylim(-0.5, 0.5)

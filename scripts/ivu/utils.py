@@ -16,13 +16,13 @@ FOLDER_BASE = '/home/gabriel/repos-dev/'
 
 
 def get_kmap_filename(width):
-    fname = f'./results/model/kickmap-ID-{width}t.txt'
+    fname = f'./results/model/kickmap-ID-{width}.txt'
     return fname
 
 
 def create_ids(
         width, nr_steps=None, rescale_kicks=15.3846,
-        rescale_length=15.3846):
+        rescale_length=15.3846, shift_kicks=[0.0, 0.0]):
     # create IDs
     nr_steps = nr_steps or 40
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
@@ -42,6 +42,7 @@ def create_ids(
         file_name=fname,
         fam_name='IVU18', nr_steps=nr_steps,
         rescale_kicks=rescale_kicks, rescale_length=rescale_length,
+        shift_kicks=shift_kicks,
         termination_kicks=termination_kicks)
     ids = [ivu18, ]
     return ids

@@ -124,9 +124,6 @@ def calc_rk_respm(width, rk_s_step):
     respm[3, 0] = (pyf_p - pyf_n)/delta_p
     b1t += delta_p/2
 
-    plt.plot(traj_p.rz, traj_p.rx, label='pos')
-    plt.plot(traj_n.rz, traj_n.rx, label='neg')
-    plt.show()
 
     # calc block 2 thickness response
     b2t += delta_p/2  # positive variation
@@ -263,6 +260,8 @@ if __name__ == "__main__":
     fpath = './results/model/'
     step = 2  # [mm]
     width = 48  # [mm]
-    fname = 'respm_termination_{}.pickle'.format(width)
-    generate_data(fpath, step, width, fname)
+    widths = [20, 43, 48]
+    for width in widths:
+        fname = 'respm_termination_{}.pickle'.format(width)
+        generate_data(fpath, step, width, fname)
     # load_data(fpath, step, width, fname)

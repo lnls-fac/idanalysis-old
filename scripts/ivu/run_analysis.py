@@ -19,10 +19,11 @@ from idanalysis import optics as optics
 import utils
 
 
-def create_model_ids(width, rescale_kicks):
+def create_model_ids(width, rescale_kicks, shift_kicks):
     """."""
     print('--- model with kickmap ---')
-    ids = utils.create_ids(width=width, rescale_kicks=rescale_kicks)
+    ids = utils.create_ids(width=width, rescale_kicks=rescale_kicks,
+                            shift_kicks=shift_kicks)
     # ids = utils.create_ids(phase, gap, rescale_kicks=1)
     model = pymodels.si.create_accelerator(ids=ids)
     model.cavity_on = False
@@ -192,12 +193,14 @@ def create_models(width):
     # print(twiss0.muy[-1]/2/np.pi)
 
     # create model with id
-    model1, knobs, locs_beta = create_model_ids(width, rescale_kicks=rescale_kicks)
+    rescale_kicks = 15.3846
+    shift_kicks = [1e-6*16.825, 0.0]
+    model1, knobs, locs_beta = create_model_ids(width, rescale_kicks=rescale_kicks, shift_kicks=shift_kicks)
 
-    
+
     twiss1, *_ = pyacc_opt.calc_twiss(model1, indices='closed')
-    plt.plot(1e6 * twiss1.rx)
-    plt.show()
+    # plt.plot(twiss1.spos, 1e6 * twiss1.rx)
+    # plt.show()
     # print(model1.length)
     # print(twiss1.mux[-1]/2/np.pi)
     # print(twiss1.muy[-1]/2/np.pi)
@@ -231,6 +234,9 @@ def analysis_twiss(width, plot_flag=True):
 
     orb_results = orbcorr.correct_orbit_fb(
         model0, model1, 'IVU18', corr_system='SOFB')
+
+    # plt.plot(orb_results[1], 1e6*orb_results[4])
+    # plt.show()
 
     # calculate beta beating and tune delta tunes
     twiss1 = analysis_uncorrected_perturbation(
