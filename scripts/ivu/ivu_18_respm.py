@@ -49,10 +49,10 @@ def model_respm(width, b1t, b2t, b3t, dist1, dist2, rk_s_step):
 
     ]
 
-    # block_subdivision = [8, 4, 3]
-    # pole_subdivision = [12, 12, 3]
-    block_subdivision = [3, 3, 3]
-    pole_subdivision = [3, 3, 3]
+    block_subdivision = [8, 4, 3]
+    pole_subdivision = [12, 12, 3]
+    # block_subdivision = [3, 3, 3]
+    # pole_subdivision = [3, 3, 3]
 
     lengths = [b1t, b2t, b3t]
     distances = [dist1, dist2, 0]
@@ -199,8 +199,8 @@ def calc_delta_pos(width, results=None):
     traj_init_ry = 0
     traj_init_px = 0
     traj_init_py = 0
-    rk_s_step = 2
-    ivu = model_respm(width, b1t, b2t, b3t, dist1, dist2)
+    rk_s_step = 2.0
+    ivu, *_ = model_respm(width, b1t, b2t, b3t, dist1, dist2, rk_s_step)
     idkickmap = IDKickMap()
     idkickmap.radia_model = ivu
     idkickmap.beam_energy = 3.0  # [GeV]
@@ -233,22 +233,36 @@ def calc_correction(respm, delta_pos):
     invmat = np.dot(np.dot(vmat.T, ismat), umat.T)
     dp = np.dot(invmat, delta_pos)
     # print(respm)
-    # print(smat)
-    return list([dp[0], dp[1], dp[2], dp[3], dp[4]])
+    return dp
 
+
+def generate_data(fpath, step, width, fname):
+    respm = calc_rk_respm(width, step)
+    data['respm'] = respm
+    save_pickle(data, fpath + fname,
+                overwrite=True)
+
+
+def load_data(fpath, step, width, fname):
+    data = load_pickle(fpath + fname)
+    respm = data['respm']
+    results = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+    for i in np.arange(7):
+        delta_pos = calc_delta_pos(width, results)
+        dresults = calc_correction(respm, delta_pos)
+        results += dresults
+        print(dresults)
+    print(results)
+    data['results'] = results
+    save_pickle(data, fpath + fname,
+                overwrite=True)
 
 if __name__ == "__main__":
 
     data = dict()
     fpath = './results/model/'
     step = 2  # [mm]
-    width = 68  # [mm]
-    respm = calc_rk_respm(width, step)
-    # delta_pos = calc_delta_pos(width)
-    # data['respm'] = respm
-    # save_pickle(data, fpath + 'respm68_2.pickle',
-    #             overwrite=True)
-    # # data = load_pickle(fpath + 'respm68_test.pickle')
-    # # respm = data['respm']
-    # results = calc_correction(respm, delta_pos)
-    # print(results)
+    width = 48  # [mm]
+    fname = 'respm_termination_{}.pickle'.format(width)
+    generate_data(fpath, step, width, fname)
+    # load_data(fpath, step, width, fname)
