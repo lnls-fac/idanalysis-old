@@ -95,14 +95,14 @@ def generate_kickmap(posx, posy, width, radia_model):
                                         # plot_flag=False)
     print(idkickmap._radia_model_config)
     idkickmap.fmap_calc_kickmap(posx=posx, posy=posy)
-    fname = './results/model/kickmap-ID-{}.txt'.format(width)
+    fname = './results/model/kickmap-ID-{}21pts.txt'.format(width)
     idkickmap.save_kickmap_file(kickmap_filename=fname)
 
 
 def run_kickmap(width):
     """."""
     x = np.linspace(-10, +10, 21) / 1000  # [m]
-    y = np.linspace(-6, +6, 5) / 1000  # [m]
+    y = np.linspace(-2.05, +2.05, 21) / 1000  # [m]
     ivu = generate_model(width)
     generate_kickmap(posx=x, posy=y, width=width, radia_model=ivu)
 
@@ -308,7 +308,7 @@ if __name__ == "__main__":
     rx = np.linspace(-40, 40, 81)
     rz = np.linspace(-100, 100, 200)
     # run_generate_data(fpath, widths, rx, rz)
-    run_plot_data(fpath, widths, rx, rz)
-    # for width_s in widths:
-        # width = int(width_s)
-        # run_kickmap(width)
+    # run_plot_data(fpath, widths, rx, rz)
+    for width_s in widths:
+        width = int(width_s)
+        run_kickmap(width)

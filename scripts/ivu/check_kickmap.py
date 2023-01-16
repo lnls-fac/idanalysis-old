@@ -11,6 +11,8 @@ import pyaccel
 from idanalysis import IDKickMap
 from pyaccel import lattice as pyacc_lat
 
+from scipy.optimize import curve_fit
+
 
 def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
     """."""
@@ -35,37 +37,56 @@ def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
 
     return rx0, ry0, pxf, pyf, rxf, ryf
 
+def fit_function(x, g, s, o, d, e, q, w, r, t):
+    """."""
+    f = g + s*x**2 + o*x**4 + d*x**6 + e*x**8
+    f += q*x**10 + w*x**12 + r*x**14 + t*x**16
+
+    return f
+
+def find_fit(x, p):
+    """."""
+    opt = curve_fit(fit_function, x, p)[0]
+    return opt
+
 
 if __name__ == '__main__':
     widths = [68]
+    width = 68
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
-    for i, width in enumerate(widths):
-        fname = './results/model/kickmap-ID-{}test.txt'.format(width)
+    for i in np.arange(3):
+        fname = './results/model/kickmap-ID-{}.txt'.format(width)
         id_kickmap = IDKickMap(fname)
-        for i in np.arange(3):
-            rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(
-            idkmap=id_kickmap, plane_idx=i, plot_flag=False)
+
+        rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(
+        idkmap = id_kickmap, plane_idx=i, plot_flag=False)
+
+        rk = 15.3846
+        pxf *= rk
+        pyf *= rk
+
+        shiftkx = 1e-6*16.825
+        shiftky = 0.0
+        shift_kicks = [shiftkx, shiftky]
+        pxf += shiftkx
+        pyf += shiftky
+        pfit = np.polyfit(rx0, pxf, 21)
+        pxf_fit = np.polyval(pfit, rx0)
+        print(pfit[::-1])
 
 
-            rk = 15.3846
-            pxf *= rk
-            pyf *= rk
 
-            shiftkx = 1e-6*16.825
-            shiftky = 0.0
-            shift_kicks = [shiftkx, shiftky]
-            pxf += shiftkx
-            pyf += shiftky
-            labelx = 'Kick x - width {}'.format(width)
-            labely = 'Kick y - width {}'.format(width)
-            label = 'y = {} mm'.format(i*3-6)
-            plt.figure(1)
-            plt.plot(
-                1e3*rx0, 1e6*pxf, '.-', color=colors[i], label=label)
-            plt.figure(2)
-            plt.plot(
-                1e3*rx0, 1e6*pyf, '.-', color=colors[i], label=label)
-    for i in [1, 2]:
+        labelx = 'Kick x - width {}'.format(width)
+        labely = 'Kick y - width {}'.format(width)
+        label = 'y = {} mm'.format(-2.05+i*2.05/2)
+        plt.figure(1)
+        plt.plot(
+            1e3*rx0, 1e6*pxf, '.-', color=colors[i], label=label)
+        plt.plot(
+            1e3*rx0, 1e6*pxf_fit, '-', color=colors[i], alpha=0.6)
+
+
+    for i in [1]:
         plt.figure(i)
         # plt.ylim(-0.5, 0.5)
         plt.xlabel('x0 [mm]')
