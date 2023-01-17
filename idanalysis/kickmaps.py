@@ -201,10 +201,15 @@ class IDKickMap:
         return config
 
     def fmap_calc_kickmap(
-            self, posx, posy, beam_energy=None, rk_s_step=None):
+            self, posx, posy, beam_energy=None, rk_s_step=None, symmetry=None):
         """."""
         self.posx = _np.array(posx)  # [m]
         self.posy = _np.array(posy)  # [m]
+
+        if symmetry is not None:
+            original_posx = self.posx.copy()
+            original_posy = self.posy.copy()
+
         if beam_energy is not None:
             self.beam_energy = beam_energy
         if rk_s_step is not None:
@@ -236,6 +241,48 @@ class IDKickMap:
                 self.kicky[i, j] = pyf * brho**2
                 self.fposx[i, j] = rxf / 1e3
                 self.fposy[i, j] = ryf / 1e3
+
+    def find_fit_plateau(self, p):
+        """."""
+        opt = _curve_fit(self._plateau_function, self.posx, p)[0]
+        return opt
+
+    def filter_kmap(self, posx, order=8):
+        kickx = _np.zeros((len(self.posy), len(posx)))
+        fposx = _np.zeros((len(self.posy), len(posx)))
+        colors = ['b', 'g', 'y', 'C1', 'r', 'k']
+        for i, ryi in enumerate(self.posy):
+            opt = _np.polyfit(self.posx, self.kickx[i, :], order)
+            pxf = _np.polyval(opt, posx)
+            xfit = _np.polyfit(self.posx, self.fposx[i, :], order)
+            xf = _np.polyval(xfit, posx)
+            kickx[i, :] = pxf
+            fposx[i, :] = xf
+            label = 'y = {:.2f} mm'.format(1e3*ryi)
+            _plt.plot(1e3*self.posx, 1e6*self.kickx[i, :],
+                      '.-', label=label)
+            _plt.plot(1e3*posx, 1e6*kickx[i, :])
+        _plt.xlabel('x pos [mm]')
+        _plt.ylabel('kicks [Tm²]')
+        _plt.legend()
+        _plt.show()
+
+        kicky = _np.zeros((len(self.posy), len(posx)))
+        fposy = _np.zeros((len(self.posy), len(posx)))
+        for i, ryi in enumerate(self.posy):
+            opt = _np.polyfit(self.posx, self.kicky[i, :], order)
+            pyf = _np.polyval(opt, posx)
+            yfit = _np.polyfit(self.posx, self.fposy[i, :], order)
+            yf = _np.polyval(yfit, posx)
+            kicky[i, :] = pxf
+            fposy[i, :] = yf
+
+        self.kickx = kickx
+        self.fposx = fposx
+        self.posx = posx
+
+        self.kicky = kicky
+        self.fposy = fposy
 
     def save_kickmap_file(self, kickmap_filename):
         """."""
@@ -446,6 +493,10 @@ class IDKickMap:
         kmap_fname = configs.get_kickmap_filename(configs[idx])
         self.kmap_fname = kmap_fname
 
+    # def filter_kmap(self, posx, posy):
+    #     for i, ryi in enumerate(self.posy):
+    #         pfit = _np.polyfit(self.posx, self.kickx[i, j], 21)
+
     def _load_kmap(self):
         """."""
         if not self.kmap_fname:
@@ -532,6 +583,12 @@ class IDKickMap:
     @staticmethod
     def _linear_function(x, a, b):
         return a*x + b
+
+    @staticmethod
+    def _plateau_function(x, a, b, c):
+        k = a/_np.pi*_np.sin(_np.pi/(2*a))
+        f = k*(1/(1+x**(2*a)))*b + c
+        return f
 
     @staticmethod
     def _find_value_idx(data, value):
