@@ -54,8 +54,8 @@ if __name__ == '__main__':
     widths = [68]
     width = 68
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
-    for i in np.arange(3):
-        fname = './results/model/kickmap-ID-{}.txt'.format(width)
+    for i in [0, 1, 2]:
+        fname = './results/model/kickmap-ID-{}_filter.txt'.format(width)
         id_kickmap = IDKickMap(fname)
 
         rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(
@@ -65,7 +65,7 @@ if __name__ == '__main__':
         pxf *= rk
         pyf *= rk
 
-        shiftkx = 1e-6*16.825
+        shiftkx = 1e-6*16.825*1
         shiftky = 0.0
         shift_kicks = [shiftkx, shiftky]
         pxf += shiftkx
@@ -74,11 +74,9 @@ if __name__ == '__main__':
         pxf_fit = np.polyval(pfit, rx0)
         print(pfit[::-1])
 
-
-
         labelx = 'Kick x - width {}'.format(width)
         labely = 'Kick y - width {}'.format(width)
-        label = 'y = {} mm'.format(-2.05+i*2.05/2)
+        label = 'y idx = {}'.format(i)
         plt.figure(1)
         plt.plot(
             1e3*rx0, 1e6*pxf, '.-', color=colors[i], label=label)

@@ -2,6 +2,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+import pickle
 
 import imaids.utils as utils
 
@@ -55,11 +57,14 @@ def generate_model(width):
     # block_subdivision = [3, 3, 3]
     # pole_subdivision = [3, 3, 3]
 
-    b1t = 6.35/2 + 0.0832
-    b2t = 2.9/2 - 0.1703
-    b3t = 6.35 - 0.0466
-    dist1 = 2.9 - 0.0048
-    dist2 = 2.9 - 0.0098
+    fname = './results/model/respm_termination_{}.pickle'.format(width)
+    term = load_pickle(fname)
+    d1, d2, d3, d4, d5 = term['results']
+    b1t = 6.35/2 + d1
+    b2t = 2.9/2 + d2
+    b3t = 6.35 + d3
+    dist1 = 2.9 + d4
+    dist2 = 2.9 + d5
 
     lengths = [b1t, b2t, b3t]
     distances = [dist1, dist2, 0]
@@ -95,14 +100,14 @@ def generate_kickmap(posx, posy, width, radia_model):
                                         # plot_flag=False)
     print(idkickmap._radia_model_config)
     idkickmap.fmap_calc_kickmap(posx=posx, posy=posy)
-    fname = './results/model/kickmap-ID-{}21pts.txt'.format(width)
+    fname = './results/model/kickmap-ID-{}-gap042mm.txt'.format(width)
     idkickmap.save_kickmap_file(kickmap_filename=fname)
 
 
 def run_kickmap(width):
     """."""
-    x = np.linspace(-10, +10, 21) / 1000  # [m]
-    y = np.linspace(-2.05, +2.05, 21) / 1000  # [m]
+    x = np.arange(-12, +12, 1) / 1000  # [m]
+    y = np.linspace(-2, +2, 9) / 1000  # [m]
     ivu = generate_model(width)
     generate_kickmap(posx=x, posy=y, width=width, radia_model=ivu)
 
@@ -162,6 +167,9 @@ def get_field_roll_off(models, widths, rx, peak_idx, data, filter='off'):
                     by_list.append(by_temp)
             by_avg = np.array(by_list)
             rx_avg = rx[6:-6]
+            # pfit = np.polyfit(rx, by, 8)
+            # rx_avg = np.linspace(rx[0], rx[-1], 1000)
+            # by_avg = np.polyval(pfit, rx_avg)
         else:
             by_avg = by
             rx_avg = rx
@@ -211,6 +219,7 @@ def calc_rk_traj(
     models = list()
     for i, width_s in enumerate(widths):
         width = int(width_s)
+
         ivu = generate_model(width=width)
         models.append(ivu)
 
@@ -288,14 +297,14 @@ def run_generate_data(fpath, widths, rx, rz):
         models=models, widths=widths, rx=rx,
         peak_idx=0, data=data, filter='on')
     data = get_field_on_axis(models=models, widths=widths, rz=rz, data=data)
-    save_pickle(data, fpath + 'rk_traj_data_filter.pickle',
+    save_pickle(data, fpath + 'rk_traj_data_filter_opt_all.pickle',
                 overwrite=True)
 
 
 def run_plot_data(fpath, widths, rx, rz):
-    data = load_pickle(fpath + 'rk_traj_data.pickle')
+    data = load_pickle(fpath + 'rk_traj_data_filter_opt_all.pickle')
     plot_rk_traj(widths, data)
-    plot_field_roll_off(data=data, widths=widths, rx=rx, filter='off')
+    plot_field_roll_off(data=data, widths=widths, rx=rx, filter='on')
     plot_field_on_axis(data, widths, rz)
 
 
@@ -303,9 +312,9 @@ if __name__ == "__main__":
 
     fpath = './results/model/'
     # widths = ['32', '35', '38', '41', '44', '47']
-    # widths = ['20', '43', '48']
-    widths = ['68']
-    rx = np.linspace(-40, 40, 81)
+    widths = ['43', '48', '53', '58', '63', '68']
+    # widths = ['68']
+    rx = np.linspace(-40, 40, 4*81)
     rz = np.linspace(-100, 100, 200)
     # run_generate_data(fpath, widths, rx, rz)
     # run_plot_data(fpath, widths, rx, rz)

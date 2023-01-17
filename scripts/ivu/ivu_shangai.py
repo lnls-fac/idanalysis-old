@@ -1,29 +1,30 @@
 #!/usr/bin/env python-sirius
 
-import numpy as _np
+import numpy as np
 import matplotlib.pyplot as plt
 
 import imaids.utils as utils
 
 from imaids.models import HybridPlanar as Hybrid
 from imaids.blocks import Block as Block
+from mathphys.functions import save_pickle, load_pickle
+from idanalysis import IDKickMap
 
 folder = 'ivu_shangai_op3/'
 
 
-def generate_model(gap=4.2, pole_length=2.9):
+def generate_model(gap=4.2, width=68):
     """."""
     period_length = 18.5
     br = 1.24
 
-    width = 68
     height = 29
     block_thickness = 6.35  # this is already given by the ivu model
     chamfer_b = 5
 
-    p_width = 54
+    p_width = 0.8*width
     p_height = 24
-    p_thickness = 2.9
+    pole_length = 2.9
     chamfer_p = 3
     y_pos = 0
 
@@ -52,12 +53,21 @@ def generate_model(gap=4.2, pole_length=2.9):
     block_subdivision = [8, 4, 3]
     pole_subdivision = [12, 12, 3]
 
-    lengths = [4.52, 2.18, 1.45]
-    distances = [1.77, 1.77, 0]
+    # block_subdivision = [3, 3, 3]
+    # pole_subdivision = [3, 3, 3]
+
+    b1t = 6.35/2 + 0.0832
+    b2t = 2.9/2 - 0.1703
+    b3t = 6.35 - 0.0466
+    dist1 = 2.9 - 0.0048
+    dist2 = 2.9 - 0.0098
+
+    lengths = [b1t, b2t, b3t]
+    distances = [dist1, dist2, 0]
     start_blocks_length = lengths
     start_blocks_distance = distances
-    end_blocks_length = lengths[::-1]
-    end_blocks_distance = distances[::-1]
+    end_blocks_length = lengths[0:-1][::-1]
+    end_blocks_distance = distances[0:-1][::-1]
 
     ivu = Hybrid(gap=gap, period_length=period_length, mr=br, nr_periods=5,
                  longitudinal_distance=0, block_shape=block_shape,
@@ -73,88 +83,94 @@ def generate_model(gap=4.2, pole_length=2.9):
     return ivu
 
 
-def generate_gap_file(gap_list, beff_list, bpeak_list):
+def run_generate_data(fpath, width, rx, gaps):
+    data = dict()
+    ivu = generate_model(width=width)
+    data = get_field_vs_gap(
+        ivu=ivu, gaps=gaps, rx=rx,
+        peak_idx=0, data=data)
+    fname = fpath + 'field-vs-gap-width{}.pickle'.format(width)
+    save_pickle(data, fname,
+                overwrite=True)
+
+
+def load_data(fpath, width):
+    fname = fpath + 'field-vs-gap-width{}.pickle'.format(width)
+    data = load_pickle(fname)
+    field_amp = data['field_amp']
+    roll_off = data['roll_off']
+
+    return field_amp, roll_off
+
+
+def get_field_vs_gap(ivu, gaps, rx, peak_idx, data):
     """."""
-    name = 'gap_file.txt'
-    name = folder + name
-    my_file = open(name, "w")  # w=writing
-    my_file.write('gap[mm]\tBeff[T]\tBpeak[T]\n')
-    for i, gap in enumerate(gap_list):
-        my_file.write("{:03.1f}\t{:06.4f}\t{:06.4f}\n".format(
-            gap, beff_list[i], bpeak_list[i]))
-    my_file.close()
+    by_x = dict()
+    rx_avg_dict = dict()
+    roll_off = dict()
+    field_amp = dict()
+    for i, gap in enumerate(gaps):
+        by_list = list()
+        ivu.dg = gap - 4.2
+        ivu.solve()
+        period = ivu.period_length
+        rz = np.linspace(-period/2, period/2, 100)
+        field = ivu.get_field(0, 0, rz)
+        by = field[:, 1]
+        by_max_idx = np.argmax(by)
+        rz_max = rz[by_max_idx] + peak_idx*period
+        field = ivu.get_field(rx, 0, rz_max)
+        by = field[:, 1]
+        for i, x in enumerate(rx):
+            if i >= 6 and i <= len(rx)-7:
+                by_temp = by[i-6] + by[i-5] + by[i-4] + by[i-3]
+                by_temp += by[i-2] + by[i-1] + by[i] + by[i+1] + by[i+2]
+                by_temp += by[i+3] + by[i+4] + by[i+5] + by[i+6]
+                by_temp = by_temp/13
+                by_list.append(by_temp)
+        by_avg = np.array(by_list)
+        rx_avg = rx[6:-6]
+        rx6_idx = np.argmin(np.abs(rx_avg - 6))
+        rx0_idx = np.argmin(np.abs(rx_avg))
+        roff = np.abs(by_avg[rx6_idx]/by_avg[rx0_idx]-1)
 
+        idx_zero = np.argmin(np.abs(rx))
+        field_amp[gap] = by[idx_zero]
 
-def generate_pole_file(pole_list, beff_list):
-    name = 'pole_file.txt'
-    name = folder + name
-    my_file = open(name, "w")  # w=writing
-    my_file.write('pole_thickness[mm]\tBeff[T]\n')
-    for i, pole in enumerate(pole_list):
-        my_file.write("{:03.2f}\t{:06.4f}\n".format(
-            pole, beff_list[i]))
-    my_file.close()
+        by_x[gap] = by_avg
+        rx_avg_dict[gap] = rx_avg
+        roll_off[gap] = roff
 
+        ivu.dg = 0
 
-def generate_roff_file(position_list, roff_list):
-    name = 'roll-off_file.txt'
-    name = folder + name
-    my_file = open(name, "w")  # w=writing
-    my_file.write('X position[mm]\tField_roll-off[]\n')
-    for i, pos in enumerate(position_list):
-        my_file.write("{:03.2f}\t{:08.6f}\n".format(
-            pos, roff_list[i]))
-    my_file.close()
+    data['by_x'] = by_x
+    data['field_amp'] = field_amp
+    data['roll_off'] = roll_off
+    data['rx_avg'] = rx_avg_dict
 
+    return data
 
-def run():
-    """."""
-    # gap analysis
-    b_correction = 1.0095  # 1.0095 For five periods
-    beff_list = []
-    bpeak_list = []
-    gap_array = _np.arange(3, 16, 1)
-    for i, gap in enumerate(gap_array):
-        ivu = generate_model(gap=gap)
-        Beff, B_peak, _ = ivu.get_effective_field(
-            polarization='hp', hmax=5, x=0)
-        beff_list.append(Beff)
-        bpeak_list.append(B_peak)
-        print(i)
-    generate_gap_file(gap_array, beff_list, bpeak_list)
-
-    # pole analysis
-    gap = 4.3
-    pole_array = _np.arange(2, 4.1, 0.1)
-    beff_list = []
-    for i, pole_length in enumerate(pole_array):
-        if i == 10:
-            ivu_nom = generate_model(
-                gap=gap, pole_length=pole_length)
-            Beff, B_peak, _ = ivu_nom.get_effective_field(
-                polarization='hp', hmax=5, x=0)
-        else:
-            ivu = generate_model(gap=gap, pole_length=pole_length)
-            Beff, B_peak, _ = ivu.get_effective_field(
-                polarization='hp', hmax=5, x=0)
-
-        beff_list.append(Beff)
-        print(i)
-    generate_pole_file(pole_array, beff_list)
-
-    # roll off analysis
-    Beff, B_peak, _ = ivu_nom.get_effective_field(
-        polarization='hp', hmax=5, x=0)
-    roff_list = []
-    position_list = _np.arange(-6, 7, 1)
-    for x in position_list:
-        Beff_x, B_peak_x, _ = ivu_nom.get_effective_field(
-            polarization='hp', hmax=5, x=x)
-        Roll_off = (B_peak - B_peak_x)/B_peak
-        roff_list.append(Roll_off)
-    generate_roff_file(position_list, roff_list)
 
 
 if __name__ == "__main__":
 
-    run()
+    gaps = np.linspace(1, 20, 20)
+    rx = np.linspace(-40, 40, 4*81)
+    widths = [43, 48, 53, 58, 63, 68]
+    fpath = './results/model/'
+    for width in widths:
+        run_generate_data(fpath, width, rx, gaps)
+    # by, roff = load_data(fpath, width=68)
+    # gaps = np.array(list(by.keys()))
+    # by = np.array((list(by.values())))
+    # roff = np.array((list(roff.values())))
+    # fig, ax1 = plt.subplots()
+    # ax2 = ax1.twinx()
+    # ax1.plot(gaps, by, label='Field amplitude')
+    # ax2.plot(gaps, roff, label='Field Roll-off at 6mm', color='C1')
+    # ax1.set_ylabel('Field [T]')
+    # ax2.set_ylabel('Roll off')
+    # plt.grid()
+    # plt.legend()
+    # plt.xlabel('Gap [mm]')
+    # plt.show()

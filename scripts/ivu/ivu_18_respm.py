@@ -240,7 +240,7 @@ def generate_data(fpath, step, width, fname):
                 overwrite=True)
 
 
-def load_data(fpath, step, width, fname):
+def load_data(fpath, width, fname):
     data = load_pickle(fpath + fname)
     respm = data['respm']
     results = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
@@ -260,8 +260,10 @@ if __name__ == "__main__":
     fpath = './results/model/'
     step = 2  # [mm]
     width = 48  # [mm]
-    widths = [20, 43, 48]
+    widths = [20]
     for width in widths:
         fname = 'respm_termination_{}.pickle'.format(width)
-        generate_data(fpath, step, width, fname)
-    # load_data(fpath, step, width, fname)
+        # generate_data(fpath, step, width, fname)
+        load_data(fpath, width, fname)
+        # data = load_pickle(fpath + fname)
+        # print(data['results'])
