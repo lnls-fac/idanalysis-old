@@ -15,12 +15,12 @@ from idanalysis import IDKickMap
 
 def generate_kickmap(posx, width):
 
-    fname = './results/model/kickmap-ID-{}-gap200mm.txt'.format(width)
+    fname = './results/model/kickmap-ID-{}-gap045mm.txt'.format(width)
     idkickmap = IDKickMap(fname)
     idkickmap._load_kmap()
     idkickmap.filter_kmap(posx, order=4)
     idkickmap.kmap_idlen = 0.13
-    fname = './results/model/kickmap-ID-{}-gap200mm-filter.txt'.format(width)
+    fname = './results/model/kickmap-ID-{}-gap04p5mm-filter.txt'.format(width)
     idkickmap.save_kickmap_file(fname)
 
 

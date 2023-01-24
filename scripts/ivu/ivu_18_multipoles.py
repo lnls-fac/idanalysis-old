@@ -302,7 +302,7 @@ def run_generate_data(fpath, widths, rx, rz):
 
 
 def run_plot_data(fpath, widths, rx, rz):
-    data = load_pickle(fpath + 'rk_traj_data_filter_opt_all_gap200.pickle')
+    data = load_pickle(fpath + 'rk_traj_data_filter_opt_all.pickle')
     plot_rk_traj(widths, data)
     plot_field_roll_off(data=data, widths=widths, rx=rx, filter='on')
     plot_field_on_axis(data, widths, rz)

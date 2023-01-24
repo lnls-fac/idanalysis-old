@@ -259,13 +259,13 @@ class IDKickMap:
             kickx[i, :] = pxf
             fposx[i, :] = xf
             label = 'y = {:.2f} mm'.format(1e3*ryi)
-            _plt.plot(1e3*self.posx, 1e6*self.kickx[i, :],
-                      '.-', label=label)
-            _plt.plot(1e3*posx, 1e6*kickx[i, :])
-        _plt.xlabel('x pos [mm]')
-        _plt.ylabel('kicks [Tm²]')
-        _plt.legend()
-        _plt.show()
+        #     _plt.plot(1e3*self.posx, 1e6*self.kickx[i, :],
+        #               '.-', label=label)
+        #     _plt.plot(1e3*posx, 1e6*kickx[i, :])
+        # _plt.xlabel('x pos [mm]')
+        # _plt.ylabel('kicks [Tm²]')
+        # _plt.legend()
+        # _plt.show()
 
         kicky = _np.zeros((len(self.posy), len(posx)))
         fposy = _np.zeros((len(self.posy), len(posx)))
