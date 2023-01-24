@@ -58,7 +58,7 @@ def find_fit(x, p):
 def plot_kick_at_plane(gap, posy, kick_plane='X'):
     """."""
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
-    
+
     gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
 
     widths= [68, 63, 58, 53, 48, 43, ]
@@ -81,8 +81,12 @@ def plot_kick_at_plane(gap, posy, kick_plane='X'):
         pyf -= pyf_shift
         pxf *= RESCALE_KICKS
         pyf *= RESCALE_KICKS
-        
-        pf, klabel = (pxf, 'posx') if kick_plane.lower() == 'x' else (pyf, 'posy')
+
+        print(width)
+        print('pxf {:.3f}'.format(pxf_shift*RESCALE_KICKS*1e6))
+        print('pyf {:.3f}'.format(pyf_shift*RESCALE_KICKS*1e6))
+
+        pf, klabel = (pxf, 'px') if kick_plane.lower() == 'x' else (pyf, 'py')
         pfit = np.polyfit(rx0, pf, 21)
         pf_fit = np.polyval(pfit, rx0)
 
@@ -113,7 +117,7 @@ def plot_kick_all_planes(gap, width):
     """."""
     gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
     fname = './results/model/kickmap-ID-{}-gap{}mm-filter.txt'.format(
-            width, gap_str)    
+            width, gap_str)
     id_kickmap = IDKickMap(fname)
     posx_zero_idx = list(id_kickmap.posx).index(0)
     posy_zero_idx = list(id_kickmap.posy).index(0)
@@ -121,7 +125,7 @@ def plot_kick_all_planes(gap, width):
             idkmap=id_kickmap, plane_idx=posy_zero_idx, plot_flag=False)
     pxf_shift = pxf[posx_zero_idx]
     pyf_shift = pyf[posx_zero_idx]
-    
+
     for plane_idx, posy in enumerate(id_kickmap.posy):
         if posy < 0:
             continue
@@ -131,7 +135,7 @@ def plot_kick_all_planes(gap, width):
         pyf -= pyf_shift
         pxf *= RESCALE_KICKS
         pyf *= RESCALE_KICKS
-        
+
         pfit = np.polyfit(rx0, pxf, 21)
         pfit = np.polyfit(rx0, pyf, 21)
 
@@ -150,4 +154,3 @@ def plot_kick_all_planes(gap, width):
 if __name__ == '__main__':
     plot_kick_at_plane(gap=20, posy=0*1.5, kick_plane='y')
     # plot_kick_all_planes(gap=4.2, width=68)
-
