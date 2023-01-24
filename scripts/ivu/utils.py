@@ -16,7 +16,7 @@ FOLDER_BASE = '/home/ximenes/repos-dev/'
 
 
 def get_kmap_filename(width):
-    fname = f'./results/model/kickmap-ID-{width}-gap042mm-filter.txt'
+    fname = f'./results/model/kickmap-ID-{width}-gap04p2mm-filter.txt'
     return fname
 
 

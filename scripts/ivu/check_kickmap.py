@@ -62,6 +62,7 @@ def plot_kick_at_plane(gap, posy, kick_plane='X'):
     gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
 
     widths= [68, 63, 58, 53, 48, 43, ]
+    pxf_shift_list = list()
     for width, color in zip(widths, colors):
         fname = './results/model/kickmap-ID-{}-gap{}mm-filter.txt'.format(
             width, gap_str)
@@ -83,8 +84,9 @@ def plot_kick_at_plane(gap, posy, kick_plane='X'):
         pyf *= RESCALE_KICKS
 
         print(width)
-        print('pxf {:.3f}'.format(pxf_shift*RESCALE_KICKS*1e6))
-        print('pyf {:.3f}'.format(pyf_shift*RESCALE_KICKS*1e6))
+        print('pxf {:.3f}'.format(-1*pxf_shift*RESCALE_KICKS*1e6))
+        print('pyf {:.3f}'.format(-1*pyf_shift*RESCALE_KICKS*1e6))
+        pxf_shift_list.append(-1*pxf_shift*RESCALE_KICKS*1e6)
 
         pf, klabel = (pxf, 'px') if kick_plane.lower() == 'x' else (pyf, 'py')
         pfit = np.polyfit(rx0, pf, 21)
@@ -96,7 +98,7 @@ def plot_kick_at_plane(gap, posy, kick_plane='X'):
             1e3*rx0, 1e6*pf, '.-', color=color, label=label)
         plt.plot(
             1e3*rx0, 1e6*pf_fit, '-', color=color, alpha=0.6)
-
+    print(pxf_shift_list)
 
     for i in [1]:
         plt.figure(i)
@@ -152,5 +154,5 @@ def plot_kick_all_planes(gap, width):
 
 
 if __name__ == '__main__':
-    plot_kick_at_plane(gap=20, posy=0*1.5, kick_plane='y')
+    plot_kick_at_plane(gap=4.2, posy=0*1.5, kick_plane='y')
     # plot_kick_all_planes(gap=4.2, width=68)
