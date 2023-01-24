@@ -13,6 +13,9 @@ from idanalysis import IDKickMap
 from pyaccel import lattice as pyacc_lat
 
 
+RESCALE_KICKS = 15.3846
+
+
 def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
     """."""
     brho = 10.007
@@ -37,11 +40,11 @@ def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
     return rx0, ry0, pxf, pyf, rxf, ryf
 
 
-def create_model_ids(width, rk, shift_kicks):
+def create_model_ids(gap, width, rk, shift_kicks):
     """."""
     print('--- model with kickmap ---')
-    ids = utils.create_ids(width, rescale_kicks=rk, shift_kicks=shift_kicks)
-    model = pymodels.si.create_accelerator(ids=ids)
+    ids = utils.create_ids(gap, width, rescale_kicks=rk, shift_kicks=shift_kicks)
+    model = pymodels.si.create_accelerator(ids=None)
     twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
     print('length : {:.4f} m'.format(model.length))
     print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/np.pi))
@@ -50,26 +53,28 @@ def create_model_ids(width, rk, shift_kicks):
 
 
 if __name__ == '__main__':
-    width = 48
-    fname = utils.get_kmap_filename(width)
+    width = 43
+    gap = 20
+    fname = utils.get_kmap_filename(gap, width)
     id_kickmap = IDKickMap(fname)
+
+    plane_idx = list(id_kickmap.posy).index(0)
+
     rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(
-      idkmap=id_kickmap, plane_idx=4, plot_flag=False)
+      idkmap=id_kickmap, plane_idx=plane_idx, plot_flag=False)
 
+    posx_zero_idx = list(id_kickmap.posx).index(0)
+    pxf_shift = pxf[posx_zero_idx]
+    pyf_shift = pyf[posx_zero_idx]
+    pxf -= pxf_shift
+    pyf -= pyf_shift
+    pxf *= RESCALE_KICKS
+    pyf *= RESCALE_KICKS
 
-    rk = 15.3846
-    pxf *= rk
-    pyf *= rk
-
-    shiftkx = +1e-6*119
-    shiftky = 0.0
-    shift_kicks = [shiftkx, shiftky]
-    pxf += shiftkx
-    pyf += shiftky
-
+    shift_kicks = [-pxf_shift * RESCALE_KICKS, -pyf_shift * RESCALE_KICKS]
 
     # lattice with IDs
-    model, twiss, ids = create_model_ids(width, rk, shift_kicks)
+    model, twiss, ids = create_model_ids(gap, width, RESCALE_KICKS, shift_kicks)
 
     famdata = pymodels.si.get_family_data(model)
     idx = famdata['IVU18']['index']

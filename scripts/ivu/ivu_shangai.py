@@ -152,7 +152,32 @@ def get_field_vs_gap(ivu, gaps, rx, peak_idx, data):
 
 
 
-if __name__ == "__main__":
+def plot_together():
+
+    colors = ['b', 'g', 'y', 'C1', 'r', 'k']
+    widths = [68, 63, 58, 53, 48, 43]
+    for width, color in zip(widths, colors):
+        fpath = './results/model/'
+        by, roff = load_data(fpath, width=width)
+        gaps = np.array(list(by.keys()))
+        by = np.array((list(by.values())))
+        roff = np.array((list(roff.values())))
+        # fig, ax1 = plt.subplots()
+        plt.semilogy(gaps, 1e4*roff*by, '.-', color=color, label='{:d} mm'.format(width))
+        plt.ylabel('Delta field [G]')
+        plt.xlabel('Gap [mm]')
+        plt.xlim(4, 20)
+        # plt.ylim(1e-6, 1e-2)
+        plt.legend()
+        plt.title('Absolute Field Rolloff @ x=6mm'.format(width))
+        plt.tight_layout()
+        # fpath = './results/'
+        # fig_path = fpath + 'width_{}/field_and_roff_width{}'.format(width, width)
+        # plt.savefig(fig_path, dpi=300)
+    plt.show()
+
+
+def plot_rolloff_field():
 
     gaps = np.linspace(1, 20, 20)
     rx = np.linspace(-40, 40, 4*81)
@@ -169,12 +194,12 @@ if __name__ == "__main__":
         fig, ax1 = plt.subplots()
         ax2 = ax1.twinx()
         ax1.plot(gaps, by, label='Field amplitude')
-        ax2.plot(gaps, roff, label='Field Roll-off at 6mm', color='C1')
-        ax2.set_ylabel('Roll off')
+        ax2.plot(gaps, 100*roff, label='Field Roll-off at 6mm', color='C1')
+        ax2.set_ylabel('Roll off [%]')
         ax1.set_ylabel('Field [T]')
-        ax2.grid(visible=True, axis='both')
-        ax2.legend()
-        ax1.legend()
+        # ax2.grid(visible=True, axis='both')
+        ax2.legend(loc='upper right')
+        ax1.legend(loc='upper left')
         ax1.set_xlabel('Gap [mm]')
         ax1.set_ylim(0, 1.5)
         plt.xlim(4, 20)
@@ -183,3 +208,6 @@ if __name__ == "__main__":
         fpath = './results/'
         fig_path = fpath + 'width_{}/field_and_roff_width{}'.format(width, width)
         plt.savefig(fig_path, dpi=300)
+
+if __name__ == "__main__":
+    plot_together()

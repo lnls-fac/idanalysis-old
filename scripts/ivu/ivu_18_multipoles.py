@@ -197,11 +197,12 @@ def plot_field_roll_off(data, widths, rx, filter='off'):
         if filter == 'on':
             rx = data['rx_avg'][width]
         roff = data['roll_off'][width]
-        label = "Roll-off at x=6 mm: {:.4f}, width {}".format(roff, width)
+        label = "width {}, {:.4f} %".format(width, 100*roff)
         print(label)
         plt.plot(rx, by, label=label, color=colors[i])
     plt.xlabel('x [mm]')
     plt.ylabel('By [T]')
+    plt.title('Field rolloff at x = 6 mm for Gap 4.2 mm')
     plt.legend()
     plt.grid()
     plt.show()
@@ -303,6 +304,7 @@ def run_generate_data(fpath, widths, rx, rz):
 
 def run_plot_data(fpath, widths, rx, rz):
     data = load_pickle(fpath + 'rk_traj_data_filter_opt_all.pickle')
+    # data = load_pickle(fpath + 'rk_traj_data_filter_opt_all_gap200.pickle')
     plot_rk_traj(widths, data)
     plot_field_roll_off(data=data, widths=widths, rx=rx, filter='on')
     plot_field_on_axis(data, widths, rz)
@@ -311,8 +313,7 @@ def run_plot_data(fpath, widths, rx, rz):
 if __name__ == "__main__":
 
     fpath = './results/model/'
-    # widths = ['32', '35', '38', '41', '44', '47']
-    widths = ['43', '48', '53', '58', '63', '68']
+    widths = ['68', '63', '58', '53', '48', '43']
     # widths = ['68']
     rx = np.linspace(-40, 40, 4*81)
     rz = np.linspace(-100, 100, 200)

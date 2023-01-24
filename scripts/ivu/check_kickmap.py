@@ -58,8 +58,10 @@ def find_fit(x, p):
 def plot_kick_at_plane(gap, posy, kick_plane='X'):
     """."""
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
-
     gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
+    posy_str = '{:05.1f}'.format(posy).replace('.', 'p')
+    fname_fig = 'kick{}-gap{}mm-posy{}.png'.format(
+        kick_plane, gap_str, posy_str)
 
     widths= [68, 63, 58, 53, 48, 43, ]
     pxf_shift_list = list()
@@ -83,14 +85,16 @@ def plot_kick_at_plane(gap, posy, kick_plane='X'):
         pxf *= RESCALE_KICKS
         pyf *= RESCALE_KICKS
 
-        print(width)
-        print('pxf {:.3f}'.format(-1*pxf_shift*RESCALE_KICKS*1e6))
-        print('pyf {:.3f}'.format(-1*pyf_shift*RESCALE_KICKS*1e6))
+        # print(width)
+        # print('pxf {:.3f}'.format(-1*pxf_shift*RESCALE_KICKS*1e6))
+        # print('pyf {:.3f}'.format(-1*pyf_shift*RESCALE_KICKS*1e6))
         pxf_shift_list.append(-1*pxf_shift*RESCALE_KICKS*1e6)
 
         pf, klabel = (pxf, 'px') if kick_plane.lower() == 'x' else (pyf, 'py')
-        pfit = np.polyfit(rx0, pf, 21)
+        pfit = np.polyfit(rx0, pf, 5)
         pf_fit = np.polyval(pfit, rx0)
+
+        print(f'{width} {pfit[-3]:+7.4f}')
 
         label = 'width = {} mm'.format(width)
         plt.figure(1)
@@ -98,7 +102,7 @@ def plot_kick_at_plane(gap, posy, kick_plane='X'):
             1e3*rx0, 1e6*pf, '.-', color=color, label=label)
         plt.plot(
             1e3*rx0, 1e6*pf_fit, '-', color=color, alpha=0.6)
-    print(pxf_shift_list)
+    # print(pxf_shift_list)
 
     for i in [1]:
         plt.figure(i)
@@ -109,9 +113,8 @@ def plot_kick_at_plane(gap, posy, kick_plane='X'):
         plt.legend()
         plt.grid()
         plt.tight_layout()
-        plt.savefig(
-            './results/model/kickmap-all-widths-gap-{}.png'.format(gap),
-            dpi=300)
+        plt.savefig(fname_fig, dpi=300)
+
     plt.show()
 
 
@@ -154,5 +157,13 @@ def plot_kick_all_planes(gap, width):
 
 
 if __name__ == '__main__':
+    # plot_kick_at_plane(gap=4.2, posy=0*1.5, kick_plane='x')
+    # plot_kick_at_plane(gap=4.2, posy=1*1.5, kick_plane='x')
+    # plot_kick_at_plane(gap=20, posy=0*1.5, kick_plane='x')
+    # plot_kick_at_plane(gap=20, posy=1*1.5, kick_plane='x')
+
     plot_kick_at_plane(gap=4.2, posy=0*1.5, kick_plane='y')
+    # plot_kick_at_plane(gap=4.2, posy=1*1.5, kick_plane='y')
+    plot_kick_at_plane(gap=20, posy=0*1.5, kick_plane='y')
+    # plot_kick_at_plane(gap=20, posy=1*1.5, kick_plane='y')
     # plot_kick_all_planes(gap=4.2, width=68)

@@ -15,20 +15,21 @@ DEF_RK_S_STEP = 2  # [mm] seems converged for the measurement fieldmap grids
 FOLDER_BASE = '/home/ximenes/repos-dev/'
 
 
-def get_kmap_filename(width):
-    fname = f'./results/model/kickmap-ID-{width}-gap04p2mm-filter.txt'
+def get_kmap_filename(gap, width):
+    gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
+    fname = f'./results/model/kickmap-ID-{width}-gap{gap_str}mm-filter.txt'
     return fname
 
 
 def create_ids(
-        width, nr_steps=None, rescale_kicks=15.3846,
+        gap, width, nr_steps=None, rescale_kicks=15.3846,
         rescale_length=15.3846, shift_kicks=[0.0, 0.0]):
     # create IDs
     nr_steps = nr_steps or 40
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
     rescale_length = \
         rescale_length if rescale_length is not None else 1
-    fname = get_kmap_filename(width)
+    fname = get_kmap_filename(gap=gap, width=width)
 
     idkmap = IDKickMap(kmap_fname=fname)
     kickx_up = idkmap.kickx_upstream  # [T².m²]
