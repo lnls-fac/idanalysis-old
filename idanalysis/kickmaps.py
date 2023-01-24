@@ -274,8 +274,15 @@ class IDKickMap:
             pyf = _np.polyval(opt, posx)
             yfit = _np.polyfit(self.posx, self.fposy[i, :], order)
             yf = _np.polyval(yfit, posx)
-            kicky[i, :] = pxf
+            kicky[i, :] = pyf
             fposy[i, :] = yf
+        #     _plt.plot(1e3*self.posx, 1e6*self.kicky[i, :],
+        #               '.-', label=label)
+        #     _plt.plot(1e3*posx, 1e6*kicky[i, :])
+        # _plt.xlabel('x pos [mm]')
+        # _plt.ylabel('kicks [Tm²]')
+        # _plt.legend()
+        # _plt.show()
 
         self.kickx = kickx
         self.fposx = fposx
