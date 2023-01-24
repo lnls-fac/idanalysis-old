@@ -51,32 +51,34 @@ def find_fit(x, p):
 
 
 if __name__ == '__main__':
-    widths = [68]
-    width = 68
+
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
-    for i in [0, 1, 2]:
-        fname = './results/model/kickmap-ID-{}_filter.txt'.format(width)
+    widths= [43, 48, 53, 58, 63, 68]
+    # gaps = ['042', '045', '050', '075', '100', '200']
+    for i in [1]:
+        gap = '042'
+        width = 48
+        fname = './results/model/kickmap-ID-{}-gap{}mm-filter.txt'.format(
+            width, gap)
+        idx = 4
         id_kickmap = IDKickMap(fname)
 
         rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(
-        idkmap = id_kickmap, plane_idx=i, plot_flag=False)
+        idkmap = id_kickmap, plane_idx=idx, plot_flag=False)
 
         rk = 15.3846
         pxf *= rk
         pyf *= rk
 
-        shiftkx = 1e-6*16.825*1
+        shiftkx = +1e-6*119
         shiftky = 0.0
         shift_kicks = [shiftkx, shiftky]
         pxf += shiftkx
         pyf += shiftky
         pfit = np.polyfit(rx0, pxf, 21)
         pxf_fit = np.polyval(pfit, rx0)
-        print(pfit[::-1])
 
-        labelx = 'Kick x - width {}'.format(width)
-        labely = 'Kick y - width {}'.format(width)
-        label = 'y idx = {}'.format(i)
+        label = 'width = {} mm'.format(width)
         plt.figure(1)
         plt.plot(
             1e3*rx0, 1e6*pxf, '.-', color=colors[i], label=label)
@@ -86,10 +88,12 @@ if __name__ == '__main__':
 
     for i in [1]:
         plt.figure(i)
-        # plt.ylim(-0.5, 0.5)
+        # plt.ylim(-175, 75)
         plt.xlabel('x0 [mm]')
         plt.ylabel('final p [urad]')
-        plt.title('Kicks')
+        plt.title('Kicks for gap 4.5mm')
         plt.legend()
         plt.grid()
+    # plt.savefig(
+    #     './results/model/kickmap-all-widths-gap-{}.png'.format(gap), dpi=300)
     plt.show()

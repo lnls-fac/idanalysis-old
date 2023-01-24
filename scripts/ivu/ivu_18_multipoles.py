@@ -100,13 +100,13 @@ def generate_kickmap(posx, posy, width, radia_model):
                                         # plot_flag=False)
     print(idkickmap._radia_model_config)
     idkickmap.fmap_calc_kickmap(posx=posx, posy=posy)
-    fname = './results/model/kickmap-ID-{}-gap042mm.txt'.format(width)
+    fname = './results/model/kickmap-ID-{}-gap150mm.txt'.format(width)
     idkickmap.save_kickmap_file(kickmap_filename=fname)
 
 
 def run_kickmap(width):
     """."""
-    x = np.arange(-12, +12, 1) / 1000  # [m]
+    x = np.arange(-12, +13, 1) / 1000  # [m]
     y = np.linspace(-2, +2, 9) / 1000  # [m]
     ivu = generate_model(width)
     generate_kickmap(posx=x, posy=y, width=width, radia_model=ivu)
@@ -297,12 +297,12 @@ def run_generate_data(fpath, widths, rx, rz):
         models=models, widths=widths, rx=rx,
         peak_idx=0, data=data, filter='on')
     data = get_field_on_axis(models=models, widths=widths, rz=rz, data=data)
-    save_pickle(data, fpath + 'rk_traj_data_filter_opt_all.pickle',
+    save_pickle(data, fpath + 'rk_traj_data_filter_opt_all_gap042.pickle',
                 overwrite=True)
 
 
 def run_plot_data(fpath, widths, rx, rz):
-    data = load_pickle(fpath + 'rk_traj_data_filter_opt_all.pickle')
+    data = load_pickle(fpath + 'rk_traj_data_filter_opt_all_gap200.pickle')
     plot_rk_traj(widths, data)
     plot_field_roll_off(data=data, widths=widths, rx=rx, filter='on')
     plot_field_on_axis(data, widths, rz)
@@ -317,7 +317,7 @@ if __name__ == "__main__":
     rx = np.linspace(-40, 40, 4*81)
     rz = np.linspace(-100, 100, 200)
     # run_generate_data(fpath, widths, rx, rz)
-    # run_plot_data(fpath, widths, rx, rz)
-    for width_s in widths:
-        width = int(width_s)
-        run_kickmap(width)
+    run_plot_data(fpath, widths, rx, rz)
+    # for width_s in widths:
+        # width = int(width_s)
+        # run_kickmap(width)

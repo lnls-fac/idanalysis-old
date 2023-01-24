@@ -50,18 +50,18 @@ def create_model_ids(width, rk, shift_kicks):
 
 
 if __name__ == '__main__':
-    width = 68
+    width = 48
     fname = utils.get_kmap_filename(width)
     id_kickmap = IDKickMap(fname)
     rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(
-      idkmap=id_kickmap, plane_idx=2, plot_flag=False)
+      idkmap=id_kickmap, plane_idx=4, plot_flag=False)
 
 
     rk = 15.3846
     pxf *= rk
     pyf *= rk
 
-    shiftkx = 1e-6*16.825
+    shiftkx = +1e-6*119
     shiftky = 0.0
     shift_kicks = [shiftkx, shiftky]
     pxf += shiftkx
@@ -85,7 +85,6 @@ if __name__ == '__main__':
     pyf_list = []
     xf_list = []
     yf_list = []
-
     inds = pyacc_lat.find_indices(model, 'fam_name', 'IVU18')
     model = pyacc_lat.shift(model, start=idx_begin)
     for x0 in rx0:
