@@ -18,7 +18,7 @@ class IDKickMap:
     DEF_BEAM_ENERGY = 3  # [GeV]
     DEF_RK_S_STEP = 0.2  # [mm]
 
-    def __init__(self, kmap_fname=None, author=None):
+    def __init__(self, kmap_fname=None, author=None, fix_on_axis=False):
         """."""
         self._kmap_fname = kmap_fname
         self.fmap_idlen = None  # [m]
@@ -32,6 +32,7 @@ class IDKickMap:
         self.period_len = None  # [mm]
         self._fmap_config = None
         self.author = author or IDKickMap.DEF_AUTHOR
+        self.fix_on_axis = fix_on_axis
         self.kickx_upstream = None
         self.kicky_upstream = None
         self.kickx_downstream = None
@@ -518,19 +519,48 @@ class IDKickMap:
         self.kickx_downstream = info['kickx_downstream']
         self.kicky_downstream = info['kicky_downstream']
 
+        if self.fix_on_axis:
+            # find indices of central line
+            try:
+                indx = list(self.posx).index(0)
+                indy = list(self.posy).index(0)
+            except ValueError:
+                raise ValueError('Kickmap does not have central transverse line!')
+            # fix kicks on axis
+            kickx0 = self.kickx[indy][indx]
+            kicky0 = self.kicky[indy][indx]
+            self.kickx -= kickx0
+            self.kicky -= kicky0
+            self.kickx_upstream = 0
+            self.kicky_upstream = 0
+            self.kickx_downstream = 0
+            self.kicky_downstream = 0
+        
     def __str__(self):
         """."""
         rst = ''
         # header
         rst += self.author
         if self.kickx_upstream is not None:
-            rst += '\n# Termination_kicks [T2m2]: {:+11.4e} {:+11.4e} {:+11.4e} {:+11.4e} '.format(
-                self.kickx_upstream, self.kicky_upstream,
-                self.kickx_downstream, self.kicky_downstream)
+            flag = True
+            flag &= self.kickx_upstream != 0
+            flag &= self.kickx_downstream != 0
+            flag &= self.kicky_upstream != 0
+            flag &= self.kicky_downstream != 0
+            if flag:
+                fmt = (
+                    '\n# Termination_kicks [T2m2]: '
+                    '{:+11.4e} {:+11.4e} {:+11.4e} {:+11.4e} '
+                    )
+                rst += fmt.format(
+                    self.kickx_upstream, self.kicky_upstream,
+                    self.kickx_downstream, self.kicky_downstream)
         else:
             rst += '\n# '
+
+        id_len = self.kmap_idlen or self.fmap_idlen
         rst += '\n# Total Length of Longitudinal Interval [m]'
-        rst += '\n{}'.format(self.kmap_idlen)
+        rst += '\n{}'.format(id_len)
         rst += '\n# Number of Horizontal Points'
         rst += '\n{}'.format(len(self.posx))
         rst += '\n# Number of Vertical Points'
@@ -607,7 +637,6 @@ class IDKickMap:
     @staticmethod
     def _load_kmap_info(kmap_fname):
         """."""
-
         kickx_up = kickx_down = 0
         kicky_up = kicky_down = 0
 

@@ -19,7 +19,7 @@ from idanalysis import optics as optics
 import utils
 
 
-def create_model_ids(width, rescale_kicks, shift_kicks):
+def create_model_ids(width, rescale_kicks):
     """."""
     print('--- model with kickmap ---')
     ids = utils.create_ids(width=width, rescale_kicks=rescale_kicks,
