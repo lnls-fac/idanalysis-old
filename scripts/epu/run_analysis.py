@@ -3,9 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from pyaccel import lattice as pyacc_lat
 from pyaccel import optics as pyacc_opt
-from pyaccel.optics import calc_touschek_energy_acceptance
 
 import utils
 import pyaccel
@@ -188,71 +186,6 @@ def plot_beta_beating(model, twiss0, twiss1, twiss2, twiss3, config_label):
     plt.close()
 
 
-def analysis_dynapt(model0, model_id, nrtheta=9, nrpts=9):
-    """."""
-    model0.vchamber_on = True
-    model_id.vchamber_on = True
-
-    model0.cavity_on = True
-    model_id.cavity_on = True
-
-    model0.radiation_on = True
-    model_id.radiation_on = True
-
-    x, y = optics.calc_dynapt_xy(
-        model0, nrturns=5000, nrtheta=nrtheta, print_flag=False)
-    xID, yID = optics.calc_dynapt_xy(
-        model_id, nrturns=5000, nrtheta=nrtheta, print_flag=False)
-
-    de, xe = optics.calc_dynapt_ex(
-        model0, nrturns=5000, nrpts=nrpts, print_flag=False)
-    deID, xeID = optics.calc_dynapt_ex(
-        model_id, nrturns=5000, nrpts=nrpts, print_flag=False)
-
-    plt.figure(1)
-    blue, red = (0.4, 0.4, 1), (1, 0.4, 0.4)
-    plt.plot(1e3*x, 1e3*y, color=blue, label='without ID')
-    plt.plot(1e3*xID, 1e3*yID, color=red, label='with ID')
-    plt.xlabel('x [mm]')
-    plt.ylabel('y [mm]')
-    plt.title('Dynamic Aperture XY')
-    plt.legend()
-    plt.grid()
-    plt.show()
-
-    plt.figure(2)
-    blue, red = (0.4, 0.4, 1), (1, 0.4, 0.4)
-    plt.plot(1e2*de, 1e3*xe, color=blue, label='without ID')
-    plt.plot(1e2*deID, 1e3*xeID, color=red, label='with ID')
-    plt.xlabel('de [%]')
-    plt.ylabel('x [mm]')
-    plt.title('Dynamic Aperture')
-    plt.grid()
-    plt.legend()
-    plt.show()
-
-
-def analysis_energy_acceptance(model0, model_id, spos=None):
-    """."""
-    accep_neg, accep_pos = calc_touschek_energy_acceptance(
-        accelerator=model0, check_tune=True)
-    accep_neg_id, accep_pos_id = calc_touschek_energy_acceptance(
-        accelerator=model_id, check_tune=True)
-
-    plt.figure(3)
-    blue, red = (0.4, 0.4, 1), (1, 0.4, 0.4)
-    plt.plot(spos, accep_neg, color=blue, label='Without ID')
-    plt.plot(spos, accep_pos, color=blue)
-    plt.plot(spos, accep_neg_id, color=red, label='With ID')
-    plt.plot(spos, accep_pos_id, color=red)
-    plt.title('Energy acceptance')
-    plt.ylabel('de [%]')
-    plt.xlabel('s [m]')
-    plt.grid()
-    plt.legend()
-    plt.show()
-
-
 def analysis(plot_flag=True):
     """."""
     # select where EPU will be installed
@@ -265,8 +198,8 @@ def analysis(plot_flag=True):
     twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
 
     # create model with id
-    # idconfig = get_idconfig(phase, gap)
-    idconfig = 'Gap 36.0 mm model'
+    idconfig = utils.get_idconfig(phase, gap)
+
     model1, knobs, locs_beta = create_model_ids()
 
     print('local quadrupole fams: ', knobs)
@@ -286,7 +219,7 @@ def analysis(plot_flag=True):
         model0, model1, 'EPU50', correction_plane='both', plot=False)
 
     orb_results = orbcorr.correct_orbit_fb(
-        model0, model1, 'EPU50', corr_system='FOFB')
+        model0, model1, 'EPU50', corr_system='SOFB')
 
     # calculate beta beating and tune delta tunes
     twiss1 = analysis_uncorrected_perturbation(
@@ -319,8 +252,7 @@ def analysis(plot_flag=True):
     plot_beta_beating(
         model0, twiss0, twiss1, twiss2, twiss3, idconfig)
 
-    # analysis_dynapt(model0, model3)
-    # analysis_energy_acceptance(model0, model3, twiss0.spos)
+    return model1
 
 
 if __name__ == '__main__':
