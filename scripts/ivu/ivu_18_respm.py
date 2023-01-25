@@ -124,7 +124,6 @@ def calc_rk_respm(width, rk_s_step):
     respm[3, 0] = (pyf_p - pyf_n)/delta_p
     b1t += delta_p/2
 
-
     # calc block 2 thickness response
     b2t += delta_p/2  # positive variation
     ivu, traj, rxf_p, ryf_p, pxf_p, pyf_p = \
@@ -253,6 +252,7 @@ def load_data(fpath, width, fname):
     data['results'] = results
     save_pickle(data, fpath + fname,
                 overwrite=True)
+
 
 if __name__ == "__main__":
 

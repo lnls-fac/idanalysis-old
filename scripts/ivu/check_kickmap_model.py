@@ -76,55 +76,41 @@ if __name__ == '__main__':
     # lattice with IDs
     model, twiss, ids = create_model_ids(
         gap, width, RESCALE_KICKS, shift_kicks)
-
-
     famdata = pymodels.si.get_family_data(model)
-    idx = famdata['IVU18']['index']
 
+    # shift model
+    idx = famdata['IVU18']['index']
     idx_end = idx[0][-1]
     idx_begin = idx[0][0]
     idx_dif = idx_end - idx_begin
-    print(idx_dif)
 
-    y0 = 0
-
-    pxf_list = []
-    pyf_list = []
-    xf_list = []
-    yf_list = []
+    pxf_list, pyf_list = list(), list()
+    xf_list, yf_list = list(), list()
     inds = pyacc_lat.find_indices(model, 'fam_name', 'IVU18')
     model = pyacc_lat.shift(model, start=idx_begin)
+    y0 = 0
     for x0 in rx0:
         coord_ini = np.array([x0, 0, y0, 0, 0, 0])
-
         coord_fin, *_ = pyaccel.tracking.line_pass(
             model, coord_ini, indices='open')
-        x = coord_fin[0, :]
-        px = coord_fin[1, :]
-        y = coord_fin[2, :]
-        py = coord_fin[3, :]
 
-        xf_t = x[idx_dif+1]
-        yf_t = y[idx_dif+1]
-        pxf_t = px[idx_dif+1]
-        pyf_t = py[idx_dif+1]
+        x, px = coord_fin[0, :], coord_fin[1, :]
+        y, py = coord_fin[2, :], coord_fin[3, :]
+        xf_trk, pxf_trk = x[idx_dif+1], px[idx_dif+1]
+        yf_trk, pyf_trk = y[idx_dif+1], py[idx_dif+1]
 
+        xf_list.append(xf_trk)
+        pxf_list.append(pxf_trk)
+        yf_list.append(yf_trk)
+        pyf_list.append(pyf_trk)
 
-        xf_list.append(xf_t)
-        yf_list.append(yf_t)
-
-        pxf_list.append(pxf_t)
-        pyf_list.append(pyf_t)
-
-    xf_array = np.array(xf_list)
-    yf_array = np.array(yf_list)
-    pxf_array = np.array(pxf_list)
-    pyf_array = np.array(pyf_list)
+    xf_trk, pxf_trk = np.array(xf_list), np.array(pxf_list)
+    yf_trk, pyf_trk = np.array(yf_list), np.array(pyf_list)
 
     plt.plot(1e3*rx0, 1e6*pxf, '.-', color='C1', label='Kick X  kickmap')
     plt.plot(1e3*rx0, 1e6*pyf, '.-', color='b', label='Kick Y  kickmap')
-    plt.plot(1e3*rx0, 1e6*pxf_array, 'o', color='C1', label='Kick X  tracking')
-    plt.plot(1e3*rx0, 1e6*pyf_array, 'o', color='b', label='Kick Y  tracking')
+    plt.plot(1e3*rx0, 1e6*pxf_trk, 'o', color='C1', label='Kick X  tracking')
+    plt.plot(1e3*rx0, 1e6*pyf_trk, 'o', color='b', label='Kick Y  tracking')
     plt.xlabel('x0 [mm]')
     plt.ylabel('final px [urad]')
     plt.title('Kicks')
@@ -134,8 +120,8 @@ if __name__ == '__main__':
 
     # plt.plot(1e3*rx0, 1e3*rxf, '.-', color='C1', label='rx  kickmap')
     # plt.plot(1e3*rx0, 1e3*ryf, '.-', color='b', label='ry  kickmap')
-    # plt.plot(1e3*rx0, 1e3*xf_array, 'o', color='C1', label='rx  tracking')
-    # plt.plot(1e3*rx0, 1e3*yf_array, 'o', color='b', label='ry  tracking')
+    # plt.plot(1e3*rx0, 1e3*xf_trk, 'o', color='C1', label='rx  tracking')
+    # plt.plot(1e3*rx0, 1e3*yf_trk, 'o', color='b', label='ry  tracking')
     # plt.xlabel('x0 [mm]')
     # plt.ylabel('final r [mm]')
     # plt.title('Kicks')

@@ -96,8 +96,6 @@ def generate_kickmap(posx, posy, width, radia_model):
     idkickmap._radia_model_config.traj_init_px = 0
     idkickmap._radia_model_config.traj_init_py = 0
     idkickmap.traj_init_rz = -100
-    # idkickmap.calc_id_termination_kicks(period_len=18.5, kmap_idlen=0.130,
-                                        # plot_flag=False)
     print(idkickmap._radia_model_config)
     idkickmap.fmap_calc_kickmap(posx=posx, posy=posy)
     fname = './results/model/kickmap-ID-{}-gap042mm.txt'.format(width)
@@ -303,7 +301,7 @@ def run_generate_data(fpath, widths, rx, rz):
 
 
 def run_plot_data(fpath, widths, rx, rz):
-    data = load_pickle(fpath + 'rk_traj_data_filter_opt_all.pickle')
+    data = load_pickle(fpath + 'rk_traj_data_filter_opt_all_gap04p2.pickle')
     # data = load_pickle(fpath + 'rk_traj_data_filter_opt_all_gap200.pickle')
     plot_rk_traj(widths, data)
     plot_field_roll_off(data=data, widths=widths, rx=rx, filter='on')
@@ -313,8 +311,7 @@ def run_plot_data(fpath, widths, rx, rz):
 if __name__ == "__main__":
 
     fpath = './results/model/'
-    # widths = ['68', '63', '58', '53', '48', '43']
-    widths = ['55']
+    widths = ['68', '63', '58', '53', '48', '43']
     rx = np.linspace(-40, 40, 4*81)
     rz = np.linspace(-100, 100, 200)
     # run_generate_data(fpath, widths, rx, rz)

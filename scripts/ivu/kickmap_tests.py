@@ -11,8 +11,6 @@ from mathphys.functions import save_pickle, load_pickle
 from idanalysis import IDKickMap
 
 
-
-
 def generate_kickmap(posx, width):
 
     fname = './results/model/kickmap-ID-{}-gap150mm.txt'.format(width)

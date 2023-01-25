@@ -63,7 +63,7 @@ def plot_kick_at_plane(gap, posy, kick_plane='X'):
     fname_fig = 'kick{}-gap{}mm-posy{}.png'.format(
         kick_plane, gap_str, posy_str)
 
-    widths= [68, 63, 58, 53, 48, 43, ]
+    widths = [68, 63, 58, 53, 48, 43]
     pxf_shift_list = list()
     for width, color in zip(widths, colors):
         fname = './results/model/kickmap-ID-{}-gap{}mm-filter.txt'.format(
@@ -109,7 +109,8 @@ def plot_kick_at_plane(gap, posy, kick_plane='X'):
         # plt.ylim(-175, 75)
         plt.xlabel('x0 [mm]')
         plt.ylabel('final {} [urad]'.format(klabel))
-        plt.title('Kick{} for gap {} mm, at posy {:+.3f} mm'.format(kick_plane.upper(), gap, posy))
+        plt.title('Kick{} for gap {} mm, at posy {:+.3f} mm'.format(
+            kick_plane.upper(), gap, posy))
         plt.legend()
         plt.grid()
         plt.tight_layout()
