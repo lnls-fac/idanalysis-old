@@ -260,10 +260,10 @@ if __name__ == "__main__":
     fpath = './results/model/'
     step = 2  # [mm]
     width = 48  # [mm]
-    widths = [20]
+    widths = [55]
     for width in widths:
         fname = 'respm_termination_{}.pickle'.format(width)
-        # generate_data(fpath, step, width, fname)
+        generate_data(fpath, step, width, fname)
         load_data(fpath, width, fname)
-        # data = load_pickle(fpath + fname)
-        # print(data['results'])
+        data = load_pickle(fpath + fname)
+        print(data['results'])

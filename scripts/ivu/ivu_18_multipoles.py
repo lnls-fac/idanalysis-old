@@ -100,7 +100,7 @@ def generate_kickmap(posx, posy, width, radia_model):
                                         # plot_flag=False)
     print(idkickmap._radia_model_config)
     idkickmap.fmap_calc_kickmap(posx=posx, posy=posy)
-    fname = './results/model/kickmap-ID-{}-gap150mm.txt'.format(width)
+    fname = './results/model/kickmap-ID-{}-gap042mm.txt'.format(width)
     idkickmap.save_kickmap_file(kickmap_filename=fname)
 
 
@@ -313,12 +313,12 @@ def run_plot_data(fpath, widths, rx, rz):
 if __name__ == "__main__":
 
     fpath = './results/model/'
-    widths = ['68', '63', '58', '53', '48', '43']
-    # widths = ['68']
+    # widths = ['68', '63', '58', '53', '48', '43']
+    widths = ['55']
     rx = np.linspace(-40, 40, 4*81)
     rz = np.linspace(-100, 100, 200)
     # run_generate_data(fpath, widths, rx, rz)
-    run_plot_data(fpath, widths, rx, rz)
-    # for width_s in widths:
-        # width = int(width_s)
-        # run_kickmap(width)
+    # run_plot_data(fpath, widths, rx, rz)
+    for width_s in widths:
+        width = int(width_s)
+        run_kickmap(width)
