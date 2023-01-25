@@ -12,9 +12,6 @@ import utils
 from pyaccel import lattice as pyacc_lat
 
 
-RESCALE_KICKS = 15.3846
-
-
 def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
     """."""
     brho = 10.007
@@ -68,14 +65,15 @@ if __name__ == '__main__':
     pyf_shift = pyf[posx_zero_idx]
     pxf -= pxf_shift
     pyf -= pyf_shift
-    pxf *= RESCALE_KICKS
-    pyf *= RESCALE_KICKS
+    pxf *= utils.RESCALE_KICKS
+    pyf *= utils.RESCALE_KICKS
 
-    shift_kicks = [-pxf_shift * RESCALE_KICKS, -pyf_shift * RESCALE_KICKS]
+    shift_kicks = [
+        -pxf_shift * utils.RESCALE_KICKS, -pyf_shift * utils.RESCALE_KICKS]
 
     # lattice with IDs
     model, twiss, ids = create_model_ids(
-        gap, width, RESCALE_KICKS, shift_kicks)
+        gap, width, utils.RESCALE_KICKS, shift_kicks)
     famdata = pymodels.si.get_family_data(model)
 
     # shift model

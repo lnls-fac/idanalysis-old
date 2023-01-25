@@ -5,16 +5,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-import pymodels
-import pyaccel
-
 from idanalysis import IDKickMap
-from pyaccel import lattice as pyacc_lat
-
-from scipy.optimize import curve_fit
 
 
-RESCALE_KICKS = 15.3846
+import utils
 
 
 def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
@@ -49,12 +43,6 @@ def fit_function(x, g, s, o, d, e, q, w, r, t):
     return f
 
 
-def find_fit(x, p):
-    """."""
-    opt = curve_fit(fit_function, x, p)[0]
-    return opt
-
-
 def plot_kick_at_plane(gap, posy, kick_plane='X'):
     """."""
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
@@ -82,13 +70,13 @@ def plot_kick_at_plane(gap, posy, kick_plane='X'):
             idkmap=id_kickmap, plane_idx=plane_idx, plot_flag=False)
         pxf -= pxf_shift
         pyf -= pyf_shift
-        pxf *= RESCALE_KICKS
-        pyf *= RESCALE_KICKS
+        pxf *= utils.RESCALE_KICKS
+        pyf *= utils.RESCALE_KICKS
 
         print(width)
-        print('pxf {:.3f}'.format(-1*pxf_shift*RESCALE_KICKS*1e6))
-        print('pyf {:.3f}'.format(-1*pyf_shift*RESCALE_KICKS*1e6))
-        pxf_shift_list.append(-1*pxf_shift*RESCALE_KICKS*1e6)
+        print('pxf {:.3f}'.format(-1 * pxf_shift * utils.RESCALE_KICKS* 1e6))
+        print('pyf {:.3f}'.format(-1 * pyf_shift * utils.RESCALE_KICKS* 1e6))
+        pxf_shift_list.append(-1 * pxf_shift * utils.RESCALE_KICKS * 1e6)
 
         pf, klabel = (pxf, 'px') if kick_plane.lower() == 'x' else (pyf, 'py')
         pfit = np.polyfit(rx0, pf, 5)
@@ -139,8 +127,8 @@ def plot_kick_all_planes(gap, width):
             idkmap=id_kickmap, plane_idx=plane_idx, plot_flag=False)
         pxf -= pxf_shift
         pyf -= pyf_shift
-        pxf *= RESCALE_KICKS
-        pyf *= RESCALE_KICKS
+        pxf *= utils.RESCALE_KICKS
+        pyf *= utils.RESCALE_KICKS
 
         pfit = np.polyfit(rx0, pxf, 21)
         pfit = np.polyfit(rx0, pyf, 21)

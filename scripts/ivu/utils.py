@@ -10,9 +10,11 @@ from idanalysis import IDKickMap
 ID_PERIOD = 18.5  # [mm]
 ID_KMAP_LEN = 0.116  # [m]
 DEF_RK_S_STEP = 2  # [mm] seems converged for the measurement fieldmap grids
+RESCALE_KICKS = 15.3846  # Radia simulations have fewer periods
 
-# FOLDER_BASE = '/home/gabriel/repos-dev/'
-FOLDER_BASE = '/home/ximenes/repos-dev/'
+
+FOLDER_BASE = '/home/gabriel/repos-dev/'
+# FOLDER_BASE = '/home/ximenes/repos-dev/'
 
 
 def get_kmap_filename(gap, width):
