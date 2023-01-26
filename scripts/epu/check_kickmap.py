@@ -21,10 +21,10 @@ def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
     kicky_end = idkmap.kicky_upstream + idkmap.kicky_downstream
     rx0 = idkmap.posx
     ry0 = idkmap.posy
-    rxf = idkmap.fposx[0, :]
-    ryf = idkmap.fposy[0, :]
-    pxf = (idkmap.kickx[0, :] + kickx_end) / brho**2
-    pyf = (idkmap.kicky[0, :] + kicky_end) / brho**2
+    rxf = idkmap.fposx[plane_idx, :]
+    ryf = idkmap.fposy[plane_idx, :]
+    pxf = (idkmap.kickx[plane_idx, :] + kickx_end) / brho**2
+    pyf = (idkmap.kicky[plane_idx, :] + kicky_end) / brho**2
     if plot_flag:
         plt.plot(1e3*rx0, 1e6*pxf, '.-', label='Kick X', color='C1')
         plt.plot(1e3*rx0, 1e6*pyf, '.-', label='Kick Y', color='b')
@@ -41,7 +41,7 @@ def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
 def create_model_ids(phase, gap):
     """."""
     print('--- model with kickmap ---')
-    ids = utils.create_ids_test(rescale_kicks=1)
+    ids = utils.create_ids_model(phase, gap, rescale_kicks=1)
     model = pymodels.si.create_accelerator(ids=ids)
     twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
     print('length : {:.4f} m'.format(model.length))
@@ -51,11 +51,12 @@ def create_model_ids(phase, gap):
 
 
 if __name__ == '__main__':
-    fname = "results/kickmap-IDFAC01.txt"
     phase, gap = PHASES[2], GAPS[0]
+    fname = utils.create_kmap_filename(phase, gap)
+    fname = './results/model/kickmap-ID-p{}-g{}.txt'.format(phase, gap)
     id_kickmap = IDKickMap(fname)
     rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(
-      idkmap=id_kickmap, plane_idx=0, plot_flag=True)
+      idkmap=id_kickmap, plane_idx=2, plot_flag=True)
 
     # lattice with IDs
     model, twiss, ids = create_model_ids(phase, gap)
@@ -90,8 +91,6 @@ if __name__ == '__main__':
         pxf_t = px[idx_dif+1]
         pyf_t = py[idx_dif+1]
 
-        if x0 == 0:
-            print(pxf_t*1e6)
 
         # xf_list.append(xf_t)
         # yf_list.append(yf_t)

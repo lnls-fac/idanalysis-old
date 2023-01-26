@@ -13,7 +13,14 @@ import idanalysis
 idanalysis.FOLDER_BASE = '/home/gabriel/repos-dev/'
 
 from idanalysis.fmap import EPUOnAxisFieldMap as _EPUOnAxisFieldMap
+from idanalysis import IDKickMap
 
+from utils import FOLDER_BASE
+from utils import DATA_PATH
+from utils import ID_CONFIGS
+from utils import get_idconfig
+
+from run_rk_traj import PHASES, GAPS
 
 class RadiaModelCalibration:
     """."""
@@ -72,6 +79,46 @@ class RadiaModelCalibration:
         """Measured on-axis longitudinal field."""
         return self._bz_meas
 
+    @rz_model.setter
+    def rz_model(self, value):
+        """Longitudinal points where fitting is performed."""
+        self._rz_model = value
+
+    @bx_model.setter
+    def bx_model(self, value):
+        """Model horizontal field."""
+        self._bx_model = value
+
+    @by_model.setter
+    def by_model(self, value):
+        """Model vertical field."""
+        self._by_model = value
+
+    @bz_model.setter
+    def bz_model(self, value):
+        """Model longitudinal field."""
+        self._bz_model = value
+
+    @rz_meas.setter
+    def rz_meas(self, value):
+        """Longitudinal points where field is measured."""
+        self._rz_meas = value
+
+    @bx_meas.setter
+    def bx_meas(self, value):
+        """Measured on-axis horizontal field."""
+        self._bx_meas = value
+
+    @by_meas.setter
+    def by_meas(self, value):
+        """Measured on-axis vertical field."""
+        self._by_meas = value
+
+    @bz_meas.setter
+    def bz_meas(self, value):
+        """Measured on-axis longitudinal field."""
+        self._bz_meas = value
+
     def set_rz_model(self, nr_pts_period=9):
         """"""
         epu = self._epu
@@ -87,44 +134,55 @@ class RadiaModelCalibration:
         """Initialize model and measurement field arrays"""
         self.set_rz_model(nr_pts_period=nr_pts_period)
         field = self._epu.get_field(0, 0, self.rz_model)  # On-axis
-        self._by_model = field[:, 1]
+        self.bz_model = field[:, 2]
+        self.by_model = field[:, 1]
+        self.bx_model = field[:, 0]
         fmap = self._fmap
-        self._rz_meas = fmap.rz
-        self._bx_meas = fmap.bx[fmap.ry_zero][fmap.rx_zero][:]
-        self._by_meas = fmap.by[fmap.ry_zero][fmap.rx_zero][:]
-        self._bz_meas = fmap.bz[fmap.ry_zero][fmap.rx_zero][:]
+        self.rz_meas = fmap.rz
+        self.bx_meas = fmap.bx[fmap.ry_zero][fmap.rx_zero][:]
+        self.by_meas = fmap.by[fmap.ry_zero][fmap.rx_zero][:]
+        self.bz_meas = fmap.bz[fmap.ry_zero][fmap.rx_zero][:]
 
     def shiftscale_calc_residue(self, shift):
         """Calculate correction scale and residue for a given shift in data."""
-        if self.by_model is None:
+        if self.by_model is None and self.bx_model is None:
             raise ValueError('Field model not yet initialized!')
         by_meas_fit = _np.interp(
             self.rz_model, self.rz_meas + shift, self.by_meas)
-        bf1, bf2 = by_meas_fit, self.by_model
+        bx_meas_fit = _np.interp(
+            self.rz_model, self.rz_meas + shift, self.bx_meas)
+        bf1 = _np.concatenate((by_meas_fit, bx_meas_fit))
+        bf2 = _np.concatenate((self.by_model, self.bx_model))
         scale = _np.dot(bf1, bf2) / _np.dot(bf2, bf2)
         residue = _np.sum((bf1 - scale * bf2)**2)/len(self.rz_model)
-        return residue, scale, by_meas_fit
+        return residue, scale, by_meas_fit, bx_meas_fit
 
     def shiftscale_plot_fields(self, shift):
-        residue, scale, by_meas_fit = self.shiftscale_calc_residue(shift)
-        plt.plot(self.rz_model, by_meas_fit, label='meas.')
-        plt.plot(self.rz_model, scale * self.by_model, label='model')
+        results = self.shiftscale_calc_residue(shift)
+        residue, scale, by_meas_fit, bx_meas_fit = results
+        fig, axs = plt.subplots(2, sharex=True)
+        axs[0].plot(self.rz_model, by_meas_fit, label='meas.')
+        axs[0].plot(self.rz_model, scale * self.by_model, label='model')
+        axs[1].plot(self.rz_model, bx_meas_fit, label='meas.')
+        axs[1].plot(self.rz_model, scale * self.bx_model, label='model')
         sfmt = 'shift: {:.4f} mm, scale: {:.4f}, residue: {:.4f} T'
-        plt.title(sfmt.format(shift, scale, residue))
+        fig.suptitle(sfmt.format(shift, scale, residue))
+        axs[0].set(ylabel='By [T]')
+        axs[1].set(xlabel='rz [mm]', ylabel='Bx [T]')
         plt.xlim(-1600, 1600)
-        plt.xlabel('rz [mm]')
-        plt.ylabel('By [T]')
         plt.legend()
         plt.show()
         return by_meas_fit
 
-    def plot_fields(self,by_meas_fit=None):
-        #dif = self.by_meas - self.by_model
-        plt.plot(self.rz_model, by_meas_fit, label='meas')
-        plt.plot(self.rz_model, self.by_model, label='model')
+    def plot_fields(self):
+        fig, axs = plt.subplots(2, sharex=True)
+        axs[0].plot(self.rz_meas, self.by_meas, label='meas.')
+        axs[0].plot(self.rz_model, self.by_model, label='model')
+        axs[1].plot(self.rz_meas, self.bx_meas, label='meas.')
+        axs[1].plot(self.rz_model, self.bx_model, label='model')
+        axs[0].set(ylabel='By [T]')
+        axs[1].set(xlabel='rz [mm]', ylabel='Bx [T]')
         plt.xlim(-1600, 1600)
-        plt.xlabel('rz [mm]')
-        plt.ylabel('By [T]')
         plt.legend()
         plt.show()
 
@@ -134,6 +192,8 @@ class RadiaModelCalibration:
             mags_old = _np.array(cas.magnetization_list)
             mags_new = (scale*mags_old).tolist()
             cas.create_radia_object(magnetization_list=mags_new)
+        mag_dict = self._epu.magnetization_dict
+        self._epu.create_radia_object(magnetization_dict=mag_dict)
 
     def get_blocks_indices(self):
         nrblocks = self._epu.cassettes_ref['csd'].nr_blocks
@@ -165,7 +225,7 @@ class RadiaModelCalibration:
             mags_delta = []
             mags_delta_inv = []
             for mag_old in mags_old:
-                mag_delta = mag_step *2*(_np.random.random(3) -0.5)
+                mag_delta = mag_step *2*(_np.random.random(3) - 0.5)
                 mag_delta_inv = -1*mag_delta
                 mags_delta.append(mag_delta.tolist())
                 mags_delta_inv.append(mag_delta_inv.tolist())
@@ -228,7 +288,7 @@ class RadiaModelCalibration:
                 # cas.blocks[idx].create_radia_object(magnetization=mags_dif[cas.name][idx_mag])
         self._by_model -= field_dif
 
-    def simulated_annealing(self,initial_residue=None, by_meas_fit=None):
+    def simulated_annealing(self, initial_residue=None, by_meas_fit=None):
 
         obj_function_old = initial_residue
         for i in _np.arange(10*1500):
@@ -249,8 +309,24 @@ class RadiaModelCalibration:
         self.plot_fields(by_meas_fit=by_meas_fit)
 
 
+def get_fmap(phase, gap):
+    """."""
+    idconfig = get_idconfig(phase, gap)
+    MEAS_FILE = ID_CONFIGS[idconfig]
+    _, meas_id = MEAS_FILE.split('ID=')
+    meas_id = meas_id.replace('.dat', '')
+    idkickmap = IDKickMap()
+    fmap_fname = FOLDER_BASE + DATA_PATH + MEAS_FILE
+    idkickmap.fmap_fname = fmap_fname
+    fmap = idkickmap.fmap_config.fmap
+
+    return fmap
+
+
 def init_objects(phase, gap):
     """."""
+    fmap = get_fmap(phase, gap)
+    gap = float(gap)
     nr_periods = 54
     period_length = 50
     block_shape = [[[0.1, 0], [40, 0], [40, -40], [0.1, -40]]]
@@ -262,53 +338,66 @@ def init_objects(phase, gap):
     end_distances = start_distances[-2::-1] # Tirar último elemento e inverter
     epu = _AppleIISabia(
         gap=gap, nr_periods=nr_periods, period_length=period_length,
-        mr=1.25, block_shape=block_shape, block_subdivision=[[1, 1, 1]],
-        start_blocks_length=start_lengths, start_blocks_distance=start_distances,
-        end_blocks_length=end_lenghts, end_blocks_distance=end_distances)
-    # print(epu.cassettes_ref['csd'].blocks[0])
+        mr=1.25, block_shape=block_shape, block_subdivision=[[1, 1, 1]])#,
+        # start_blocks_length=start_lengths, start_blocks_distance=start_distances,
+        # end_blocks_length=end_lenghts, end_blocks_distance=end_distances)
 
-    # TODO: we must shift the EPU according to 'phase' before
-    # returning the model!
-
-    configs = {
-        (0, 22.0) : _EPUOnAxisFieldMap.CONFIGS.HP_G22P0,
-        (0, 25.7) : _EPUOnAxisFieldMap.CONFIGS.HP_G25P7,
-        (0, 29.3) : _EPUOnAxisFieldMap.CONFIGS.HP_G29P3,
-        (0, 40.9) : _EPUOnAxisFieldMap.CONFIGS.HP_G40P9,
-        (25,22.0) : _EPUOnAxisFieldMap.CONFIGS.VP_G22P0_P,
-    }
-    try:
-        config = configs[(phase, gap)]
-    except KeyError:
-        raise NotImplementedError
-    fmap = _EPUOnAxisFieldMap(folder=idanalysis.FOLDER_BASE, config=config)
     return epu, fmap
 
 
-if __name__ == "__main__":
+def generate_kickmap(posx, posy, phase, gap, radia_model):
 
-    # create objects and init fields
-    phase, gap = 0.0, 22.0  # [mm], [mm]
-    epu, fmap = init_objects(phase=0, gap=gap)
+    idkickmap = IDKickMap()
+    idkickmap.radia_model = radia_model
+    idkickmap.beam_energy = 3.0  # [GeV]
+    idkickmap.rk_s_step = 2  # [mm]
+    idkickmap._radia_model_config.traj_init_px = 0
+    idkickmap._radia_model_config.traj_init_py = 0
+    idkickmap.traj_init_rz = -1800
+    idkickmap.calc_id_termination_kicks(period_len=50, kmap_idlen=2.773)
+    print(idkickmap._radia_model_config)
+    idkickmap.fmap_calc_kickmap(posx=posx, posy=posy)
+    fname = './results/model/kickmap-ID-p{}-g{}.txt'.format(phase, gap)
+    idkickmap.save_kickmap_file(kickmap_filename=fname)
+
+
+def run_calibrated_kickmap(phase, gap):
+    """."""
+    posx = _np.linspace(-10, +10, 21) / 1000  # [m]
+    posy = _np.linspace(-6, +6, 5) / 1000  # [m]
+    phase0, gap0 = float(PHASES[2]), GAPS[-2]  # phase 0 mm and gap 32 mm
+
+    print('phase: {}  gap: {}'.format(phase, gap))
+    epu, fmap = init_objects(phase=phase, gap=gap)
     cm = RadiaModelCalibration(fmap, epu)
-    # cm.update_model_field(blocks_inds={'csd': [0, ]})
-    # raise ValueError
+    cm._epu.dp = float(phase)
     cm.init_fields()
+    cm.plot_fields()
 
     # search for best shift and calc scale
     shifts = _np.linspace(-0.25, 0.25, 31) * epu.period_length
     minshift, minscale, minresidue = shifts[0], 1.0, float('inf')
     for shift in shifts:
-        residue, scale, _ = cm.shiftscale_calc_residue(shift=shift)
-        print('shift: {:+08.4f} mm -> residue: {:07.5f} T'.format(shift, residue))
+        residue, scale, *_ = cm.shiftscale_calc_residue(shift=shift)
+        # print('shift: {:+08.4f} mm -> residue: {:07.5f} T'.format(
+        #     shift, residue))
         if residue < minresidue:
             minshift, minscale, minresidue = shift, scale, residue
 
     # plot best solution and calibrates model
-
-    cm.shiftscale_set(scale=minscale)
     by_meas_fit = cm.shiftscale_plot_fields(shift=minshift)
+    cm.shiftscale_set(scale=minscale)
 
-    cm._by_model = minscale*cm._by_model
-    cm.simulated_annealing(
-        initial_residue=minresidue*len(cm.rz_model), by_meas_fit=by_meas_fit)
+    # generate kickmap with calibrated model
+    # cm._epu.dg = float(gap) - float(gap0)
+    cm.init_fields()
+    cm.plot_fields()
+
+    # generate_kickmap(
+        # posx=posx, posy=posy, phase=phase, gap=gap, radia_model=epu)
+
+
+if __name__ == "__main__":
+    phase = PHASES[2]
+    gap = GAPS[0]
+    run_calibrated_kickmap(phase, gap)
