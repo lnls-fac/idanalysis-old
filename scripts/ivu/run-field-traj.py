@@ -156,18 +156,29 @@ def get_field_on_trajectory(models, data):
 
 def save_data(data):
     """."""
-    for key, value in data.items():
-        print(key)
+    value = data['ontraj_s']
+    for keys in list(value.keys()):
+        fdata = dict()
+        for info, value in data.items():
+            fdata[info] = value[keys]
+        width = keys[1]
+        gap_str = utils.get_gap_str(keys[0])
+        fname = utils.FOLDER_DATA + 'data/'
+        fname += 'field_data_gap{}_width{}'.format(gap_str, width)
+        save_pickle(fdata, fname, overwrite=True)
 
 
 
 
 
-def plot_field_on_axis(data, widths, rz):
+
+
+def plot_field_on_axis(data, widths):
     plt.figure(1)
     for width in widths:
         label = 'width {}'.format(width)
         by = data['by_z'][width]
+        rz = data['rz'][width]
         plt.plot(rz, by, label=label)
     plt.xlabel('z [mm]')
     plt.ylabel('By [T]')
@@ -176,13 +187,12 @@ def plot_field_on_axis(data, widths, rz):
     plt.show()
 
 
-def plot_field_roll_off(data, widths, rx, filter='off'):
+def plot_field_roll_off(data, widths):
     plt.figure(1)
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
     for i, width in enumerate(widths):
         by = data['by_x'][width]
-        if filter == 'on':
-            rx = data['rx_avg'][width]
+        rx = data['rx_avg'][width]
         roff = data['roll_off'][width]
         label = "width {}, {:.4f} %".format(width, 100*roff)
         print(label)
@@ -288,11 +298,11 @@ def run_generate_kickmap(models=None, gaps=None, widths=None, gridx=None, gridy=
 
 
 
-def run_plot_data(fpath, widths, rx, rz):
+def run_plot_data(gap, widths):
+
     data = load_pickle(fpath + 'rk_traj_data_filter_opt_all_gap04p2.pickle')
-    # data = load_pickle(fpath + 'rk_traj_data_filter_opt_all_gap200.pickle')
     plot_rk_traj(widths, data)
-    plot_field_roll_off(data=data, widths=widths, rx=rx, filter='on')
+    plot_field_roll_off(data=data, widths=widths)
     plot_field_on_axis(data, widths, rz)
 
 
