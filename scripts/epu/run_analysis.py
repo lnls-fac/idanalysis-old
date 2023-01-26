@@ -96,7 +96,7 @@ def analysis_uncorrected_perturbation(
     return twiss
 
 
-def plot_beta_beating(model, twiss0, twiss1, twiss2, twiss3, config_label):
+def plot_beta_beating(twiss0, twiss1, twiss2, twiss3, config_label):
     """."""
 
     figpath = 'results/phase-organized/{}/gap-{}/'.format(phase, gap)

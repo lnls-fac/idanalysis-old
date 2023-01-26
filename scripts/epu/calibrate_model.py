@@ -393,8 +393,8 @@ def run_calibrated_kickmap(phase, gap):
     cm.init_fields()
     cm.plot_fields()
 
-    generate_kickmap(
-        posx=posx, posy=posy, phase=phase, gap=gap, radia_model=epu)
+    # generate_kickmap(
+        # posx=posx, posy=posy, phase=phase, gap=gap, radia_model=epu)
 
 
 if __name__ == "__main__":
