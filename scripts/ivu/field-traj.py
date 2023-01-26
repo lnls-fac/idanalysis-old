@@ -8,51 +8,11 @@ from imaids.blocks import Block as Block
 from mathphys.functions import save_pickle, load_pickle
 from idanalysis import IDKickMap
 
+from utils import generate_radia_model
 
-def generate_model(width):
+
+def get_termination_parameters(width):
     """."""
-    period_length = 18.5
-    br = 1.24
-    gap = 4.2
-
-    height = 29
-    block_thickness = 6.35  # this is already given by the ivu model
-    chamfer_b = 5
-
-    p_width = 0.8*width
-    p_height = 24
-    pole_length = 2.9
-    chamfer_p = 3
-    y_pos = 0
-
-    block_shape = [
-        [-width/2, -chamfer_b],
-        [-width/2, -height+chamfer_b],
-        [-width/2+chamfer_b, -height],
-        [width/2-chamfer_b, -height],
-        [width/2, -height+chamfer_b],
-        [width/2, -chamfer_b],
-        [width/2-chamfer_b, 0],
-        [-width/2+chamfer_b, 0],
-
-    ]
-
-    pole_shape = [
-        [-p_width/2, -chamfer_p-y_pos],
-        [-p_width/2, -p_height-y_pos],
-        [p_width/2, -p_height-y_pos],
-        [p_width/2, -chamfer_p-y_pos],
-        [p_width/2-chamfer_p, 0-y_pos],
-        [-p_width/2+chamfer_p, 0-y_pos],
-
-    ]
-
-    block_subdivision = [8, 4, 3]
-    pole_subdivision = [12, 12, 3]
-
-    # block_subdivision = [3, 3, 3]
-    # pole_subdivision = [3, 3, 3]
-
     fname = './results/model/respm_termination_{}.pickle'.format(width)
     term = load_pickle(fname)
     d1, d2, d3, d4, d5 = term['results']
@@ -61,26 +21,7 @@ def generate_model(width):
     b3t = 6.35 + d3
     dist1 = 2.9 + d4
     dist2 = 2.9 + d5
-
-    lengths = [b1t, b2t, b3t]
-    distances = [dist1, dist2, 0]
-    start_blocks_length = lengths
-    start_blocks_distance = distances
-    end_blocks_length = lengths[0:-1][::-1]
-    end_blocks_distance = distances[0:-1][::-1]
-
-    ivu = Hybrid(gap=gap, period_length=period_length, mr=br, nr_periods=5,
-                 longitudinal_distance=0, block_shape=block_shape,
-                 pole_shape=pole_shape, block_subdivision=block_subdivision,
-                 pole_subdivision=pole_subdivision, pole_length=pole_length,
-                 start_blocks_length=start_blocks_length,
-                 start_blocks_distance=start_blocks_distance,
-                 end_blocks_length=end_blocks_length,
-                 end_blocks_distance=end_blocks_distance,
-                 trf_on_blocks=True)
-    ivu.solve()
-
-    return ivu
+    return b1t, b2t, b3t, dist1, dist2
 
 
 def generate_kickmap(posx, posy, width, radia_model):
@@ -102,15 +43,16 @@ def run_kickmap(width):
     """."""
     x = np.arange(-12, +13, 1) / 1000  # [m]
     y = np.linspace(-2, +2, 9) / 1000  # [m]
-    ivu = generate_model(width)
+    termination_parameters = get_termination_parameters(width)
+    ivu = generate_radia_model(gap=4.2, width=width,
+        termination_parameters=termination_parameters)
     generate_kickmap(posx=x, posy=y, width=width, radia_model=ivu)
 
 
 def get_field_on_axis(models, widths, rz, data):
 
     by_z = dict()
-    for i, width_s in enumerate(widths):
-        width = int(width_s)
+    for i, width in enumerate(widths):
         ivu = models[i]
         field = ivu.get_field(0, 0, rz)
         by = field[:, 1]
@@ -122,8 +64,7 @@ def get_field_on_axis(models, widths, rz, data):
 
 def plot_field_on_axis(data, widths, rz):
     plt.figure(1)
-    for i, width_s in enumerate(widths):
-        width = int(width_s)
+    for width in widths:
         label = 'width {}'.format(width)
         by = data['by_z'][width]
         plt.plot(rz, by, label=label)
@@ -139,9 +80,8 @@ def get_field_roll_off(models, widths, rx, peak_idx, data, filter='off'):
     by_x = dict()
     rx_avg_dict = dict()
     roll_off = dict()
-    for i, width_s in enumerate(widths):
+    for i, width in enumerate(widths):
         by_list = list()
-        width = int(width_s)
         ivu = models[i]
         period = ivu.period_length
         rz = np.linspace(-period/2, period/2, 100)
@@ -185,8 +125,7 @@ def get_field_roll_off(models, widths, rx, peak_idx, data, filter='off'):
 def plot_field_roll_off(data, widths, rx, filter='off'):
     plt.figure(1)
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
-    for i, width_s in enumerate(widths):
-        width = int(width_s)
+    for i, width in enumerate(widths):
         by = data['by_x'][width]
         if filter == 'on':
             rx = data['rx_avg'][width]
@@ -212,10 +151,10 @@ def calc_rk_traj(
     px, py, pz = dict(), dict(), dict()
 
     models = list()
-    for i, width_s in enumerate(widths):
-        width = int(width_s)
-
-        ivu = generate_model(width=width)
+    for width in widths:
+        termination_parameters = get_termination_parameters(width)
+        ivu = generate_radia_model(gap=4.2, width=width,
+            termination_parameters=termination_parameters)
         models.append(ivu)
 
         print('width: {} mm'.format(width))
@@ -248,8 +187,7 @@ def calc_rk_traj(
 def plot_rk_traj(widths, data):
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
 
-    for i, width_s in enumerate(widths):
-        width = int(width_s)
+    for i, width in enumerate(widths):
         s = data['s'][width]
         rx = data['rx'][width]
         ry = data['ry'][width]
@@ -307,11 +245,10 @@ def run_plot_data(fpath, widths, rx, rz):
 if __name__ == "__main__":
 
     fpath = './results/model/'
-    widths = ['68', '63', '58', '53', '48', '43']
+    widths = [68, 63, 58, 53, 48, 43]
     rx = np.linspace(-40, 40, 4*81)
     rz = np.linspace(-100, 100, 200)
     # run_generate_data(fpath, widths, rx, rz)
     # run_plot_data(fpath, widths, rx, rz)
-    for width_s in widths:
-        width = int(width_s)
+    for width in widths:
         run_kickmap(width)

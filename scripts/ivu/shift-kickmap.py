@@ -16,7 +16,7 @@ def shift_kickmap(gap, width):
 
 if __name__ == "__main__":
     gaps = [4.2, 4.5, 5, 7.5, 10, 20]
-    widths = [43, 48, 53, 58, 63, 68]
+    widths = [68, 63, 58, 53, 48, 43]
     for gap in gaps:
         for width in widths:
             shift_kickmap(gap, width)

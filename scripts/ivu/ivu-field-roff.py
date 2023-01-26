@@ -3,83 +3,27 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from imaids.models import HybridPlanar as Hybrid
 from imaids.blocks import Block as Block
 from mathphys.functions import save_pickle, load_pickle
 
-def generate_model(gap=4.2, width=68):
+from utils import generate_radia_model
+
+
+def get_termination_parameters():
     """."""
-    period_length = 18.5
-    br = 1.24
-
-    height = 29
-    block_thickness = 6.35  # this is already given by the ivu model
-    chamfer_b = 5
-
-    p_width = 0.8*width
-    p_height = 24
-    pole_length = 2.9
-    chamfer_p = 3
-    y_pos = 0
-
-    block_shape = [
-        [-width/2, -chamfer_b],
-        [-width/2, -height+chamfer_b],
-        [-width/2+chamfer_b, -height],
-        [width/2-chamfer_b, -height],
-        [width/2, -height+chamfer_b],
-        [width/2, -chamfer_b],
-        [width/2-chamfer_b, 0],
-        [-width/2+chamfer_b, 0],
-
-    ]
-
-    pole_shape = [
-        [-p_width/2, -chamfer_p-y_pos],
-        [-p_width/2, -p_height-y_pos],
-        [p_width/2, -p_height-y_pos],
-        [p_width/2, -chamfer_p-y_pos],
-        [p_width/2-chamfer_p, 0-y_pos],
-        [-p_width/2+chamfer_p, 0-y_pos],
-
-    ]
-
-    block_subdivision = [8, 4, 3]
-    pole_subdivision = [12, 12, 3]
-
-    # block_subdivision = [3, 3, 3]
-    # pole_subdivision = [3, 3, 3]
-
     b1t = 6.35/2 + 0.0832
     b2t = 2.9/2 - 0.1703
     b3t = 6.35 - 0.0466
     dist1 = 2.9 - 0.0048
     dist2 = 2.9 - 0.0098
-
-    lengths = [b1t, b2t, b3t]
-    distances = [dist1, dist2, 0]
-    start_blocks_length = lengths
-    start_blocks_distance = distances
-    end_blocks_length = lengths[0:-1][::-1]
-    end_blocks_distance = distances[0:-1][::-1]
-
-    ivu = Hybrid(gap=gap, period_length=period_length, mr=br, nr_periods=5,
-                 longitudinal_distance=0, block_shape=block_shape,
-                 pole_shape=pole_shape, block_subdivision=block_subdivision,
-                 pole_subdivision=pole_subdivision, pole_length=pole_length,
-                 start_blocks_length=start_blocks_length,
-                 start_blocks_distance=start_blocks_distance,
-                 end_blocks_length=end_blocks_length,
-                 end_blocks_distance=end_blocks_distance,
-                 trf_on_blocks=True)
-    ivu.solve()
-
-    return ivu
+    return b1t, b2t, b3t, dist1, dist2
 
 
 def run_generate_data(fpath, width, rx, gaps):
     data = dict()
-    ivu = generate_model(width=width)
+    termination_parameters = get_termination_parameters()
+    ivu = generate_radia_model(gap=4.2, width=width,
+        termination_parameters=termination_parameters)
     data = get_field_vs_gap(
         ivu=ivu, gaps=gaps, rx=rx,
         peak_idx=0, data=data)

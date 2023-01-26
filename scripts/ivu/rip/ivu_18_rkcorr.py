@@ -188,21 +188,23 @@ def run_generate_data(fpath, widths, rx, rz):
                 overwrite=True)
 
 
-def load_respm_data(fpath, width_s):
+def load_respm_data(fpath, width):
     data = load_pickle(fpath + 'respm_corr.pickle')
-    respm = data['respm'][width_s]
+    try:
+        respm = data['respm'][width]
+    except ValueError:
+        respm = data['respm'][str(width)]
     return respm
 
 
 if __name__ == "__main__":
-
     fpath = './results/model/'
-    # widths = ['32', '35', '38', '41', '44', '47']
-    widths = ['20', '43', '48', '68']
+
+    widths = [68, 48, 43, 20]
     rx = np.linspace(-40, 40, 4*81)
     rz = np.linspace(-100, 100, 200)
     # run_generate_data(fpath, widths, rx, rz)
-    respm = load_respm_data(fpath, '68')
+    respm = load_respm_data(fpath, 68)
     delta, traj, *_ = calc_delta_pos(68, 0, 0)
     cor = calc_correction(respm, delta)
     print(cor)

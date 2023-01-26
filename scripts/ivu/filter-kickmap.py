@@ -24,9 +24,7 @@ def filter_kickmap(posx, width):
 
 
 if __name__ == "__main__":
-
-    widths = ['43', '48', '53', '58', '63', '68']
+    widths = [68, 63, 58, 53, 48, 43]
     rx = np.linspace(-10, 10, 61)/1000
-    for width_s in widths:
-        width = int(width_s)
+    for width in widths:
         filter_kickmap(rx, width)
