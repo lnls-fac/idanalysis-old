@@ -8,6 +8,8 @@ from mathphys.functions import save_pickle, load_pickle
 
 from utils import generate_radia_model
 
+SOLVE_FLAG = True
+
 
 def get_termination_parameters():
     """."""
@@ -23,7 +25,7 @@ def run_generate_data(fpath, width, rx, gaps):
     data = dict()
     termination_parameters = get_termination_parameters()
     ivu = generate_radia_model(gap=4.2, width=width,
-        termination_parameters=termination_parameters)
+        termination_parameters=termination_parameters, solve=SOLVE_FLAG)
     data = get_field_vs_gap(
         ivu=ivu, gaps=gaps, rx=rx,
         peak_idx=0, data=data)

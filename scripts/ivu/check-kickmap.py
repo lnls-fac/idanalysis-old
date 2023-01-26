@@ -37,7 +37,7 @@ def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
 def plot_kick_at_plane(gap, posy, kick_plane='X'):
     """."""
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
-    gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
+    gap_str = utils.get_gap_str(gap)
     posy_str = '{:05.1f}'.format(posy).replace('.', 'p')
     fname_fig = 'kick{}-gap{}mm-posy{}.png'.format(
         kick_plane, gap_str, posy_str)

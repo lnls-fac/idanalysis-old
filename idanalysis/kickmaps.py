@@ -39,6 +39,7 @@ class IDKickMap:
         self.kicky_downstream = None
         self._radia_model_config = None
         self._traj_init_rz = None
+        self._traj_rk_min_rz = None
         self._config = None
 
         # load kickmap
@@ -155,6 +156,26 @@ class IDKickMap:
             self._fmap_config.traj_init_rz = value
         else:
             self._radia_model_config.traj_init_rz = value
+
+    @property
+    def traj_rk_min_rz(self):
+        """."""
+        if self._fmap_config:
+            return self._fmap_config.traj_rk_min_rz
+        elif self._radia_model_config:
+            return self._radia_model_config.traj_rk_min_rz
+        else:
+            return None
+
+    @traj_rk_min_rz.setter
+    def traj_rk_min_rz(self, value):
+        """."""
+        if not self._fmap_config and not self._radia_model_config:
+            raise AttributeError('Undefined configuration!')
+        elif not self._radia_model_config:
+            self._fmap_config.traj_rk_min_rz = value
+        else:
+            self._radia_model_config.traj_rk_min_rz = value
 
     @property
     def radia_model_config(self):

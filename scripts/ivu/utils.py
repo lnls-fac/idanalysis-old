@@ -5,6 +5,7 @@ import pymodels
 from imaids.models import HybridPlanar as Hybrid
 from idanalysis import IDKickMap
 
+BEAM_ENERGY = 3.0  # [GeV]
 
 ID_PERIOD = 18.5  # [mm]
 ID_KMAP_LEN = 0.116  # [m]
@@ -12,13 +13,20 @@ DEF_RK_S_STEP = 2  # [mm] seems converged for the measurement fieldmap grids
 RESCALE_KICKS = 15.3846  # Radia simulations have fewer ID periods
 
 
-FOLDER_BASE = '/home/gabriel/repos-dev/'
-# FOLDER_BASE = '/home/ximenes/repos-dev/'
+# FOLDER_BASE = '/home/gabriel/repos-dev/'
+FOLDER_BASE = '/home/ximenes/repos-dev/'
+FOLDER_DATA = './results/model/'
+
+
+def get_gap_str(gap):
+    """."""
+    gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
+    return gap_str
 
 
 def get_kmap_filename(gap, width):
     fpath = './results/model/kickmaps/'
-    gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
+    gap_str = get_gap_str(gap)
     fname = fpath + f'kickmap-ID-{width}-gap{gap_str}mm-filter.txt'
     return fname
 
@@ -69,7 +77,7 @@ def get_orb4d(model):
     return codrx, codpx, codry, codpy
 
 
-def generate_radia_model(gap, width, termination_parameters):
+def generate_radia_model(gap, width, termination_parameters, solve=True):
     """."""
     period_length = 18.5
     br = 1.24
@@ -127,6 +135,7 @@ def generate_radia_model(gap, width, termination_parameters):
                  end_blocks_length=end_blocks_length,
                  end_blocks_distance=end_blocks_distance,
                  trf_on_blocks=True)
-    ivu.solve()
+    if solve:
+        ivu.solve()
 
     return ivu

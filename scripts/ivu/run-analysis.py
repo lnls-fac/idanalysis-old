@@ -3,11 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from pyaccel import lattice as pyacc_lat
 from pyaccel import optics as pyacc_opt
-from pyaccel.optics import calc_touschek_energy_acceptance
-from mathphys.functions import save_pickle, load_pickle
-from apsuite.dynap import DynapXY, DynapEX, PhaseSpace
 
 import pyaccel
 import pymodels
@@ -194,7 +190,6 @@ def plot_beta_beating(
     plt.legend()
     plt.grid()
     plt.show()
-
 
 
 def symmetrize(gap, width, plot_flag=True, shift_flag=False):
