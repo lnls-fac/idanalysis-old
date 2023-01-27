@@ -5,13 +5,14 @@ import pymodels
 from imaids.models import HybridPlanar as Hybrid
 from idanalysis import IDKickMap
 
+
 BEAM_ENERGY = 3.0  # [GeV]
 
 ID_PERIOD = 18.5  # [mm]
 ID_KMAP_LEN = 0.116  # [m]
 DEF_RK_S_STEP = 2  # [mm] seems converged for the measurement fieldmap grids
 RESCALE_KICKS = 15.3846  # Radia simulations have fewer ID periods
-
+SOLVE_FLAG = False
 
 # FOLDER_BASE = '/home/gabriel/repos-dev/'
 FOLDER_BASE = '/home/ximenes/repos-dev/'

@@ -2,23 +2,20 @@
 
 import numpy as np
 
-from imaids.models import HybridPlanar as Hybrid
-from imaids.blocks import Block as Block
-
-from mathphys.functions import save_pickle, load_pickle
+from mathphys.functions import save_pickle
 
 from idanalysis import IDKickMap
 import utils
 
 
+SOLVE_FLAG = utils.SOLVE_FLAG 
+RK_S_STEP = utils.DEF_RK_S_STEP
 GAP = 4.2  # [mm]
-RK_S_STEP = 2.0  # [mm]
 
 # these are the nominal termination parameters for 
 # HybridPlanar as of 2023-01
-# [b1t, b2t, b3t, dist1, dist2 ]
+# paremeters: [b1t, b2t, b3t, dist1, dist2 ]
 NOMINAL_TERMINATION_PARAMETERS = np.array([6.35/2, 2.9/2, 6.35, 2.9, 2.9])
-SOLVE_FLAG = True 
 
 
 def calc_traj(ivu):
@@ -48,7 +45,7 @@ def calc_traj(ivu):
 def calc_residue(ivu):
     """."""
     _, rxf, ryf, pxf, pyf = calc_traj(ivu)
-    residue = np.array([rxf, ryf, pxf, pyf])
+    residue = np.array([rxf, pxf, ryf, pyf])
     return residue
 
 
@@ -144,20 +141,27 @@ def calc_correction(respm, residue):
     return dp
     
 
-def calc_termination_parameters(width, respm):
+def calc_termination_parameters(width, respm, nr_iters=7):
     """."""
-    delta_parameters = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
-    for i in np.arange(7):
-        termination_parameters = \
-            NOMINAL_TERMINATION_PARAMETERS + delta_parameters
+    def new_model():
+        print('parameters [mm] | residue [um|urad] : ', end='')
+        parms_str = ''.join([f'{val:.8f} ' for val in termination_parameters])
         ivu = utils.generate_radia_model(
             gap=GAP, width=width,
             termination_parameters=termination_parameters,
             solve=SOLVE_FLAG)
         residue = calc_residue(ivu)
+        resid_str = ''.join([f'{val*1e6:+.8f} ' for val in residue])
+        print(parms_str + ' | ' + resid_str)
+        return residue
+
+    # iterate
+    termination_parameters = NOMINAL_TERMINATION_PARAMETERS.copy()
+    for i in np.arange(nr_iters):
+        residue = new_model()
         dparams = calc_correction(respm, residue)
-        delta_parameters += dparams
-        print(delta_parameters)
+        termination_parameters += dparams
+    residue = new_model()
     return termination_parameters
 
 
@@ -165,16 +169,21 @@ def run_optimize_termination(widths=None):
     """."""
     widths = widths or [68, 63, 58, 53, 48, 43]  # [mm]
     for width in widths:
+        print('optimizing termination for width {} mm ...'.format(width))
         fname = utils.FOLDER_DATA + 'respm_termination_{}.pickle'.format(width)
+        print('calculating response matrix...')
         respm = calc_rk_respm(width)
+        print('finding termination parameters...')
         termination_parameters = calc_termination_parameters(width, respm)
         data = dict()
         data['respm'] = respm
         data['results'] = termination_parameters
         save_pickle(data, fname, overwrite=True)
+        print()
 
 
 if __name__ == "__main__":
-    run_optimize_termination(widths=[55])
+    widths = [68, 63]  # [mm]
+    run_optimize_termination(widths=widths)
 
         

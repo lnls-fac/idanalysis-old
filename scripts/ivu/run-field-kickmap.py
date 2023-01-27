@@ -3,16 +3,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from imaids.blocks import Block as Block
 from mathphys.functions import save_pickle, load_pickle
-from idanalysis import IDKickMap
 
+from idanalysis import IDKickMap
 import utils
 
 
-SOLVE_FLAG = False
+SOLVE_FLAG = utils.SOLVE_FLAG
+RK_S_STEP = utils.DEF_RK_S_STEP
 ROLL_OFF_RX = 6.0  # [mm]
-RK_S_STEP = 2.0  # [mm]
 
 
 def get_termination_parameters(width):
@@ -37,7 +36,7 @@ def generate_kickmap(gap, width, gridx, gridy, radia_model):
     idkickmap._radia_model_config.traj_init_px = 0
     idkickmap._radia_model_config.traj_init_py = 0
     idkickmap.traj_init_rz = -100
-    print(idkickmap._radia_model_config)
+    # print(idkickmap._radia_model_config)
     idkickmap.fmap_calc_kickmap(posx=gridx, posy=gridy)
     fname = utils.get_kmap_filename(gap, width)
     idkickmap.save_kickmap_file(kickmap_filename=fname)
@@ -156,9 +155,23 @@ def get_field_on_trajectory(models, data):
 
 def save_data(data):
     """."""
+    onaxis = dict()
+    rolloff = dict()
+    ontraj = dict()
     for key, value in data.items():
-        print(key)
-
+        if 'onaxis' in key:
+            onaxis[key] = value
+        elif 'rolloff' in key:
+            rolloff[key] = value
+        elif 'ontraj' in key:
+            ontraj[key] = value
+    
+    fname = utils.FOLDER_DATA + 'data/field_onaxis.pickle'
+    save_pickle(onaxis, fname, overwrite=True)
+    fname = utils.FOLDER_DATA + 'data/field_ontraj.pickle'
+    save_pickle(ontraj, fname, overwrite=True)
+    fname = utils.FOLDER_DATA + 'data/field_rolloff.pickle'
+    save_pickle(rolloff, fname, overwrite=True)
 
 
 
@@ -240,11 +253,8 @@ def plot_rk_traj(widths, data):
 def run_calc_fields(models=None, gaps=None, widths=None, rx=None, rz=None):
     """."""
     if not models:
-        # gaps = gaps or [4.2, 20.0]  # [mm]
-        # widths = widths or [68, 63, 58, 53, 48, 43]  # [mm]
-
         gaps = gaps or [4.2, 20.0]  # [mm]
-        widths = widths or [68, 63, ]  # [mm]
+        widths = widths or [68, 63, 58, 53, 48, 43]  # [mm]
 
         # --- create radia models for various gaps/widths
         models = create_models(gaps, widths)
@@ -274,11 +284,12 @@ def run_generate_kickmap(models=None, gaps=None, widths=None, gridx=None, gridy=
     """."""
     gaps = gaps or [4.2, 20.0]  # [mm]
     widths = widths or [68, 63, 58, 53, 48, 43]  # [mm]
-    gridx = gridx or np.arange(-12, +13, 1) / 1000  # [m]
-    gridy = gridy or np.linspace(-2, +2, 9) / 1000  # [m]
+    gridx = gridx or list(np.arange(-12, +13, 1) / 1000)  # [m]
+    gridy = gridy or list(np.linspace(-2, +2, 9) / 1000)  # [m]
     models = models or create_models()
 
     for (gap, width), ivu in models.items():
+        print(f'calc kickmap for gap {gap} mm and width {width} mm')
         generate_kickmap(
             gap, width, gridx=gridx, gridy=gridy, radia_model=ivu)
 
@@ -298,5 +309,14 @@ def run_plot_data(fpath, widths, rx, rz):
 
 
 if __name__ == "__main__":
-    models = run_calc_fields(models=None, gaps=None, widths=None, rx=None, rz=None)
-    # run_generate_kickmap(models=models, gaps=None, widths=None, gridx=None, gridy=None)
+    
+    models = dict()
+    gaps = [4.2, 20.0]  # [mm]
+    widths = [68, 63]  # [mm]
+    gridx = list(np.array([-12, 0, 12]) / 1000)  # [m]
+    gridy = list(np.array([-2, 0, 2]) / 1000)  # [m]
+
+    models = run_calc_fields(
+        models=models, gaps=gaps, widths=widths, rx=None, rz=None)
+    models = run_generate_kickmap(
+        models=models, gaps=gaps, widths=widths, gridx=gridx, gridy=gridy)
