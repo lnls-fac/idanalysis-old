@@ -300,7 +300,11 @@ def run_generate_kickmap(models=None, gaps=None, widths=None, gridx=None, gridy=
 
 def run_plot_data(gap, widths):
 
-    data = load_pickle(fpath + 'rk_traj_data_filter_opt_all_gap04p2.pickle')
+    gap_str = utils.get_gap_str(gap)
+    for width in widths:
+        fname = utils.FOLDER_DATA + 'data/'
+        fname += 'field_data_gap{}_width{}'.format(gap_str, width)
+        fdata = load_pickle(fname)
     plot_rk_traj(widths, data)
     plot_field_roll_off(data=data, widths=widths)
     plot_field_on_axis(data, widths, rz)
@@ -310,3 +314,4 @@ def run_plot_data(gap, widths):
 if __name__ == "__main__":
     models = run_calc_fields(models=None, gaps=None, widths=None, rx=None, rz=None)
     # run_generate_kickmap(models=models, gaps=None, widths=None, gridx=None, gridy=None)
+    run_plot_data(gap=4.2, widths=[63])
