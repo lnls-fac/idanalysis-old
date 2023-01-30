@@ -14,6 +14,8 @@ from idanalysis import optics as optics
 
 import utils
 
+from apsuite.dynap import DynapXY, DynapEX, PhaseSpace
+
 RESCALE_KICKS = utils.RESCALE_KICKS
 
 
@@ -263,11 +265,12 @@ def symmetrize(gaps, widths, plot_flag=True, shift_flag=False):
 
     for gap in gaps:
         for width in widths:
+            gap_str = utils.get_gap_str(gap)
             model1 = symmetrize_for_gap_and_width(gap, width)
 
 
 if __name__ == '__main__':
 
-    gaps = [4.2, 20]
-    widths = [68, 63, 58, 53, 48, 43]
+    gaps = [4.2]
+    widths = [68]
     symmetrize(gaps, widths, plot_flag=False, shift_flag=True)
