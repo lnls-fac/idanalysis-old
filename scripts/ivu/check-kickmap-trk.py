@@ -13,7 +13,7 @@ from idanalysis import IDKickMap
 from pyaccel import lattice as pyacc_lat
 
 
-def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
+def calc_idkmap_kicks(plane_idx=0, idkmap=None):
     """."""
     brho = 10.007
     kickx_end = idkmap.kickx_upstream + idkmap.kickx_downstream
@@ -24,24 +24,14 @@ def calc_idkmap_kicks(plane_idx=0, plot_flag=False, idkmap=None):
     ryf = idkmap.fposy[plane_idx, :]
     pxf = (idkmap.kickx[plane_idx, :] + kickx_end) / brho**2
     pyf = (idkmap.kicky[plane_idx, :] + kicky_end) / brho**2
-    if plot_flag:
-        plt.plot(1e3*rx0, 1e6*pxf, '.-', label='Kick X', color='C1')
-        plt.plot(1e3*rx0, 1e6*pyf, '.-', label='Kick Y', color='b')
-        plt.xlabel('init rx [mm]')
-        plt.ylabel('final px [urad]')
-        plt.title('Kicks')
-        plt.legend()
-        plt.grid()
-        plt.show()
-
     return rx0, ry0, pxf, pyf, rxf, ryf
 
 
-def create_model_ids(gap, width, rescale_kicks, shift_kicks):
+def create_model_ids(gap, width, rescale_kicks, shift_flag):
     """."""
     print('--- model with kickmap ---')
     ids = utils.create_ids(
-        gap, width, rescale_kicks=rescale_kicks, shift_kicks=shift_kicks)
+        gap, width, rescale_kicks=rescale_kicks, shift_kicks=shift_flag)
     model = pymodels.si.create_accelerator(ids=ids)
     twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
     print('length : {:.4f} m'.format(model.length))
@@ -50,33 +40,25 @@ def create_model_ids(gap, width, rescale_kicks, shift_kicks):
     return model, twiss, ids
 
 
-if __name__ == '__main__':
-    width = 53
-    gap = 20
+def check_kick_at_plane(gap, width, rescale_kicks, shift_flag=False):
+    """."""
     fname = utils.get_kmap_filename(gap, width)
+    if shift_flag:
+        fname = fname.replace('.txt', '_shifted_on_axis.txt')
     id_kickmap = IDKickMap(fname)
-
     plane_idx = list(id_kickmap.posy).index(0)
-
-    rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(
-      idkmap=id_kickmap, plane_idx=plane_idx, plot_flag=False)
-
-    posx_zero_idx = list(id_kickmap.posx).index(0)
-    pxf_shift = pxf[posx_zero_idx]
-    pyf_shift = pyf[posx_zero_idx]
-    pxf -= pxf_shift
-    pyf -= pyf_shift
-    pxf *= utils.RESCALE_KICKS
-    pyf *= utils.RESCALE_KICKS
-
-    shift_kicks = [
-        -pxf_shift * utils.RESCALE_KICKS, -pyf_shift * utils.RESCALE_KICKS]
+    rx0, _, pxf, pyf, *_ = calc_idkmap_kicks(
+      idkmap=id_kickmap, plane_idx=plane_idx)
+    pxf *= rescale_kicks
+    pyf *= rescale_kicks
 
     # lattice with IDs
-    model, twiss, ids = create_model_ids(
-        gap, width, utils.RESCALE_KICKS, shift_kicks)
-    famdata = pymodels.si.get_family_data(model)
+    model, _ = utils.create_model_ids(
+                    gap=gap, width=width,
+                    rescale_kicks=rescale_kicks,
+                    shift_flag=shift_flag)
 
+    famdata = pymodels.si.get_family_data(model)
     # shift model
     idx = famdata['IVU18']['index']
     idx_end = idx[0][-1]
@@ -85,11 +67,9 @@ if __name__ == '__main__':
 
     pxf_list, pyf_list = list(), list()
     xf_list, yf_list = list(), list()
-    inds = pyacc_lat.find_indices(model, 'fam_name', 'IVU18')
     model = pyacc_lat.shift(model, start=idx_begin)
-    y0 = 0
     for x0 in rx0:
-        coord_ini = np.array([x0, 0, y0, 0, 0, 0])
+        coord_ini = np.array([x0, 0, 0, 0, 0, 0])
         coord_fin, *_ = pyaccel.tracking.line_pass(
             model, coord_ini, indices='open')
 
@@ -116,3 +96,12 @@ if __name__ == '__main__':
     plt.legend()
     plt.grid()
     plt.show()
+
+
+if __name__ == '__main__':
+    width = 48
+    gap = 4.2
+    rescale_kicks = utils.RESCALE_KICKS
+    check_kick_at_plane(gap=gap, width=width,
+                        rescale_kicks=rescale_kicks,
+                        shift_flag=False)

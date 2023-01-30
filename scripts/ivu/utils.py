@@ -1,9 +1,11 @@
 """."""
 import pyaccel
 import pymodels
+import numpy as np
 
 from imaids.models import HybridPlanar as Hybrid
 from idanalysis import IDKickMap
+
 
 BEAM_ENERGY = 3.0  # [GeV]
 
@@ -11,11 +13,11 @@ ID_PERIOD = 18.5  # [mm]
 ID_KMAP_LEN = 0.116  # [m]
 DEF_RK_S_STEP = 2  # [mm] seems converged for the measurement fieldmap grids
 RESCALE_KICKS = 15.3846  # Radia simulations have fewer ID periods
-
+SOLVE_FLAG = True
 
 # FOLDER_BASE = '/home/gabriel/repos-dev/'
 FOLDER_BASE = '/home/ximenes/repos-dev/'
-FOLDER_DATA = './results/model/'
+FOLDER_DATA = './results/model/data/'
 
 
 def get_gap_str(gap):
@@ -25,7 +27,8 @@ def get_gap_str(gap):
 
 
 def get_kmap_filename(gap, width):
-    fpath = './results/model/kickmaps/'
+    fpath = FOLDER_DATA + 'kickmaps/'
+    fpath = fpath.replace('model/data/', 'model/')
     gap_str = get_gap_str(gap)
     fname = fpath + f'kickmap-ID-{width}-gap{gap_str}mm-filter.txt'
     return fname
@@ -59,22 +62,14 @@ def create_ids(
     return ids
 
 
-def get_orb4d(model):
-
-    state_cavity = model.cavity_on
-    state_radiation = model.radiation_on
-    model.cavity_on = False
-    # model.radiation_on = pyaccel.accelerator.RadiationStates.off
-
-    # orbit
-    closed_orbit = pyaccel.tracking.find_orbit4(model, indices='closed')
-    codrx, codpx, codry, codpy = \
-        closed_orbit[0], closed_orbit[1], closed_orbit[2], closed_orbit[3]
-
-    model.cavity_on = state_cavity
-    model.radiation_on = state_radiation
-
-    return codrx, codpx, codry, codpy
+def create_model_ids(gap, width, rescale_kicks=RESCALE_KICKS,
+                     rescale_length=RESCALE_KICKS, shift_flag=True):
+    ids = create_ids(
+        gap, width, rescale_kicks=rescale_kicks,
+        rescale_length=rescale_length,
+        shift_flag=shift_flag)
+    model = pymodels.si.create_accelerator(ids=ids)
+    return model, ids
 
 
 def generate_radia_model(gap, width, termination_parameters, solve=True):

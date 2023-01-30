@@ -3,21 +3,20 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from imaids.blocks import Block as Block
 from mathphys.functions import save_pickle, load_pickle
-from idanalysis import IDKickMap
 
+from idanalysis import IDKickMap
 import utils
 
 
-SOLVE_FLAG = False
+SOLVE_FLAG = utils.SOLVE_FLAG
+RK_S_STEP = utils.DEF_RK_S_STEP
 ROLL_OFF_RX = 6.0  # [mm]
-RK_S_STEP = 2.0  # [mm]
 
 
 def get_termination_parameters(width):
     """."""
-    fname = './results/model/data/respm_termination_{}.pickle'.format(width)
+    fname = utils.FOLDER_DATA + 'respm_termination_{}.pickle'.format(width)
     term = load_pickle(fname)
     d1, d2, d3, d4, d5 = term['results']
     b1t = 6.35/2 + d1
@@ -37,7 +36,7 @@ def generate_kickmap(gap, width, gridx, gridy, radia_model):
     idkickmap._radia_model_config.traj_init_px = 0
     idkickmap._radia_model_config.traj_init_py = 0
     idkickmap.traj_init_rz = -100
-    print(idkickmap._radia_model_config)
+    # print(idkickmap._radia_model_config)
     idkickmap.fmap_calc_kickmap(posx=gridx, posy=gridy)
     fname = utils.get_kmap_filename(gap, width)
     idkickmap.save_kickmap_file(kickmap_filename=fname)
@@ -103,7 +102,7 @@ def get_field_roll_off(models, data, rx, peak_idx, filter='off'):
 
 def get_field_on_axis(models, data, rz):
 
-    bx_dict, by_dict = dict(), dict()
+    bx_dict, by_dict, rz_dict = dict(), dict(), dict()
     for (gap, width), ivu in models.items():
         print(f'calc field on-axis for gap {gap} mm and width {width} mm')
         field = ivu.get_field(0, 0, rz)
@@ -112,8 +111,10 @@ def get_field_on_axis(models, data, rz):
         key = (gap, width)
         bx_dict[key] = bx
         by_dict[key] = by
+        rz_dict[key] = rz
     data['onaxis_bx'] = bx_dict
     data['onaxis_by'] = by_dict
+    data['onaxis_rz'] = rz_dict
 
     return data
 
@@ -163,22 +164,18 @@ def save_data(data):
             fdata[info] = value[keys]
         width = keys[1]
         gap_str = utils.get_gap_str(keys[0])
-        fname = utils.FOLDER_DATA + 'data/'
+        fname = utils.FOLDER_DATA
         fname += 'field_data_gap{}_width{}'.format(gap_str, width)
         save_pickle(fdata, fname, overwrite=True)
 
 
-
-
-
-
-
-def plot_field_on_axis(data, widths):
+def plot_field_on_axis(data):
     plt.figure(1)
+    widths = list(data.keys())
     for width in widths:
         label = 'width {}'.format(width)
-        by = data['by_z'][width]
-        rz = data['rz'][width]
+        by = data[width]['onaxis_by']
+        rz = data[width]['onaxis_rz']
         plt.plot(rz, by, label=label)
     plt.xlabel('z [mm]')
     plt.ylabel('By [T]')
@@ -187,13 +184,14 @@ def plot_field_on_axis(data, widths):
     plt.show()
 
 
-def plot_field_roll_off(data, widths):
+def plot_field_roll_off(data):
     plt.figure(1)
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
+    widths = list(data.keys())
     for i, width in enumerate(widths):
-        by = data['by_x'][width]
-        rx = data['rx_avg'][width]
-        roff = data['roll_off'][width]
+        by = data[width]['rolloff_by']
+        rx = data[width]['rolloff_rx']
+        roff = data[width]['rolloff_value']
         label = "width {}, {:.4f} %".format(width, 100*roff)
         print(label)
         plt.plot(rx, by, label=label, color=colors[i])
@@ -205,15 +203,15 @@ def plot_field_roll_off(data, widths):
     plt.show()
 
 
-def plot_rk_traj(widths, data):
+def plot_rk_traj(data):
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
-
+    widths = list(data.keys())
     for i, width in enumerate(widths):
-        s = data['s'][width]
-        rx = data['rx'][width]
-        ry = data['ry'][width]
-        px = 1e6*data['px'][width]
-        py = 1e6*data['py'][width]
+        s = data[width]['ontraj_s']
+        rx = data[width]['ontraj_rx']
+        ry = data[width]['ontraj_ry']
+        px = 1e6*data[width]['ontraj_px']
+        py = 1e6*data[width]['ontraj_py']
         label = 'width = {} mm'.format(width)
 
         plt.figure(1)
@@ -244,17 +242,11 @@ def plot_rk_traj(widths, data):
     plt.show()
 
 
-
-
-
 def run_calc_fields(models=None, gaps=None, widths=None, rx=None, rz=None):
     """."""
     if not models:
-        # gaps = gaps or [4.2, 20.0]  # [mm]
-        # widths = widths or [68, 63, 58, 53, 48, 43]  # [mm]
-
         gaps = gaps or [4.2, 20.0]  # [mm]
-        widths = widths or [68, 63, ]  # [mm]
+        widths = widths or [68, 63, 58, 53, 48, 43]  # [mm]
 
         # --- create radia models for various gaps/widths
         models = create_models(gaps, widths)
@@ -280,38 +272,49 @@ def run_calc_fields(models=None, gaps=None, widths=None, rx=None, rz=None):
     return models
 
 
-def run_generate_kickmap(models=None, gaps=None, widths=None, gridx=None, gridy=None):
+def run_generate_kickmap(models=None, gaps=None,
+                         widths=None, gridx=None,
+                         gridy=None):
     """."""
     gaps = gaps or [4.2, 20.0]  # [mm]
     widths = widths or [68, 63, 58, 53, 48, 43]  # [mm]
-    gridx = gridx or np.arange(-12, +13, 1) / 1000  # [m]
-    gridy = gridy or np.linspace(-2, +2, 9) / 1000  # [m]
+    gridx = gridx or list(np.arange(-12, +13, 1) / 1000)  # [m]
+    gridy = gridy or list(np.linspace(-2, +2, 9) / 1000)  # [m]
     models = models or create_models()
 
     for (gap, width), ivu in models.items():
+        print(f'calc kickmap for gap {gap} mm and width {width} mm')
         generate_kickmap(
             gap, width, gridx=gridx, gridy=gridy, radia_model=ivu)
 
     return models
 
 
-
-
-
 def run_plot_data(gap, widths):
 
+    data_plot = dict()
     gap_str = utils.get_gap_str(gap)
     for width in widths:
-        fname = utils.FOLDER_DATA + 'data/'
+        fname = utils.FOLDER_DATA
         fname += 'field_data_gap{}_width{}'.format(gap_str, width)
         fdata = load_pickle(fname)
-    plot_rk_traj(widths, data)
-    plot_field_roll_off(data=data, widths=widths)
-    plot_field_on_axis(data, widths, rz)
+        data_plot[width] = fdata
 
+    plot_rk_traj(data=data_plot)
+    plot_field_roll_off(data=data_plot)
+    plot_field_on_axis(data=data_plot)
 
 
 if __name__ == "__main__":
-    models = run_calc_fields(models=None, gaps=None, widths=None, rx=None, rz=None)
-    # run_generate_kickmap(models=models, gaps=None, widths=None, gridx=None, gridy=None)
-    run_plot_data(gap=4.2, widths=[63])
+
+    models = dict()
+    gaps = [4.2, 20.0]  # [mm]
+    widths = [68, 63]  # [mm]
+    gridx = list(np.array([-12, 0, 12]) / 1000)  # [m]
+    gridy = list(np.array([-2, 0, 2]) / 1000)  # [m]
+
+    models = run_calc_fields(
+        models=models, gaps=gaps, widths=widths, rx=None, rz=None)
+    run_plot_data(gap=4.2, widths=widths)
+    models = run_generate_kickmap(
+        models=models, gaps=gaps, widths=widths, gridx=gridx, gridy=gridy)
