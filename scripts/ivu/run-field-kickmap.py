@@ -18,13 +18,8 @@ def get_termination_parameters(width):
     """."""
     fname = utils.FOLDER_DATA + 'respm_termination_{}.pickle'.format(width)
     term = load_pickle(fname)
-    d1, d2, d3, d4, d5 = term['results']
-    b1t = 6.35/2 + d1
-    b2t = 2.9/2 + d2
-    b3t = 6.35 + d3
-    dist1 = 2.9 + d4
-    dist2 = 2.9 + d5
-    return b1t, b2t, b3t, dist1, dist2
+    b1t, b2t, b3t, dist1, dist2 = term['results']
+    return list([b1t, b2t, b3t, dist1, dist2])
 
 
 def generate_kickmap(gap, width, gridx, gridy, radia_model):
@@ -49,7 +44,8 @@ def create_models(gaps, widths):
         for width in widths:
             print(f'creating model for gap {gap} mm and width {width} mm')
             termination_parameters = get_termination_parameters(width)
-            ivu = utils.generate_radia_model(gap=gap, width=width,
+            ivu = utils.generate_radia_model(
+                gap=gap, width=width,
                 termination_parameters=termination_parameters,
                 solve=SOLVE_FLAG)
             models[(gap, width)] = ivu
@@ -309,7 +305,7 @@ if __name__ == "__main__":
 
     models = dict()
     gaps = [4.2, 20.0]  # [mm]
-    widths = [68, 63]  # [mm]
+    widths = [68, 63, 58, 53, 48, 43]  # [mm]
     gridx = list(np.array([-12, 0, 12]) / 1000)  # [m]
     gridy = list(np.array([-2, 0, 2]) / 1000)  # [m]
 

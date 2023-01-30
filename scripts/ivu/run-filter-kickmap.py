@@ -9,7 +9,6 @@ import utils
 
 def filter_kickmap(gaps, widths, rx, filter_order=4):
     """."""
-
     for gap in gaps:
         for width in widths:
             fname_filter = utils.get_kmap_filename(gap, width)

@@ -183,5 +183,4 @@ def run_optimize_termination(widths=None):
 
 
 if __name__ == "__main__":
-    widths = [68, 63]  # [mm]
-    run_optimize_termination(widths=widths)
+    run_optimize_termination()

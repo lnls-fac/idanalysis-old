@@ -192,66 +192,82 @@ def plot_beta_beating(
     plt.show()
 
 
-def symmetrize(gap, width, plot_flag=True, shift_flag=False):
+def symmetrize(gaps, widths, plot_flag=True, shift_flag=False):
     """."""
-    model0, model1, knobs, locs_beta, straight_nr = create_models(
-        gap, width, shift_flag)
-    twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
-    print('local quadrupole fams: ', knobs)
-    print('element indices for straight section begin and end: ', locs_beta)
+    def correct_optics(model1, straight_nr, knobs, goal_beta, goal_alpha):
+        dk_tot = np.zeros(len(knobs))
+        for i in range(7):
+            dk = optics.correct_symmetry_withbeta(
+                model1, straight_nr, goal_beta, goal_alpha)
+            print('iteration #{}, dK: {}'.format(i+1, dk))
+            dk_tot += dk
+        stg = str()
+        for i, fam in enumerate(knobs):
+            stg += '{:<9s} dK: {:+9.4f} 1/m² \n'.format(fam, dk_tot[i])
+        print(stg)
+        twiss2, *_ = pyacc_opt.calc_twiss(model1, indices='closed')
+        print()
+        return twiss2, stg
 
-    # calculate nominal twiss
-    goal_tunes = np.array(
-        [twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
-    goal_beta = np.array(
-        [twiss0.betax[locs_beta], twiss0.betay[locs_beta]])
-    goal_alpha = np.array(
-        [twiss0.alphax[locs_beta], twiss0.alphay[locs_beta]])
-    print(goal_beta)
+    def correct_tunes(model1, twiss1, goal_tunes):
+        tunes = twiss1.mux[-1]/np.pi/2, twiss1.muy[-1]/np.pi/2
+        print('init    tunes: {:.9f} {:.9f}'.format(tunes[0], tunes[1]))
+        for i in range(2):
+            optics.correct_tunes_twoknobs(model1, goal_tunes)
+            twiss, *_ = pyacc_opt.calc_twiss(model1)
+            tunes = twiss.mux[-1]/np.pi/2, twiss.muy[-1]/np.pi/2
+            print('iter #{} tunes: {:.9f} {:.9f}'.format(
+                i+1, tunes[0], tunes[1]))
+        print('goal    tunes: {:.9f} {:.9f}'.format(
+            goal_tunes[0], goal_tunes[1]))
+        twiss3, *_ = pyacc_opt.calc_twiss(model1, indices='closed')
+        print()
+        return twiss3
 
-    orb_results = orbcorr.correct_orbit_fb(
-        model0, model1, 'IVU18', corr_system='SOFB')
+    def symmetrize_for_gap_and_width(gap, width):
+        model0, model1, knobs, locs_beta, straight_nr = create_models(
+            gap, width, shift_flag)
+        twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
+        print('local quadrupole fams: ', knobs)
+        print('element indices for straight section begin and end: ',
+              locs_beta)
 
-    # calculate beta beating and tune delta tunes
-    twiss1 = analysis_uncorrected_perturbation(
-        width, model1, twiss0=twiss0, plot_flag=False)
+        # calculate nominal twiss
+        goal_tunes = np.array(
+            [twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
+        goal_beta = np.array(
+            [twiss0.betax[locs_beta], twiss0.betay[locs_beta]])
+        goal_alpha = np.array(
+            [twiss0.alphax[locs_beta], twiss0.alphay[locs_beta]])
+        print(goal_beta)
 
-    # symmetrize optics (local quad fam knobs)
-    dk_tot = np.zeros(len(knobs))
-    for i in range(7):
-        dk = optics.correct_symmetry_withbeta(
-            model1, straight_nr, goal_beta, goal_alpha)
-        print('iteration #{}, dK: {}'.format(i+1, dk))
-        dk_tot += dk
-    stg = str()
-    for i, fam in enumerate(knobs):
-        stg += '{:<9s} dK: {:+9.4f} 1/m² \n'.format(fam, dk_tot[i])
-    print(stg)
-    twiss2, *_ = pyacc_opt.calc_twiss(model1, indices='closed')
-    print()
+        # correct orbit
+        _ = orbcorr.correct_orbit_fb(
+            model0, model1, 'IVU18', corr_system='SOFB')
 
-    # correct tunes
-    tunes = twiss1.mux[-1]/np.pi/2, twiss1.muy[-1]/np.pi/2
-    print('init    tunes: {:.9f} {:.9f}'.format(tunes[0], tunes[1]))
-    for i in range(2):
-        optics.correct_tunes_twoknobs(model1, goal_tunes)
-        twiss, *_ = pyacc_opt.calc_twiss(model1)
-        tunes = twiss.mux[-1]/np.pi/2, twiss.muy[-1]/np.pi/2
-        print('iter #{} tunes: {:.9f} {:.9f}'.format(i+1, tunes[0], tunes[1]))
-    print('goal    tunes: {:.9f} {:.9f}'.format(goal_tunes[0], goal_tunes[1]))
-    twiss3, *_ = pyacc_opt.calc_twiss(model1, indices='closed')
-    print()
+        # calculate beta beating and delta tunes
+        twiss1 = analysis_uncorrected_perturbation(
+            width, model1, twiss0=twiss0, plot_flag=False)
 
-    plot_beta_beating(
-        twiss0, twiss1, twiss2, twiss3, width, gap, stg)
+        # symmetrize optics (local quad fam knobs)
+        twiss2, stg = correct_optics(
+            model1, straight_nr, knobs, goal_beta, goal_alpha)
 
-    return model1
+        # correct tunes
+        twiss3 = correct_tunes(model1, twiss1, goal_tunes)
+
+        plot_beta_beating(
+            twiss0, twiss1, twiss2, twiss3, width, gap, stg)
+
+        return model1
+
+    for gap in gaps:
+        for width in widths:
+            model1 = symmetrize_for_gap_and_width(gap, width)
 
 
 if __name__ == '__main__':
 
     gaps = [4.2, 20]
     widths = [68, 63, 58, 53, 48, 43]
-    for gap in gaps:
-        for width in widths:
-            model1 = symmetrize(gap, width, plot_flag=False, shift_flag=True)
+    symmetrize(gaps, widths, plot_flag=False, shift_flag=True)

@@ -78,7 +78,6 @@ def generate_radia_model(gap, width, termination_parameters, solve=True):
     br = 1.24
 
     height = 29
-    block_thickness = 6.35  # this is already given by the ivu model
     chamfer_b = 5
 
     p_width = 0.8*width

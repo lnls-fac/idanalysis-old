@@ -10,12 +10,14 @@ import pyaccel
 import utils
 
 from idanalysis import IDKickMap
+from fieldmaptrack import Beam
 from pyaccel import lattice as pyacc_lat
 
 
 def calc_idkmap_kicks(plane_idx=0, idkmap=None):
     """."""
-    brho = 10.007
+    beam = Beam(energy=3)
+    brho = beam.brho
     kickx_end = idkmap.kickx_upstream + idkmap.kickx_downstream
     kicky_end = idkmap.kicky_upstream + idkmap.kicky_downstream
     rx0 = idkmap.posx
