@@ -8,11 +8,11 @@ from idanalysis import IDKickMap
 import utils
 
 
-SOLVE_FLAG = utils.SOLVE_FLAG 
+SOLVE_FLAG = utils.SOLVE_FLAG
 RK_S_STEP = utils.DEF_RK_S_STEP
 GAP = 4.2  # [mm]
 
-# these are the nominal termination parameters for 
+# these are the nominal termination parameters for
 # HybridPlanar as of 2023-01
 # paremeters: [b1t, b2t, b3t, dist1, dist2 ]
 NOMINAL_TERMINATION_PARAMETERS = np.array([6.35/2, 2.9/2, 6.35, 2.9, 2.9])
@@ -38,7 +38,7 @@ def calc_traj(ivu):
     traj = idkickmap.traj
     rxf, pxf = traj.rx[-1], traj.px[-1]
     ryf, pyf = traj.ry[-1], traj.py[-1]
-    
+
     return traj, rxf, ryf, pxf, pyf
 
 
@@ -58,7 +58,7 @@ def calc_rk_respm(width):
         'distance1 value ', 'distance2 value ',
     )
     respm = np.zeros((4, 5))
-    
+
     for idx in range(len(termination_parameters)):
         print(parms_labels[idx] + ', ', end='', flush=True)
 
@@ -86,7 +86,7 @@ def calc_rk_respm(width):
         termination_parameters[idx] += delta_p/2
 
         respm[:, idx] = (residue_p - residue_n) / delta_p
-   
+
     return respm
 
 
@@ -95,7 +95,7 @@ def calc_delta_pos(width, delta_parameters=None):
     termination_parameters = NOMINAL_TERMINATION_PARAMETERS
     if delta_parameters is not None:
         termination_parameters += delta_parameters
-        
+
     traj_init_rx = 0
     traj_init_ry = 0
     traj_init_px = 0
@@ -139,7 +139,7 @@ def calc_correction(respm, residue):
     invmat = np.dot(np.dot(vmat.T, ismat), umat.T)
     dp = - np.dot(invmat, residue)
     return dp
-    
+
 
 def calc_termination_parameters(width, respm, nr_iters=7):
     """."""
@@ -185,5 +185,3 @@ def run_optimize_termination(widths=None):
 if __name__ == "__main__":
     widths = [68, 63]  # [mm]
     run_optimize_termination(widths=widths)
-
-        

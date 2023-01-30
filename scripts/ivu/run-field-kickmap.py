@@ -16,7 +16,7 @@ ROLL_OFF_RX = 6.0  # [mm]
 
 def get_termination_parameters(width):
     """."""
-    fname = './results/model/data/respm_termination_{}.pickle'.format(width)
+    fname = utils.FOLDER_DATA + 'respm_termination_{}.pickle'.format(width)
     term = load_pickle(fname)
     d1, d2, d3, d4, d5 = term['results']
     b1t = 6.35/2 + d1
@@ -102,7 +102,7 @@ def get_field_roll_off(models, data, rx, peak_idx, filter='off'):
 
 def get_field_on_axis(models, data, rz):
 
-    bx_dict, by_dict = dict(), dict()
+    bx_dict, by_dict, rz_dict = dict(), dict(), dict()
     for (gap, width), ivu in models.items():
         print(f'calc field on-axis for gap {gap} mm and width {width} mm')
         field = ivu.get_field(0, 0, rz)
@@ -111,8 +111,10 @@ def get_field_on_axis(models, data, rz):
         key = (gap, width)
         bx_dict[key] = bx
         by_dict[key] = by
+        rz_dict[key] = rz
     data['onaxis_bx'] = bx_dict
     data['onaxis_by'] = by_dict
+    data['onaxis_rz'] = rz_dict
 
     return data
 
@@ -155,32 +157,25 @@ def get_field_on_trajectory(models, data):
 
 def save_data(data):
     """."""
-    onaxis = dict()
-    rolloff = dict()
-    ontraj = dict()
-    for key, value in data.items():
-        if 'onaxis' in key:
-            onaxis[key] = value
-        elif 'rolloff' in key:
-            rolloff[key] = value
-        elif 'ontraj' in key:
-            ontraj[key] = value
-    
-    fname = utils.FOLDER_DATA + 'data/field_onaxis.pickle'
-    save_pickle(onaxis, fname, overwrite=True)
-    fname = utils.FOLDER_DATA + 'data/field_ontraj.pickle'
-    save_pickle(ontraj, fname, overwrite=True)
-    fname = utils.FOLDER_DATA + 'data/field_rolloff.pickle'
-    save_pickle(rolloff, fname, overwrite=True)
+    value = data['ontraj_s']
+    for keys in list(value.keys()):
+        fdata = dict()
+        for info, value in data.items():
+            fdata[info] = value[keys]
+        width = keys[1]
+        gap_str = utils.get_gap_str(keys[0])
+        fname = utils.FOLDER_DATA
+        fname += 'field_data_gap{}_width{}'.format(gap_str, width)
+        save_pickle(fdata, fname, overwrite=True)
 
 
-
-
-def plot_field_on_axis(data, widths, rz):
+def plot_field_on_axis(data):
     plt.figure(1)
+    widths = list(data.keys())
     for width in widths:
         label = 'width {}'.format(width)
-        by = data['by_z'][width]
+        by = data[width]['onaxis_by']
+        rz = data[width]['onaxis_rz']
         plt.plot(rz, by, label=label)
     plt.xlabel('z [mm]')
     plt.ylabel('By [T]')
@@ -189,14 +184,14 @@ def plot_field_on_axis(data, widths, rz):
     plt.show()
 
 
-def plot_field_roll_off(data, widths, rx, filter='off'):
+def plot_field_roll_off(data):
     plt.figure(1)
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
+    widths = list(data.keys())
     for i, width in enumerate(widths):
-        by = data['by_x'][width]
-        if filter == 'on':
-            rx = data['rx_avg'][width]
-        roff = data['roll_off'][width]
+        by = data[width]['rolloff_by']
+        rx = data[width]['rolloff_rx']
+        roff = data[width]['rolloff_value']
         label = "width {}, {:.4f} %".format(width, 100*roff)
         print(label)
         plt.plot(rx, by, label=label, color=colors[i])
@@ -208,15 +203,15 @@ def plot_field_roll_off(data, widths, rx, filter='off'):
     plt.show()
 
 
-def plot_rk_traj(widths, data):
+def plot_rk_traj(data):
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
-
+    widths = list(data.keys())
     for i, width in enumerate(widths):
-        s = data['s'][width]
-        rx = data['rx'][width]
-        ry = data['ry'][width]
-        px = 1e6*data['px'][width]
-        py = 1e6*data['py'][width]
+        s = data[width]['ontraj_s']
+        rx = data[width]['ontraj_rx']
+        ry = data[width]['ontraj_ry']
+        px = 1e6*data[width]['ontraj_px']
+        py = 1e6*data[width]['ontraj_py']
         label = 'width = {} mm'.format(width)
 
         plt.figure(1)
@@ -245,9 +240,6 @@ def plot_rk_traj(widths, data):
         plt.legend()
         plt.grid()
     plt.show()
-
-
-
 
 
 def run_calc_fields(models=None, gaps=None, widths=None, rx=None, rz=None):
@@ -280,7 +272,9 @@ def run_calc_fields(models=None, gaps=None, widths=None, rx=None, rz=None):
     return models
 
 
-def run_generate_kickmap(models=None, gaps=None, widths=None, gridx=None, gridy=None):
+def run_generate_kickmap(models=None, gaps=None,
+                         widths=None, gridx=None,
+                         gridy=None):
     """."""
     gaps = gaps or [4.2, 20.0]  # [mm]
     widths = widths or [68, 63, 58, 53, 48, 43]  # [mm]
@@ -296,20 +290,23 @@ def run_generate_kickmap(models=None, gaps=None, widths=None, gridx=None, gridy=
     return models
 
 
+def run_plot_data(gap, widths):
 
+    data_plot = dict()
+    gap_str = utils.get_gap_str(gap)
+    for width in widths:
+        fname = utils.FOLDER_DATA
+        fname += 'field_data_gap{}_width{}'.format(gap_str, width)
+        fdata = load_pickle(fname)
+        data_plot[width] = fdata
 
-
-def run_plot_data(fpath, widths, rx, rz):
-    data = load_pickle(fpath + 'rk_traj_data_filter_opt_all_gap04p2.pickle')
-    # data = load_pickle(fpath + 'rk_traj_data_filter_opt_all_gap200.pickle')
-    plot_rk_traj(widths, data)
-    plot_field_roll_off(data=data, widths=widths, rx=rx, filter='on')
-    plot_field_on_axis(data, widths, rz)
-
+    plot_rk_traj(data=data_plot)
+    plot_field_roll_off(data=data_plot)
+    plot_field_on_axis(data=data_plot)
 
 
 if __name__ == "__main__":
-    
+
     models = dict()
     gaps = [4.2, 20.0]  # [mm]
     widths = [68, 63]  # [mm]
@@ -318,5 +315,6 @@ if __name__ == "__main__":
 
     models = run_calc_fields(
         models=models, gaps=gaps, widths=widths, rx=None, rz=None)
+    run_plot_data(gap=4.2, widths=widths)
     models = run_generate_kickmap(
         models=models, gaps=gaps, widths=widths, gridx=gridx, gridy=gridy)

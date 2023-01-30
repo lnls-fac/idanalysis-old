@@ -1,30 +1,29 @@
 #!/usr/bin/env python-sirius
 
 import numpy as np
-import matplotlib.pyplot as plt
 
-import imaids.utils as utils
-
-from imaids.models import HybridPlanar as Hybrid
-from imaids.blocks import Block as Block
-from mathphys.functions import save_pickle, load_pickle
 from idanalysis import IDKickMap
 
+import utils
 
-def filter_kickmap(posx, width):
 
-    fpath = './results/model/kickmaps/'
-    fname = fpath + 'kickmap-ID-{}-gap150mm.txt'.format(width)
-    idkickmap = IDKickMap(fname)
-    idkickmap._load_kmap()
-    idkickmap.filter_kmap(posx, order=4)
-    idkickmap.kmap_idlen = 0.13
-    fname = fpath + 'kickmap-ID-{}-gap15p0mm-filter.txt'.format(width)
-    idkickmap.save_kickmap_file(fname)
+def filter_kickmap(gaps, widths, rx, filter_order=4):
+    """."""
+
+    for gap in gaps:
+        for width in widths:
+            fname_filter = utils.get_kmap_filename(gap, width)
+            fname = fname_filter.replace('-filter.txt', '.txt')
+            idkickmap = IDKickMap(fname)
+            idkickmap._load_kmap()
+            idkickmap.filter_kmap(rx, order=filter_order)
+            idkickmap.kmap_idlen = 0.13
+            idkickmap.save_kickmap_file(fname_filter)
 
 
 if __name__ == "__main__":
+    gaps = [4.2, 20]
     widths = [68, 63, 58, 53, 48, 43]
     rx = np.linspace(-10, 10, 61)/1000
-    for width in widths:
-        filter_kickmap(rx, width)
+    filter_order = 4  # This is the default value
+    filter_kickmap(gaps, widths, rx, filter_order)
