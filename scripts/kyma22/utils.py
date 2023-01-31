@@ -22,22 +22,22 @@ FOLDER_DATA = './results/model/data/'
 MEAS_FILE = './results/measurements/fieldmap_phase0.dat'
 
 
-def get_kmap_filename():
+def get_kmap_filename(phase):
     fpath = FOLDER_DATA + 'kickmaps/'
     fpath = fpath.replace('model/data/', 'model/')
-    fname = fpath + 'kickmap-ID-kyma22.txt'
+    fname = fpath + 'kickmap-ID-kyma22-phase{}.txt'.format(phase)
     return fname
 
 
 def create_ids(
-        nr_steps=None, rescale_kicks=RESCALE_KICKS,
+        phase=0, nr_steps=None, rescale_kicks=RESCALE_KICKS,
         rescale_length=RESCALE_LENGTH, meas_flag=False):
     # create IDs
     nr_steps = nr_steps or 40
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
     rescale_length = \
         rescale_length if rescale_length is not None else 1
-    fname = get_kmap_filename()
+    fname = get_kmap_filename(phase)
     if meas_flag:
         fname = fname.replace('model/', 'measurements/')
     idkmap = IDKickMap(kmap_fname=fname)
@@ -57,8 +57,10 @@ def create_ids(
     return ids
 
 
-def create_model_ids(rescale_kicks=RESCALE_KICKS,
-                     rescale_length=RESCALE_KICKS, meas_flag=True):
+def create_model_ids(
+        phase=0,
+        rescale_kicks=RESCALE_KICKS,
+        rescale_length=RESCALE_KICKS, meas_flag=True):
     ids = create_ids(
         rescale_kicks=rescale_kicks,
         rescale_length=rescale_length,
@@ -67,10 +69,10 @@ def create_model_ids(rescale_kicks=RESCALE_KICKS,
     return model, ids
 
 
-def generate_radia_model(nr_periods=5, solve=False):
+def generate_radia_model(phase, nr_periods=5, solve=False):
     """."""
     kyma = Kyma22(nr_periods=nr_periods)
-
+    kyma.dg = phase
     if solve:
         kyma.solve()
 

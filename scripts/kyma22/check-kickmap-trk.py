@@ -29,11 +29,11 @@ def calc_idkmap_kicks(plane_idx=0, idkmap=None):
     return rx0, ry0, pxf, pyf, rxf, ryf
 
 
-def create_model_ids(rescale_kicks, meas_flag):
+def create_model_ids(phase, rescale_kicks, meas_flag):
     """."""
     print('--- model with kickmap ---')
     ids = utils.create_ids(
-        rescale_kicks=rescale_kicks, meas_flag=meas_flag)
+        phase=phase, rescale_kicks=rescale_kicks, meas_flag=meas_flag)
     model = pymodels.si.create_accelerator(ids=ids)
     twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
     print('length : {:.4f} m'.format(model.length))
@@ -42,9 +42,9 @@ def create_model_ids(rescale_kicks, meas_flag):
     return model, twiss, ids
 
 
-def check_kick_at_plane(rescale_kicks, rescale_length, meas_flag=False):
+def check_kick_at_plane(phase, rescale_kicks, rescale_length, meas_flag=False):
     """."""
-    fname = utils.get_kmap_filename()
+    fname = utils.get_kmap_filename(phase)
     if meas_flag:
         fname = fname.replace('model/', 'measurements/')
     id_kickmap = IDKickMap(fname)
@@ -56,6 +56,7 @@ def check_kick_at_plane(rescale_kicks, rescale_length, meas_flag=False):
 
     # lattice with IDs
     model, ids = utils.create_model_ids(
+                    phase=phase,
                     rescale_kicks=rescale_kicks,
                     rescale_length=rescale_length,
                     meas_flag=meas_flag)
@@ -104,6 +105,8 @@ if __name__ == '__main__':
 
     rescale_kicks = utils.RESCALE_KICKS
     rescale_length = utils.RESCALE_LENGTH
-    check_kick_at_plane(rescale_kicks=rescale_kicks,
+    phase = 0
+    check_kick_at_plane(phase=phase,
+                        rescale_kicks=rescale_kicks,
                         rescale_length=rescale_length,
                         meas_flag=True)

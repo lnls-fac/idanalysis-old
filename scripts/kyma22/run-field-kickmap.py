@@ -16,6 +16,7 @@ ROLL_OFF_RX = 5.0  # [mm]
 
 def generate_kickmap(gridx, gridy, radia_model, max_rz):
 
+    phase = radia_model.dg
     idkickmap = IDKickMap()
     idkickmap.radia_model = radia_model
     idkickmap.beam_energy = 3.0  # [GeV]
@@ -25,13 +26,14 @@ def generate_kickmap(gridx, gridy, radia_model, max_rz):
     idkickmap.traj_init_rz = -max_rz
     idkickmap.traj_rk_min_rz = max_rz
     idkickmap.fmap_calc_kickmap(posx=gridx, posy=gridy)
-    fname = utils.get_kmap_filename()
+    fname = utils.get_kmap_filename(phase)
     idkickmap.save_kickmap_file(kickmap_filename=fname)
 
 
-def create_models(nr_periods, phase):
+def create_models(phase, nr_periods):
     """."""
     kyma = utils.generate_radia_model(
+            phase,
             nr_periods=nr_periods,
             solve=False)
     return kyma
@@ -66,7 +68,7 @@ def get_field_roll_off(kyma, data, rx, peak_idx, filter='on', plot_flag=False):
     roff = np.abs(by_avg[rx5_idx]/by_avg[rx0_idx]-1)
     print('roll off = ', 100*roff, '%')
     if plot_flag:
-        plt.plot(rx, by)
+        plt.plot(rx, by, label='Roll off = {:.2f} %'.format(100*roff))
         plt.xlabel('x [mm]')
         plt.ylabel('By [T]')
         plt.title('Field rolloff at x = 5 mm for Gap 8.0 mm')
@@ -135,9 +137,10 @@ def get_field_on_trajectory(kyma, data, max_rz):
     return data
 
 
-def save_data(data):
+def save_data(phase, data):
     """."""
     fpath = utils.FOLDER_DATA
+    fpath = fpath.replace('data/', 'data/phase{}/'.format(phase))
     fname = fpath + 'field_data_kyma22'
     save_pickle(data, fname, overwrite=True)
 
@@ -158,10 +161,11 @@ def plot_field_roll_off(data):
     by = data['rolloff_by']
     rx = data['rolloff_rx']
     roff = data['rolloff_value']
-    plt.plot(rx, by)
+    plt.plot(rx, by, label='roll off = {:.2f} %'.format(100*roff))
+    plt.legend()
     plt.xlabel('x [mm]')
     plt.ylabel('By [T]')
-    plt.title('Field rolloff at x = 6 mm for Gap 4.2 mm')
+    plt.title('Field rolloff at x = 5 mm for Gap 8 mm')
     plt.grid()
     plt.show()
 
@@ -200,9 +204,9 @@ def plot_rk_traj(data):
     plt.show()
 
 
-def run_calc_fields(nr_periods):
+def run_calc_fields(phase, nr_periods):
 
-    kyma = create_models(nr_periods=nr_periods)
+    kyma = create_models(phase, nr_periods=nr_periods)
 
     rx = np.linspace(-40, 40, 4*81)
 
@@ -222,7 +226,7 @@ def run_calc_fields(nr_periods):
     data = get_field_on_trajectory(kyma=kyma, data=data, max_rz=max_rz)
 
     # --- save data
-    save_data(data)
+    save_data(phase, data)
 
     return kyma, max_rz
 
@@ -241,9 +245,10 @@ def run_generate_kickmap(kyma=None,
     return kyma
 
 
-def run_plot_data():
+def run_plot_data(phase):
 
     fpath = utils.FOLDER_DATA
+    fpath = fpath.replace('data/', 'data/phase{}/'.format(phase))
     fname = fpath + 'field_data_kyma22.pickle'
     data = load_pickle(fname)
 
@@ -254,9 +259,10 @@ def run_plot_data():
 
 if __name__ == "__main__":
 
+    phase = 0
     gridx = list(np.array([-12, 0, 12]) / 1000)  # [m]
     gridy = list(np.array([-2, 0, 2]) / 1000)  # [m]
 
-    kyma, max_rz = run_calc_fields(nr_periods=5)
-    run_plot_data()
-    # kyma = run_generate_kickmap(kyma=kyma, max_rz=max_rz)
+    kyma, max_rz = run_calc_fields(phase, nr_periods=5)
+    # run_plot_data(phase)
+    kyma = run_generate_kickmap(kyma=kyma, max_rz=max_rz)
