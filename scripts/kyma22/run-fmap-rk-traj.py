@@ -128,12 +128,12 @@ def run_plot_data(phase, rx0):
 
 if __name__ == "__main__":
     """."""
-    phase = 0
+    phase = 11
     posx = np.arange(-11, +12, 1) / 1000  # [m]
     posy = np.linspace(-3.8, +3.8, 3) / 1000  # [m]
     # run_generate_kickmap(phase, posx, posy)
     data = dict()
-    rx0 = 6/1000*1
+    rx0 = 6/1000*0
     data = get_field_on_trajectory(phase, data, rx0)
     save_data(phase, data)
-    run_plot_data(phase, rx0=6/1000*1)
+    run_plot_data(phase, rx0=6/1000*0)

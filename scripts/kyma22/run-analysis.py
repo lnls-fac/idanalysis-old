@@ -18,14 +18,15 @@ from apsuite.dynap import DynapXY, DynapEX, PhaseSpace
 
 RESCALE_KICKS = utils.RESCALE_KICKS
 RESCALE_LENGTH = utils.RESCALE_LENGTH
-MEAS_FLAG = True
+MEAS_FLAG = False
 
 
-def create_model_ids(meas_flag):
+def create_model_ids(phase, meas_flag):
     """."""
     print('--- model with kickmap ---')
     ids = utils.create_ids(
-        rescale_kicks=RESCALE_KICKS,
+        phase,
+        rescale_kicks=RESCALE_KICKS*1,
         rescale_length=RESCALE_LENGTH, meas_flag=meas_flag)
     model = pymodels.si.create_accelerator(ids=ids)
     model.cavity_on = False
@@ -46,7 +47,7 @@ def create_model_ids(meas_flag):
     return model, knobs, locs_beta, straight_nr
 
 
-def create_models(meas_flag):
+def create_models(phase, meas_flag):
 
     # create unperturbed model for reference
     model0 = pymodels.si.create_accelerator()
@@ -55,6 +56,7 @@ def create_models(meas_flag):
 
     # create model with id
     model1, knobs, locs_beta, straight_nr = create_model_ids(
+        phase,
         meas_flag)
 
     # return
@@ -114,12 +116,13 @@ def analysis_uncorrected_perturbation(
 
 
 def plot_beta_beating(
-        twiss0, twiss1, twiss2, twiss3, stg, meas_flag=MEAS_FLAG):
+        phase, twiss0, twiss1, twiss2, twiss3, stg, meas_flag=MEAS_FLAG):
     """."""
 
     fpath = utils.FOLDER_DATA
+    fpath = fpath.replace('data/', 'data/phase{}/')
     if meas_flag:
-        fpath = fpath.replace('model/', 'measurements/')
+        fpath = fpath.replace('model/', 'measurements/'.format(phase))
     # Compare optics between nominal value and uncorrect optics due ID
     results = calc_dtune_betabeat(twiss0, twiss1)
     dtunex, dtuney = results[0], results[1]
@@ -200,7 +203,7 @@ def plot_beta_beating(
     plt.show()
 
 
-def analysis_dynapt(model1, meas_flag=MEAS_FLAG):
+def analysis_dynapt(phase, model1, meas_flag=MEAS_FLAG):
 
     model1.radiation_on = 0
     model1.cavity_on = False
@@ -216,13 +219,13 @@ def analysis_dynapt(model1, meas_flag=MEAS_FLAG):
     fig2, *ax = dynapxy.make_figure_diffusion(orders=(1, 2, 3, 4))
     fig2.show()
 
-    fig_path = './results/model/data/dynapt-kickmap-symmetrized.png'
+    fig_path = './results/model/data/phase{}/dynapt-kickmap-symmetrized.png'.format(phase)
     if meas_flag:
         fig_path = fig_path.replace('model/', 'measurements/')
     fig2.savefig(fig_path, dpi=300, format='png')
 
 
-def symmetrize(plot_flag=True, meas_flag=False):
+def symmetrize(phase, plot_flag=True, meas_flag=False):
     """."""
     def correct_optics(model1, straight_nr, knobs, goal_beta, goal_alpha):
         dk_tot = np.zeros(len(knobs))
@@ -254,8 +257,9 @@ def symmetrize(plot_flag=True, meas_flag=False):
         print()
         return twiss3
 
-    def calc_symmetrization():
+    def calc_symmetrization(phase):
         model0, model1, knobs, locs_beta, straight_nr = create_models(
+            phase,
             meas_flag)
         twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
         print('local quadrupole fams: ', knobs)
@@ -271,12 +275,12 @@ def symmetrize(plot_flag=True, meas_flag=False):
             [twiss0.alphax[locs_beta], twiss0.alphay[locs_beta]])
         print(goal_beta)
 
-        # correct orbit
+        # # correct orbit
         # orbcorr.correct_orbit_local(
         #     model0, model1, 'APU22', correction_plane='both', plot=False)
 
-        _ = orbcorr.correct_orbit_fb(
-            model0, model1, 'APU22', corr_system='SOFB')
+        orb_res = orbcorr.correct_orbit_fb(
+            model0, model1, 'APU22', corr_system='SOFB', nr_steps=1)
 
         # calculate beta beating and delta tunes
         twiss1 = analysis_uncorrected_perturbation(
@@ -290,14 +294,15 @@ def symmetrize(plot_flag=True, meas_flag=False):
         twiss3 = correct_tunes(model1, twiss1, goal_tunes)
 
         plot_beta_beating(
-            twiss0, twiss1, twiss2, twiss3, stg)
+            phase, twiss0, twiss1, twiss2, twiss3, stg)
 
         return model1
 
-    model1 = calc_symmetrization()
-    analysis_dynapt(model1)
+    model1 = calc_symmetrization(phase)
+    analysis_dynapt(phase, model1)
 
 
 if __name__ == '__main__':
 
-    symmetrize(plot_flag=False, meas_flag=MEAS_FLAG)
+    phase = 0
+    symmetrize(phase, plot_flag=False, meas_flag=MEAS_FLAG)

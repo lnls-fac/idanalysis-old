@@ -150,11 +150,11 @@ def run(phase):
     # plot_field(fmap)
 
     # calc_roll_off(fmap)
-    compare_model(fmap, phase=phase)
+    # compare_model(fmap, phase=phase)
 
 
 if __name__ == "__main__":
     """."""
 
-    phase = 0
+    phase = 11
     run(phase=phase)

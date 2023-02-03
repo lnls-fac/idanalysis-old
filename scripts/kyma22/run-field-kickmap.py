@@ -266,10 +266,10 @@ def run_plot_data(phase):
 
 if __name__ == "__main__":
 
-    phase = 0
+    phase = 11
     gridx = list(np.array([-12, 0, 12]) / 1000)  # [m]
     gridy = list(np.array([-2, 0, 2]) / 1000)  # [m]
 
-    # kyma, max_rz = run_calc_fields(phase, nr_periods=5)
+    kyma, max_rz = run_calc_fields(phase, nr_periods=5)
     run_plot_data(phase)
-    # kyma = run_generate_kickmap(kyma=kyma, max_rz=max_rz)
+    kyma = run_generate_kickmap(kyma=kyma, max_rz=max_rz)

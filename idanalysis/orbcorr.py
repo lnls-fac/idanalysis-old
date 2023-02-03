@@ -20,7 +20,11 @@ def correct_orbit_local(
     orb0_ang = orb0[[1, 3], :]
 
     # find idc1 and idc2 indices for local correctors
-    idinds = pyaccel.lattice.find_indices(model1, 'fam_name', id_famname)
+    inds = pyaccel.lattice.find_indices(model1, 'fam_name', id_famname)
+    idinds = list()
+    for idx in inds:
+        if model1[idx].pass_method == 'kicktable_pass':
+            idinds.append(idx)
     idc1, idc2 = idinds[0], idinds[-1]
     while idc1 >= 0 and model1[idc1].fam_name != 'IDC':
         idc1 -= 1
@@ -311,8 +315,11 @@ def correct_orbit_fb(
     famdata = si.get_family_data(model1)
     bpms = np.array([idx[0] for idx in famdata['BPM']['index']])
     spos_bpms = pyaccel.lattice.find_spos(model1, indices=bpms)
-    inds_id = pyaccel.lattice.find_indices(model1, 'fam_name', id_famname)
-
+    inds = pyaccel.lattice.find_indices(model1, 'fam_name', id_famname)
+    inds_id = list()
+    for idx in inds:
+        if model1[idx].pass_method == 'kicktable_pass':
+            inds_id.append(idx)
     # create orbit corrector
     cparams = CorrParams()
     cparams.minsingval = minsingval
