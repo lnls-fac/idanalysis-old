@@ -19,13 +19,14 @@ def calc_roll_off(fmap):
     rx0idx = np.argmin(np.abs(rx))
     rx5idx = np.argmin(np.abs(rx - 5))
     roff = 100*(byx[rx0idx] - byx[rx5idx])/byx[rx0idx]
-    plt.figure(1)
-    plt.plot(rx, byx, label='roll off = {:.2} %'.format(roff))
-    plt.legend()
-    plt.xlabel('rx [mm]')
-    plt.ylabel('By [T]')
-    plt.grid()
-    plt.show()
+    # plt.figure(1)
+    # plt.plot(rx, byx, label='roll off @ 5 mm= {:.2} %'.format(roff))
+    # plt.legend()
+    # plt.xlabel('rx [mm]')
+    # plt.ylabel('By [T]')
+    # plt.grid()
+    # plt.show()
+    return rx, byx, roff
 
 
 def plot_field(fmap):
@@ -92,13 +93,63 @@ def compare_model(fmap, phase):
     figname = utils.FOLDER_DATA + 'B{}_comparison_phase{}'.format(fcomp, phase)
     plt.savefig(figname, dpi=300)
 
+    rx, byx, roff_meas = calc_roll_off(fmap)
+
+    period = kyma.period_length
+    rz = np.linspace(-period/2, period/2, 100)
+    field = kyma.get_field(0, 0, rz)
+    by = field[:, 1]
+    by_max_idx = np.argmax(by)
+    rz_at_max = rz[by_max_idx]
+    field = kyma.get_field(rx, 0, rz_at_max)
+    by = field[:, 1]
+    by_avg = by
+    rx_avg = rx
+    rx5_idx = np.argmin(np.abs(rx_avg - 5))
+    rx0_idx = np.argmin(np.abs(rx_avg))
+    roff = 100*np.abs(by_avg[rx5_idx]/by_avg[rx0_idx]-1)
+
+    plt.figure(4)
+    plt.plot(
+        rx, byx, color='C0', label='roll off @ 5mm - meas  {:.2f} %'.format(roff_meas))
+    plt.plot(
+        rx_avg, by_avg, color='C1', label='roll off @ 5mm- model  {:.2f} %'.format(roff))
+    plt.xlabel('rx [mm]')
+    plt.ylabel('By [T]')
+    plt.legend()
+    plt.grid()
+    figname = utils.FOLDER_DATA + 'Roll_off_phase{}'.format(phase)
+    plt.savefig(figname, dpi=300)
+
+    plt.figure(5)
+    byx -= byx[int(len(byx)/2)] - by_avg[int(len(by_avg)/2)]
+    plt.plot(
+        rx, byx, color='C0', label='roll off @ 5mm - meas  {:.2f} %'.format(roff_meas))
+    plt.plot(
+        rx_avg, by_avg, '.-', color='C1', label='roll off @ 5mm- model  {:.2f} %'.format(roff))
+    plt.xlabel('rx [mm]')
+    plt.ylabel('By [T]')
+    plt.legend()
+    plt.grid()
+    figname = utils.FOLDER_DATA + 'Roll_off_shift_phase{}'.format(phase)
+    plt.savefig(figname, dpi=300)
+
+
+
     plt.show()
 
 
 def run(phase):
     fmap = load_fieldmap(phase=phase)
-    # calc_roll_off(fmap)
+    i1 = fmap.calc_first_integral(fmap.By, fmap.rz)
+    i2 = fmap.calc_first_integral(i1, fmap.rz)
+    print('First integral: {:.2} Tm  or {:.3f} urad'.format(
+        i1[-1], 1e6*i1[-1]/10))
+    print('Second integral: {:.2} Tm2  or {:.3f} mm'.format(
+        i2[-1], 1e3*i2[-1]/10))
     # plot_field(fmap)
+
+    # calc_roll_off(fmap)
     compare_model(fmap, phase=phase)
 
 

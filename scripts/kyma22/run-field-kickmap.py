@@ -34,8 +34,7 @@ def create_models(phase, nr_periods):
     """."""
     kyma = utils.generate_radia_model(
             phase,
-            nr_periods=nr_periods,
-            solve=False)
+            nr_periods=nr_periods)
     return kyma
 
 
@@ -156,7 +155,9 @@ def plot_field_on_axis(data):
     plt.show()
 
 
-def plot_field_roll_off(data):
+def plot_field_roll_off(data, phase):
+    fig = utils.FOLDER_DATA
+    fig = fig.replace('data/', 'data/phase{}/'.format(phase))
     plt.figure(1)
     by = data['rolloff_by']
     rx = data['rolloff_rx']
@@ -167,11 +168,14 @@ def plot_field_roll_off(data):
     plt.ylabel('By [T]')
     plt.title('Field rolloff at x = 5 mm for Gap 8 mm')
     plt.grid()
+    plt.savefig(fig + 'field_roll_off', dpi=300)
     plt.show()
 
 
-def plot_rk_traj(data):
+def plot_rk_traj(data, phase):
 
+    fig = utils.FOLDER_DATA
+    fig = fig.replace('data/', 'data/phase{}/'.format(phase))
     s = data['ontraj_s']
     rx = data['ontraj_rx']
     ry = data['ontraj_ry']
@@ -179,19 +183,23 @@ def plot_rk_traj(data):
     py = 1e6*data['ontraj_py']
 
     plt.figure(1)
-    plt.plot(s, 1e3*rx, color='b')
+    plt.plot(s, rx, color='b')
     plt.xlabel('s [mm]')
-    plt.ylabel('x [um]')
+    plt.ylabel('x [mm]')
+    plt.grid()
+    plt.savefig(fig + 'traj_rx', dpi=300)
 
     plt.figure(2)
-    plt.plot(s, 1e3*ry, color='b')
+    plt.plot(s, ry, color='b')
     plt.xlabel('s [mm]')
-    plt.ylabel('y [um]')
+    plt.ylabel('y [mm]')
 
     plt.figure(3)
     plt.plot(s, px, color='b')
     plt.xlabel('s [mm]')
     plt.ylabel('px [urad]')
+    plt.grid()
+    plt.savefig(fig + 'traj_px', dpi=300)
 
     plt.figure(4)
     plt.plot(s, py, color='b')
@@ -200,7 +208,6 @@ def plot_rk_traj(data):
 
     for i in [1, 2, 3, 4]:
         plt.figure(i)
-        plt.grid()
     plt.show()
 
 
@@ -252,8 +259,8 @@ def run_plot_data(phase):
     fname = fpath + 'field_data_kyma22.pickle'
     data = load_pickle(fname)
 
-    plot_rk_traj(data=data)
-    plot_field_roll_off(data=data)
+    plot_rk_traj(data=data, phase=phase)
+    plot_field_roll_off(data=data, phase=phase)
     plot_field_on_axis(data=data)
 
 
@@ -263,6 +270,6 @@ if __name__ == "__main__":
     gridx = list(np.array([-12, 0, 12]) / 1000)  # [m]
     gridy = list(np.array([-2, 0, 2]) / 1000)  # [m]
 
-    kyma, max_rz = run_calc_fields(phase, nr_periods=5)
-    # run_plot_data(phase)
-    kyma = run_generate_kickmap(kyma=kyma, max_rz=max_rz)
+    # kyma, max_rz = run_calc_fields(phase, nr_periods=5)
+    run_plot_data(phase)
+    # kyma = run_generate_kickmap(kyma=kyma, max_rz=max_rz)

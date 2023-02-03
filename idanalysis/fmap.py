@@ -264,6 +264,7 @@ class FieldmapOnAxisAnalysis:
         self.bx = None
         self.by = None
         self.bz = None
+        self.field = None
         self.beam = _Beam(beam_energy)
         self.traj = None
         self.s_step = 0.5
@@ -357,6 +358,7 @@ class FieldmapOnAxisAnalysis:
         self.Bx = field.bx[idx_y0][idx_x0][:]
         self.By = field.by[idx_y0][idx_x0][:]
         self.Bz = field.bz[idx_y0][idx_x0][:]
+        self.field = field
 
 
     def run(self):

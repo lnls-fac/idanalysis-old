@@ -20,8 +20,9 @@ def run_generate_kickmap(phase, posx, posy):
     idkickmap.traj_rk_min_rz = 739
     idkickmap.beam_energy = 3.0  # [GeV]
     idkickmap.rk_s_step = 0.2  # [mm]
+    idkickmap.kmap_idlen = 1.3
     idkickmap.fmap_calc_kickmap(posx=posx, posy=posy)
-    fname = './results/measurements/kickmaps/kickmap-ID-kyma22-phase{}.txt'.format(phase)
+    fname = './results/measurements/kickmaps/kickmap-ID-kyma22-midplane-phase{}.txt'.format(phase)
     idkickmap.save_kickmap_file(kickmap_filename=fname)
 
 
@@ -42,10 +43,10 @@ def get_field_on_trajectory(phase, data, rx0):
     idkickmap.traj_init_rz = -739
     idkickmap.traj_rk_min_rz = 739
     idkickmap.rk_s_step = 0.2
-    idkickmap.fmap_calc_trajectory(
+    config = idkickmap.fmap_calc_trajectory(
         traj_init_rx=rx0, traj_init_ry=0,
         traj_init_px=0, traj_init_py=0)
-    traj = idkickmap.traj
+    traj = config.traj
 
     s = traj.s
     bx, by, bz = traj.bx, traj.by, traj.bz
@@ -73,37 +74,46 @@ def save_data(phase, data):
 
 def plot_rk_traj(data, rx0):
 
+    fig = utils.FOLDER_DATA
+    fig = fig.replace(
+        'model/data/', 'measurements/data/phase{}/'.format(phase))
     s = data[('ontraj_s', rx0)]
     rx = data[('ontraj_rx', rx0)]
     ry = data[('ontraj_ry', rx0)]
-    px = 1e6*data[('ontraj_px', rx0)]
-    py = 1e6*data[('ontraj_py', rx0)]
+    px = data[('ontraj_px', rx0)]
+    py = data[('ontraj_py', rx0)]
 
     label = 'init rx = {} mm'.format(rx0*1e3)
     plt.figure(1)
-    plt.plot(s, 1e3*rx, color='b', label=label)
+    plt.plot(s, rx, color='b', label=label)
     plt.xlabel('s [mm]')
     plt.ylabel('x [mm]')
+    plt.legend()
+    plt.grid()
+    plt.savefig(fig + 'traj_rx', dpi=300)
+    print('rx final: {:.3f} mm'.format(rx[-1]))
 
     plt.figure(2)
-    plt.plot(s, 1e3*ry, color='b', label=label)
+    plt.plot(s, ry, color='b', label=label)
     plt.xlabel('s [mm]')
     plt.ylabel('y [mm]')
 
     plt.figure(3)
-    plt.plot(s, px, color='b', label=label)
+    plt.plot(s, 1e6*px, color='b', label=label)
     plt.xlabel('s [mm]')
     plt.ylabel('px [urad]')
+    plt.legend()
+    plt.grid()
+    plt.savefig(fig + 'traj_px', dpi=300)
+    print('px final: {:.3f} urad'.format(1e6*px[-1]))
 
     plt.figure(4)
-    plt.plot(s, py, color='b', label=label)
+    plt.plot(s, 1e6*py, color='b', label=label)
     plt.xlabel('s [mm]')
     plt.ylabel('py [urad]')
 
     for i in [1, 2, 3, 4]:
         plt.figure(i)
-        plt.legend()
-        plt.grid()
     plt.show()
 
 
@@ -121,9 +131,9 @@ if __name__ == "__main__":
     phase = 0
     posx = np.arange(-11, +12, 1) / 1000  # [m]
     posy = np.linspace(-3.8, +3.8, 3) / 1000  # [m]
-    run_generate_kickmap(phase, posx, posy)
-    # data = dict()
-    # rx0 = 6/1000
-    # data = get_field_on_trajectory(phase, data, rx0)
-    # save_data(phase, data)
-    # run_plot_data(phase, rx0=6/1000)
+    # run_generate_kickmap(phase, posx, posy)
+    data = dict()
+    rx0 = 6/1000*1
+    data = get_field_on_trajectory(phase, data, rx0)
+    save_data(phase, data)
+    run_plot_data(phase, rx0=6/1000*1)

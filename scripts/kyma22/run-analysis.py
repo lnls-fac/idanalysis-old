@@ -18,7 +18,7 @@ from apsuite.dynap import DynapXY, DynapEX, PhaseSpace
 
 RESCALE_KICKS = utils.RESCALE_KICKS
 RESCALE_LENGTH = utils.RESCALE_LENGTH
-MEAS_FLAG = False
+MEAS_FLAG = True
 
 
 def create_model_ids(meas_flag):
@@ -216,7 +216,7 @@ def analysis_dynapt(model1, meas_flag=MEAS_FLAG):
     fig2, *ax = dynapxy.make_figure_diffusion(orders=(1, 2, 3, 4))
     fig2.show()
 
-    fig_path = './results/model/data/dynapt-kickmap-not-symmetrized.png'
+    fig_path = './results/model/data/dynapt-kickmap-symmetrized.png'
     if meas_flag:
         fig_path = fig_path.replace('model/', 'measurements/')
     fig2.savefig(fig_path, dpi=300, format='png')

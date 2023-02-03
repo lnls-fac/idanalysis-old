@@ -14,7 +14,7 @@ ID_KMAP_LEN = 0.13  # [m]
 DEF_RK_S_STEP = 1  # [mm] seems converged for the measurement fieldmap grids
 RESCALE_KICKS = 1  # Radia simulations have fewer ID periods
 RESCALE_LENGTH = 10  # Radia simulations have fewer ID periods
-SOLVE_FLAG = False
+SOLVE_FLAG = True
 
 # FOLDER_BASE = '/home/gabriel/repos-dev/'
 FOLDER_BASE = '/home/ximenes/repos-dev/'
@@ -40,6 +40,7 @@ def create_ids(
     fname = get_kmap_filename(phase)
     if meas_flag:
         fname = fname.replace('model/', 'measurements/')
+        rescale_length = rescale_length/rescale_length
     idkmap = IDKickMap(kmap_fname=fname)
     kickx_up = idkmap.kickx_upstream  # [T².m²]
     kicky_up = idkmap.kicky_upstream  # [T².m²]
@@ -60,7 +61,7 @@ def create_ids(
 def create_model_ids(
         phase=0,
         rescale_kicks=RESCALE_KICKS,
-        rescale_length=RESCALE_KICKS, meas_flag=True):
+        rescale_length=RESCALE_LENGTH, meas_flag=True):
     ids = create_ids(
         rescale_kicks=rescale_kicks,
         rescale_length=rescale_length,
@@ -69,7 +70,7 @@ def create_model_ids(
     return model, ids
 
 
-def generate_radia_model(phase, nr_periods=5, solve=False):
+def generate_radia_model(phase, nr_periods=5, solve=SOLVE_FLAG):
     """."""
     kyma = Kyma22(nr_periods=nr_periods)
     kyma.dg = phase

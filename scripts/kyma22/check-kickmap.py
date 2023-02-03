@@ -45,8 +45,9 @@ def plot_kick_at_plane(phase, posy, kick_plane='X', meas_flag=True):
     pyf *= utils.RESCALE_KICKS
 
     pf, klabel = (pxf, 'px') if kick_plane.lower() == 'x' else (pyf, 'py')
-    pfit = np.polyfit(rx0, pf, 5)
+    pfit = np.polyfit(rx0, pf, 23)
     pf_fit = np.polyval(pfit, rx0)
+    print(pfit[::-1])
 
     plt.figure(1)
     plt.plot(

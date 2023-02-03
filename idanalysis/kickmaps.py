@@ -208,9 +208,8 @@ class IDKickMap:
             self.rk_s_step = rk_s_step
 
         config = self._fmap_config or self._radia_model_config
-
-        config.traj_init_rx = traj_init_rx
-        config.traj_init_ry = traj_init_ry
+        config.traj_init_rx = traj_init_rx * 1e3
+        config.traj_init_ry = traj_init_ry * 1e3
         config.traj_init_px = traj_init_px
         config.traj_init_py = traj_init_py
         if traj_init_rz is not None:
@@ -223,22 +222,16 @@ class IDKickMap:
         return config
 
     def fmap_calc_kickmap(
-            self, posx, posy, beam_energy=None, rk_s_step=None, symmetry=None):
+            self, posx, posy, beam_energy=None, rk_s_step=None):
         """."""
         self.posx = _np.array(posx)  # [m]
         self.posy = _np.array(posy)  # [m]
-
-        if symmetry is not None:
-            original_posx = self.posx.copy()
-            original_posy = self.posy.copy()
 
         if beam_energy is not None:
             self.beam_energy = beam_energy
         if rk_s_step is not None:
             self.rk_s_step = rk_s_step
         brho = self.brho
-        # idlen = self.fmap_config.fmap.rz[-1] - self.fmap_config.fmap.rz[0]
-        # self.fmap_idlen = idlen/1e3
         self.kickx = _np.full((len(self.posy), len(self.posx)), _np.inf)
         self.kicky = _np.full((len(self.posy), len(self.posx)), _np.inf)
         self.fposx = _np.full((len(self.posy), len(self.posx)), _np.inf)
