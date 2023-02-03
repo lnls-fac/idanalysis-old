@@ -30,7 +30,7 @@ def generate_kickmap(gridx, gridy, radia_model, max_rz):
     idkickmap.save_kickmap_file(kickmap_filename=fname)
 
 
-def create_models(phase, nr_periods):
+def create_model(phase, nr_periods):
     """."""
     kyma = utils.generate_radia_model(
             phase,
@@ -65,7 +65,7 @@ def get_field_roll_off(kyma, data, rx, peak_idx, filter='on', plot_flag=False):
     rx5_idx = np.argmin(np.abs(rx_avg - 5))
     rx0_idx = np.argmin(np.abs(rx_avg))
     roff = np.abs(by_avg[rx5_idx]/by_avg[rx0_idx]-1)
-    print('roll off = ', 100*roff, '%')
+    print(f'roll off = {100*roff:.2f} %')
     if plot_flag:
         plt.plot(rx, by, label='Roll off = {:.2f} %'.format(100*roff))
         plt.xlabel('x [mm]')
@@ -141,7 +141,7 @@ def save_data(phase, data):
     fpath = utils.FOLDER_DATA
     fpath = fpath.replace('data/', 'data/phase{}/'.format(phase))
     fname = fpath + 'field_data_kyma22'
-    save_pickle(data, fname, overwrite=True)
+    save_pickle(data, fname, overwrite=True, makedirs=True)
 
 
 def plot_field_on_axis(data):
@@ -166,7 +166,7 @@ def plot_field_roll_off(data, phase):
     plt.legend()
     plt.xlabel('x [mm]')
     plt.ylabel('By [T]')
-    plt.title('Field rolloff at x = 5 mm for Gap 8 mm')
+    plt.title('Field rolloff for phase {:+.3f} mm'.format(phase))
     plt.grid()
     plt.savefig(fig + 'field_roll_off', dpi=300)
     plt.show()
@@ -176,46 +176,52 @@ def plot_rk_traj(data, phase):
 
     fig = utils.FOLDER_DATA
     fig = fig.replace('data/', 'data/phase{}/'.format(phase))
-    s = data['ontraj_s']
+    rz = data['ontraj_rz']
     rx = data['ontraj_rx']
     ry = data['ontraj_ry']
     px = 1e6*data['ontraj_px']
     py = 1e6*data['ontraj_py']
 
     plt.figure(1)
-    plt.plot(s, rx, color='b')
-    plt.xlabel('s [mm]')
-    plt.ylabel('x [mm]')
+    plt.plot(rz, rx, color='b')
+    plt.xlabel('rz [mm]')
+    plt.ylabel('rx [mm]')
     plt.grid()
+    plt.title('Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
     plt.savefig(fig + 'traj_rx', dpi=300)
 
     plt.figure(2)
-    plt.plot(s, ry, color='b')
-    plt.xlabel('s [mm]')
-    plt.ylabel('y [mm]')
+    plt.plot(rz, ry, color='b')
+    plt.xlabel('rz [mm]')
+    plt.ylabel('ry [mm]')
+    plt.grid()
+    plt.title('Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
+    plt.savefig(fig + 'traj_ry', dpi=300)
 
     plt.figure(3)
-    plt.plot(s, px, color='b')
-    plt.xlabel('s [mm]')
+    plt.plot(rz, px, color='b')
+    plt.xlabel('rz [mm]')
     plt.ylabel('px [urad]')
     plt.grid()
+    plt.title('Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
     plt.savefig(fig + 'traj_px', dpi=300)
 
     plt.figure(4)
-    plt.plot(s, py, color='b')
-    plt.xlabel('s [mm]')
+    plt.plot(rz, py, color='b')
+    plt.xlabel('rz [mm]')
     plt.ylabel('py [urad]')
+    plt.grid()
+    plt.title('Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
+    plt.savefig(fig + 'traj_py', dpi=300)
 
-    for i in [1, 2, 3, 4]:
-        plt.figure(i)
     plt.show()
 
 
-def run_calc_fields(phase, nr_periods):
+def run_calc_fields(phase, nr_periods=5):
 
-    kyma = create_models(phase, nr_periods=nr_periods)
+    kyma = create_model(phase, nr_periods=nr_periods)
 
-    rx = np.linspace(-40, 40, 4*81)
+    rx = np.linspace(-40, 40, 4*81)  # [mm]
 
     max_rz = utils.ID_PERIOD*nr_periods + 40
     rz = np.linspace(-max_rz, max_rz, 2001)
@@ -266,10 +272,8 @@ def run_plot_data(phase):
 
 if __name__ == "__main__":
 
-    phase = 11
-    gridx = list(np.array([-12, 0, 12]) / 1000)  # [m]
-    gridy = list(np.array([-2, 0, 2]) / 1000)  # [m]
+    phase = 0
+    kyma, max_rz = run_calc_fields(phase)
+    # kyma = run_generate_kickmap(kyma=kyma, max_rz=max_rz)
 
-    kyma, max_rz = run_calc_fields(phase, nr_periods=5)
     run_plot_data(phase)
-    kyma = run_generate_kickmap(kyma=kyma, max_rz=max_rz)
