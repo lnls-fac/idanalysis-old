@@ -10,15 +10,14 @@ from idanalysis import IDKickMap
 BEAM_ENERGY = 3.0  # [GeV]
 
 ID_PERIOD = 22  # [mm]
+NR_PERIODS = 5  # Number of periods of Radia model
 ID_KMAP_LEN = 0.13  # [m]
 DEF_RK_S_STEP = 1  # [mm] seems converged for the measurement fieldmap grids
 RESCALE_KICKS = 1  # Radia simulations have fewer ID periods
 RESCALE_LENGTH = 10  # Radia simulations have fewer ID periods
-SOLVE_FLAG = True
 ROLL_OFF_RX = 10.0  # [mm]
+SOLVE_FLAG = True
 
-# FOLDER_BASE = '/home/gabriel/repos-dev/'
-FOLDER_BASE = '/home/ximenes/repos-dev/'
 FOLDER_DATA = './results/model/data/'
 MEAS_FILE = './results/measurements/fieldmap_phase0.dat'
 
@@ -30,10 +29,18 @@ def get_phase_str(gap):
     return phase_str
 
 
-def get_kmap_filename(phase):
+def get_kmap_filename(phase, meas_flag=False):
     fpath = FOLDER_DATA + 'kickmaps/'
     fpath = fpath.replace('model/data/', 'model/')
+    if meas_flag:
+        fpath = fpath.replace('model', 'measurements')
     fname = fpath + 'kickmap-ID-kyma22-phase{}.txt'.format(phase)
+    return fname
+
+
+def get_fmap_filename(phase):
+    fmap_fname = MEAS_FILE
+    fname = fmap_fname.replace('phase0', 'phase{}'.format(phase))
     return fname
 
 
@@ -71,6 +78,7 @@ def create_model_ids(
         rescale_kicks=RESCALE_KICKS,
         rescale_length=RESCALE_LENGTH, meas_flag=True):
     ids = create_ids(
+        phase=phase,
         rescale_kicks=rescale_kicks,
         rescale_length=rescale_length,
         meas_flag=meas_flag)
@@ -81,7 +89,7 @@ def create_model_ids(
 def generate_radia_model(phase, nr_periods=5, solve=SOLVE_FLAG):
     """."""
     kyma = Kyma22(nr_periods=nr_periods)
-    kyma.dg = phase
+    kyma.set_cassete_positions(dp=phase)
     if solve:
         kyma.solve()
 

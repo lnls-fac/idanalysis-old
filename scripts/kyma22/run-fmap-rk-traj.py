@@ -8,21 +8,22 @@ from mathphys.functions import save_pickle, load_pickle
 
 import utils
 
+BEAM_ENERGY = utils.BEAM_ENERGY
+RK_S_STEP = utils.DEF_RK_S_STEP
 
-def run_generate_kickmap(phase, posx, posy):
 
-    MEAS_FILE = utils.MEAS_FILE
+def generate_kickmap(phase, gridx, gridy, max_rz):
+
     idkickmap = IDKickMap()
-    fmap_fname = MEAS_FILE
-    fmap_fname = fmap_fname.replace('phase0', 'phase{}'.format(phase))
+    fmap_fname = utils.get_fmap_filename(phase)
     idkickmap.fmap_fname = fmap_fname
-    idkickmap.traj_init_rz = -739
-    idkickmap.traj_rk_min_rz = 739
-    idkickmap.beam_energy = 3.0  # [GeV]
-    idkickmap.rk_s_step = 0.2  # [mm]
+    idkickmap.beam_energy = BEAM_ENERGY
+    idkickmap.rk_s_step = RK_S_STEP
     idkickmap.kmap_idlen = 1.3
-    idkickmap.fmap_calc_kickmap(posx=posx, posy=posy)
-    fname = './results/measurements/kickmaps/kickmap-ID-kyma22-midplane-phase{}.txt'.format(phase)
+    idkickmap.traj_init_rz = -max_rz
+    idkickmap.traj_rk_min_rz = max_rz
+    idkickmap.fmap_calc_kickmap(posx=gridx, posy=gridy)
+    fname = utils.get_kmap_filename(phase, meas_flag=True)
     idkickmap.save_kickmap_file(kickmap_filename=fname)
 
 
