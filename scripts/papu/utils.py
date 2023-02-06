@@ -18,12 +18,13 @@ from idanalysis import IDKickMap
 BEAM_ENERGY = 3.0  # [GeV]
 
 ID_PERIOD = 50  # [mm]
-ID_KMAP_LEN = 0.900  # [m]
+NR_PERIODS = 18  # [mm]
+ID_KMAP_LEN = 1.200  # [m]
 DEF_RK_S_STEP = 1  # [mm] seems converged for the measurement fieldmap grids
 RESCALE_KICKS = 1  # Radia simulations could have fewer ID periods
 RESCALE_LENGTH = 1  # Radia simulations could have fewer ID periods
-SOLVE_FLAG = True
 ROLL_OFF_RX = 10.0  # [mm]
+SOLVE_FLAG = True
 
 FOLDER_DATA = './results/model/data/'
 

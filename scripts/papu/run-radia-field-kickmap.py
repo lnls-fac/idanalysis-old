@@ -11,7 +11,8 @@ import utils
 
 SOLVE_FLAG = utils.SOLVE_FLAG
 RK_S_STEP = utils.DEF_RK_S_STEP
-ROLL_OFF_RX = 10.0  # [mm]
+BEAM_ENERGY = utils.BEAM_ENERGY
+ROLL_OFF_RX = utils.ROLL_OFF_RX
 
 
 def create_path(phase):
@@ -26,10 +27,8 @@ def generate_kickmap(gridx, gridy, radia_model, max_rz):
     phase = radia_model.dp
     idkickmap = IDKickMap()
     idkickmap.radia_model = radia_model
-    idkickmap.beam_energy = 3.0  # [GeV]
-    idkickmap.rk_s_step = RK_S_STEP  # [mm]
-    idkickmap._radia_model_config.traj_init_px = 0
-    idkickmap._radia_model_config.traj_init_py = 0
+    idkickmap.beam_energy = BEAM_ENERGY
+    idkickmap.rk_s_step = RK_S_STEP
     idkickmap.traj_init_rz = -max_rz
     idkickmap.traj_rk_min_rz = max_rz
     idkickmap.fmap_calc_kickmap(posx=gridx, posy=gridy)
@@ -243,13 +242,13 @@ def plot_rk_traj(data):
     plt.show()
 
 
-def run_calc_fields(phase, nr_periods=18):
+def run_calc_fields(phase):
 
     papu = create_model(phase)
 
     rx = utils.ROLL_OFF_RX * np.linspace(-2, 2, 4*81)  # [mm]
 
-    max_rz = 900  # utils.ID_PERIOD*nr_periods + 40
+    max_rz = 900  # utils.ID_PERIOD*utils.NR_PERIODS + 40
     rz = np.linspace(-max_rz, max_rz, 2801)
 
     data = dict(phase=phase)
