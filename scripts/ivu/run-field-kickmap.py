@@ -11,7 +11,6 @@ import utils
 
 SOLVE_FLAG = utils.SOLVE_FLAG
 RK_S_STEP = utils.DEF_RK_S_STEP
-ROLL_OFF_RX = 6.0  # [mm]
 
 
 def get_termination_parameters(width):
@@ -81,7 +80,7 @@ def get_field_roll_off(models, data, rx, peak_idx, filter='off'):
         else:
             by_avg = by
             rx_avg = rx
-        rx6_idx = np.argmin(np.abs(rx_avg - ROLL_OFF_RX))
+        rx6_idx = np.argmin(np.abs(rx_avg - utils.ROLL_OFF_RX))
         rx0_idx = np.argmin(np.abs(rx_avg))
         roff = np.abs(by_avg[rx6_idx]/by_avg[rx0_idx]-1)
 

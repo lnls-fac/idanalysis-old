@@ -8,9 +8,9 @@ from mathphys.functions import save_pickle, load_pickle
 
 import utils
 
-SOLVE_FLAG = False
-NOMINAL_GAP = 4.2  # [mm]
-ROLL_OFF_RX = 6.0  # [mm]
+
+SOLVE_FLAG = utils.SOLVE_FLAG
+NOMINAL_GAP = utils.NOMINAL_GAP
 
 
 def get_termination_parameters(width):
@@ -47,7 +47,7 @@ def get_field_vs_gap(ivu, gaps, rx, peak_idx, data):
                 by_list.append(by_temp)
         by_avg = np.array(by_list)
         rx_avg = rx[6:-6]
-        rx6_idx = np.argmin(np.abs(rx_avg - ROLL_OFF_RX))
+        rx6_idx = np.argmin(np.abs(rx_avg - utils.ROLL_OFF_RX))
         rx0_idx = np.argmin(np.abs(rx_avg))
         roff = np.abs(by_avg[rx6_idx]/by_avg[rx0_idx]-1)
 

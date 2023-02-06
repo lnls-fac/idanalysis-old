@@ -15,11 +15,19 @@ DEF_RK_S_STEP = 1  # [mm] seems converged for the measurement fieldmap grids
 RESCALE_KICKS = 1  # Radia simulations have fewer ID periods
 RESCALE_LENGTH = 10  # Radia simulations have fewer ID periods
 SOLVE_FLAG = True
+ROLL_OFF_RX = 10.0  # [mm]
 
 # FOLDER_BASE = '/home/gabriel/repos-dev/'
 FOLDER_BASE = '/home/ximenes/repos-dev/'
 FOLDER_DATA = './results/model/data/'
 MEAS_FILE = './results/measurements/fieldmap_phase0.dat'
+
+
+def get_phase_str(gap):
+    """."""
+    phase_str = '{:+07.3f}'.format(gap).replace('.', 'p')
+    phase_str = phase_str.replace('+', 'pos').replace('-', 'neg')
+    return phase_str
 
 
 def get_kmap_filename(phase):
