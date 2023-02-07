@@ -275,7 +275,7 @@ def run_generate_kickmap(papu=None,
                          gridy=None):
     """."""
     gridx = gridx or list(np.arange(-10, +11, 1) / 1000)  # [m]
-    gridy = gridy or list(np.linspace(-3.6, +3.6, 9) / 1000)  # [m]
+    gridy = gridy or list(np.linspace(-3.5, +3.5, 5) / 1000)  # [m]
 
     generate_kickmap(
         gridx=gridx, gridy=gridy, radia_model=papu, max_rz=max_rz)

@@ -37,9 +37,10 @@ def get_phase_str(gap):
 
 
 def get_kmap_filename(phase):
-    fpath = FOLDER_DATA + 'kickmaps/'
-    fpath = fpath.replace('model/data/', 'model/')
-    fname = fpath + 'kickmap-ID-kyma22-phase{}.txt'.format(phase)
+    # fpath = FOLDER_DATA + 'kickmaps/'
+    # fpath = fpath.replace('model/data/', 'model/')
+    # fname = fpath + 'kickmap-ID-PAPU50-phase{}.txt'.format(phase)
+    fname = 'kickmap-ID-PAPU50-phase{}.txt'.format(phase)
     return fname
 
 
