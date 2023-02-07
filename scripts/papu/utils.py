@@ -132,6 +132,6 @@ def generate_radia_model(phase=0):
                              end_blocks_distance=end_blocks_distance,
                              init_radia_object=False)
     papu.create_radia_object(magnetization_dict=magnetization_dict)
-    papu.set_cassete_positions(dp=phase)
+    papu.dp = phase
 
     return papu

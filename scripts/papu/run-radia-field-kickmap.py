@@ -15,6 +15,13 @@ BEAM_ENERGY = utils.BEAM_ENERGY
 ROLL_OFF_RX = utils.ROLL_OFF_RX
 
 
+def create_model(phase):
+    """."""
+    papu = utils.generate_radia_model(
+            phase)
+    return papu
+
+
 def create_path(phase):
     fpath = utils.FOLDER_DATA
     phase_str = utils.get_phase_str(phase)
@@ -22,25 +29,25 @@ def create_path(phase):
     return fpath
 
 
-def generate_kickmap(gridx, gridy, radia_model, max_rz):
-
-    phase = radia_model.dp
+def config_traj(radia_model, max_rz):
     idkickmap = IDKickMap()
     idkickmap.radia_model = radia_model
     idkickmap.beam_energy = BEAM_ENERGY
     idkickmap.rk_s_step = RK_S_STEP
     idkickmap.traj_init_rz = -max_rz
     idkickmap.traj_rk_min_rz = max_rz
+    return idkickmap
+
+
+def generate_kickmap(gridx, gridy, radia_model, max_rz):
+    # Config trajectory parameters
+    idkickmap = config_traj(radia_model=radia_model, max_rz=max_rz)
     idkickmap.fmap_calc_kickmap(posx=gridx, posy=gridy)
+
+    # Generate kickmap file
+    phase = idkickmap.radia_model.dp
     fname = utils.get_kmap_filename(phase)
     idkickmap.save_kickmap_file(kickmap_filename=fname)
-
-
-def create_model(phase):
-    """."""
-    papu = utils.generate_radia_model(
-            phase)
-    return papu
 
 
 def get_field_roll_off(papu, data, rx, peak_idx, filter='on'):
@@ -105,7 +112,7 @@ def get_field_on_axis(papu, data, rz, plot_flag=False):
     return data
 
 
-def get_field_on_trajectory(papu, data, max_rz):
+def get_field_on_trajectory(papu, data, max_rz, rx0=0):
     """Calculate RK for set of EPU configurations."""
     s = dict()
     bx, by, bz = dict(), dict(), dict()
@@ -113,16 +120,9 @@ def get_field_on_trajectory(papu, data, max_rz):
     px, py, pz = dict(), dict(), dict()
 
     # create IDKickMap and calc trajectory
-    idkickmap = IDKickMap()
-    idkickmap.radia_model = papu
-    idkickmap.beam_energy = utils.BEAM_ENERGY
-    idkickmap._radia_model_config.traj_init_px = 0
-    idkickmap._radia_model_config.traj_init_py = 0
-    idkickmap.traj_init_rz = -max_rz
-    idkickmap.traj_rk_min_rz = max_rz
-    idkickmap.rk_s_step = RK_S_STEP
+    idkickmap = config_traj(radia_model=papu, max_rz=max_rz)
     idkickmap.fmap_calc_trajectory(
-        traj_init_rx=0, traj_init_ry=0,
+        traj_init_rx=rx0, traj_init_ry=0,
         traj_init_px=0, traj_init_py=0)
     traj = idkickmap.traj
 
@@ -131,10 +131,6 @@ def get_field_on_trajectory(papu, data, max_rz):
     rx, ry, rz = traj.rx, traj.ry, traj.rz
     px, py, pz = traj.px, traj.py, traj.pz
 
-    data['ontraj_bx'], data['ontraj_by'], data['ontraj_bz'] = bx, by, bz
-    data['ontraj_s'] = s
-    data['ontraj_rx'], data['ontraj_ry'], data['ontraj_rz'] = rx, ry, rz
-    data['ontraj_px'], data['ontraj_py'], data['ontraj_pz'] = px, py, pz
 
     return data
 
