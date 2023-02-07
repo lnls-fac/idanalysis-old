@@ -24,7 +24,7 @@ DEF_RK_S_STEP = 1  # [mm] seems converged for the measurement fieldmap grids
 RESCALE_KICKS = 1  # Radia simulations could have fewer ID periods
 RESCALE_LENGTH = 1/0.75  # RK traj is not calculated in free field regions
 ROLL_OFF_RX = 10.0  # [mm]
-SOLVE_FLAG = True
+SOLVE_FLAG = False
 
 FOLDER_DATA = './results/model/data/'
 
@@ -32,7 +32,7 @@ FOLDER_DATA = './results/model/data/'
 def get_phase_str(gap):
     """."""
     phase_str = '{:+07.3f}'.format(gap).replace('.', 'p')
-    phase_str = phase_str.replace('+', '_pos').replace('-', '_neg')
+    phase_str = phase_str.replace('+', 'pos').replace('-', 'neg')
     return phase_str
 
 
@@ -40,7 +40,7 @@ def get_kmap_filename(phase):
     fpath = FOLDER_DATA + 'kickmaps/'
     fpath = fpath.replace('model/data/', 'model/')
     phase_str = get_phase_str(phase)
-    fname = fpath + 'kickmap-ID-PAPU50-phase{}.txt'.format(phase_str)
+    fname = fpath + 'kickmap-papu50-phase{}.txt'.format(phase_str)
     return fname
 
 
@@ -75,14 +75,14 @@ def create_model_ids(
         rescale_kicks=RESCALE_KICKS,
         rescale_length=RESCALE_LENGTH):
     ids = create_ids(
-            phase=phase,
-            rescale_kicks=rescale_kicks,
-            rescale_length=rescale_length)
+        phase=phase,
+        rescale_kicks=rescale_kicks,
+        rescale_length=rescale_length)
     model = pymodels.si.create_accelerator(ids=ids)
     return model, ids
 
 
-def generate_radia_model(phase=0):
+def generate_radia_model(phase=0, solve_flag=False):
     """."""
 
     shape = [
@@ -134,4 +134,6 @@ def generate_radia_model(phase=0):
     papu.create_radia_object(magnetization_dict=magnetization_dict)
     papu.dp = phase
 
+    if solve_flag:
+        papu.solve()
     return papu

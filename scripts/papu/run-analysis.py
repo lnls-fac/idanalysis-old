@@ -28,7 +28,7 @@ def create_path(phase):
     return fpath
 
 
-def create_model_ids(phase):
+def create_model_ids(phase, fitted_model=False):
     """."""
     print('--- model with kickmap ---')
     ids = utils.create_ids(
@@ -36,6 +36,7 @@ def create_model_ids(phase):
         rescale_kicks=RESCALE_KICKS*1,
         rescale_length=RESCALE_LENGTH)
     model = pymodels.si.create_accelerator(ids=ids)
+    model = pymodels.si.fitted_models.vertical_dispersion_and_coupling(model)
     model.cavity_on = False
     model.radiation_on = 0
     twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
@@ -54,16 +55,20 @@ def create_model_ids(phase):
     return model, knobs, locs_beta, straight_nr
 
 
-def create_models(phase):
+def create_models(phase, fitted_model=False):
 
     # create unperturbed model for reference
     model0 = pymodels.si.create_accelerator()
+    if fitted_model:
+        model0 = \
+            pymodels.si.fitted_models.vertical_dispersion_and_coupling(
+                model0)
     model0.cavity_on = False
     model0.radiation_on = 0
 
     # create model with id
     model1, knobs, locs_beta, straight_nr = create_model_ids(
-        phase)
+        phase, fitted_model)
 
     # return
     return model0, model1, knobs, locs_beta, straight_nr
@@ -227,7 +232,7 @@ def analysis_dynapt(phase, model1):
     fig.savefig(fig_name, dpi=300, format='png')
 
 
-def symmetrize(phase, plot_flag=True):
+def symmetrize(phase, plot_flag=True, fitted_model=False):
     """."""
     def correct_optics(model1, straight_nr, knobs, goal_beta, goal_alpha):
         dk_tot = np.zeros(len(knobs))
@@ -259,9 +264,9 @@ def symmetrize(phase, plot_flag=True):
         print()
         return twiss3
 
-    def calc_symmetrization(phase):
+    def calc_symmetrization(phase, fitted_model=False):
         model0, model1, knobs, locs_beta, straight_nr = create_models(
-            phase)
+            phase, fitted_model)
         twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
         print('local quadrupole fams: ', knobs)
         print('element indices for straight section begin and end: ',
@@ -299,11 +304,11 @@ def symmetrize(phase, plot_flag=True):
 
         return model1
 
-    model1 = calc_symmetrization(phase)
+    model1 = calc_symmetrization(phase, fitted_model)
     analysis_dynapt(phase, model1)
 
 
 if __name__ == '__main__':
 
     phase = 25
-    symmetrize(phase, plot_flag=False)
+    symmetrize(phase, plot_flag=False. fitted_model=False)

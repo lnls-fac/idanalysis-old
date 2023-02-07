@@ -18,7 +18,7 @@ ROLL_OFF_RX = utils.ROLL_OFF_RX
 def create_model(phase):
     """."""
     papu = utils.generate_radia_model(
-            phase)
+            phase, solve_flag=SOLVE_FLAG)
     return papu
 
 
@@ -294,12 +294,12 @@ def run_generate_kickmap(papu=None,
 def run_plot_data(phase, rx_init):
 
     fpath = create_path(phase)
-    fname = fpath + 'field_data_PAPU50.pickle'
+    fname = fpath + 'field_data_papu50.pickle'
     data = load_pickle(fname)
 
-    plot_rk_traj(data=data, rx_init=rx_init)
-    plot_field_roll_off(data=data)
     plot_field_on_axis(data=data)
+    plot_field_roll_off(data=data)
+    plot_rk_traj(data=data, rx_init=rx_init)
 
 
 if __name__ == "__main__":
@@ -307,5 +307,5 @@ if __name__ == "__main__":
     phase = 25
     rx_init = [-10e-3, 0, 10e-3]  # High beta's worst initial conditions [m]
     papu, max_rz = run_calc_fields(phase, rx_init)
-    papu = run_generate_kickmap(papu=papu, max_rz=max_rz)
     run_plot_data(phase=phase, rx_init=rx_init)
+    papu = run_generate_kickmap(papu=papu, max_rz=max_rz)
