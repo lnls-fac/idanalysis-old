@@ -112,7 +112,7 @@ def get_field_on_axis(papu, data, rz, plot_flag=False):
     return data
 
 
-def get_field_on_trajectory(papu, data, max_rz, rx0=0):
+def get_field_on_trajectory(papu, data, max_rz, rx_init=0):
     """Calculate RK for set of EPU configurations."""
     s = dict()
     bx, by, bz = dict(), dict(), dict()
@@ -121,16 +121,30 @@ def get_field_on_trajectory(papu, data, max_rz, rx0=0):
 
     # create IDKickMap and calc trajectory
     idkickmap = config_traj(radia_model=papu, max_rz=max_rz)
-    idkickmap.fmap_calc_trajectory(
-        traj_init_rx=rx0, traj_init_ry=0,
-        traj_init_px=0, traj_init_py=0)
-    traj = idkickmap.traj
+    for rx0 in rx_init:
+        idkickmap.fmap_calc_trajectory(
+            traj_init_rx=rx0, traj_init_ry=0,
+            traj_init_px=0, traj_init_py=0)
+        traj = idkickmap.traj
 
-    s = traj.s
-    bx, by, bz = traj.bx, traj.by, traj.bz
-    rx, ry, rz = traj.rx, traj.ry, traj.rz
-    px, py, pz = traj.px, traj.py, traj.pz
+        s = traj.s
+        bx, by, bz = traj.bx, traj.by, traj.bz
+        rx, ry, rz = traj.rx, traj.ry, traj.rz
+        px, py, pz = traj.px, traj.py, traj.pz
 
+        data[('ontraj_s', rx0)] = s
+
+        data[('ontraj_rx', rx0)] = rx
+        data[('ontraj_ry', rx0)] = ry
+        data[('ontraj_rz', rx0)] = rz
+
+        data[('ontraj_bx', rx0)] = bx
+        data[('ontraj_by', rx0)] = by
+        data[('ontraj_bz', rx0)] = bz
+
+        data[('ontraj_px', rx0)] = px
+        data[('ontraj_py', rx0)] = py
+        data[('ontraj_pz', rx0)] = pz
 
     return data
 
@@ -165,11 +179,11 @@ def plot_field_on_axis(data):
 
 def plot_field_roll_off(data):
     phase = data['phase']
-    fpath = create_path(phase)
-    plt.figure(1)
     by = data['rolloff_by']
     rx = data['rolloff_rx']
     roffp, roffn = data['rolloff_value']
+    fpath = create_path(phase)
+    plt.figure(1)
     plt.plot(
         rx, by, color='b', label='roll off = {:.2f}, {:.2f} %'.format(
             100*roffn, 100*roffp))
@@ -184,61 +198,58 @@ def plot_field_roll_off(data):
     plt.show()
 
 
-def plot_rk_traj(data):
+def plot_rk_traj(data, rx_init=0):
     phase = data['phase']
+    colors = ['b', 'g', 'y', 'C1', 'r', 'k']
     fpath = create_path(phase)
-    rz = data['ontraj_rz']
-    rx = data['ontraj_rx']
-    ry = data['ontraj_ry']
-    px = 1e6*data['ontraj_px']
-    py = 1e6*data['ontraj_py']
+    for i, rx0 in enumerate(rx_init):
+        rz = data[('ontraj_rz', rx0)]
+        rx = data[('ontraj_rx', rx0)]
+        ry = data[('ontraj_ry', rx0)]
+        px = 1e6*data[('ontraj_px', rx0)]
+        py = 1e6*data[('ontraj_py', rx0)]
 
-    plt.figure(1)
-    plt.plot(
-        rz, 1e3*rx, color='b', label='final rx: {:.3f} um'.format(1e3*rx[-1]))
-    plt.xlabel('rz [m]')
-    plt.ylabel('rx [um]')
-    plt.grid()
-    plt.legend()
-    plt.title(
-        'PAPU50 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
-    plt.savefig(fpath + 'traj_rx', dpi=300)
+        rx -= 1e3*rx0
+        plt.figure(1)
+        plt.plot(
+            rz, 1e3*rx, color=colors[i],
+            label='rx0 = {} mm, delta rx: {:.3f} um'.format(
+                1e3*rx0, 1e3*rx[-1]))
 
-    plt.figure(2)
-    plt.plot(
-        rz, 1e3*ry, color='b', label='final ry: {:.3f} um'.format(1e3*ry[-1]))
-    plt.xlabel('rz [mm]')
-    plt.ylabel('ry [um]')
-    plt.grid()
-    plt.legend()
-    plt.title(
-        'PAPU50 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
-    plt.savefig(fpath + 'traj_ry', dpi=300)
+        plt.figure(2)
+        plt.plot(
+            rz, 1e3*ry, color=colors[i],
+            label='rx0 = {} mm, delta ry: {:.3f} um'.format(
+                1e3*rx0, 1e3*ry[-1]))
 
-    plt.figure(3)
-    plt.plot(rz, px, color='b', label='final px: {:.3f} urad'.format(px[-1]))
-    plt.xlabel('rz [mm]')
-    plt.ylabel('px [urad]')
-    plt.grid()
-    plt.legend()
-    plt.title(
-        'PAPU50 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
-    plt.savefig(fpath + 'traj_px', dpi=300)
+        plt.figure(3)
+        plt.plot(
+            rz, px, color=colors[i],
+            label='rx0 = {} mm, delta px: {:.3f} urad'.format(
+                1e3*rx0, px[-1]))
 
-    plt.figure(4)
-    plt.plot(rz, py, color='b', label='final py: {:.3f} urad'.format(py[-1]))
-    plt.xlabel('rz [mm]')
-    plt.ylabel('py [urad]')
-    plt.grid()
-    plt.legend()
-    plt.title(
-        'PAPU50 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
-    plt.savefig(fpath + 'traj_py', dpi=300)
+        plt.figure(4)
+        plt.plot(
+            rz, py, color=colors[i],
+            label='rx0 = {} mm, delta py: {:.3f} urad'.format(
+                1e3*rx0, py[-1]))
 
+    xlabel = 'rz [mm]'
+    ylabel = ['rx [um]', 'ry [um]', 'px [urad]', 'py [urad]']
+    tlt = 'PAPU50 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase)
+    fig_sulfix = ['traj_rx', 'traj_ry', 'traj_px', 'traj_py']
+    for j, i in enumerate([1, 2, 3, 4]):
+        plt.figure(i)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel[j])
+        plt.title(tlt)
+        plt.grid()
+        plt.legend()
+        plt.savefig(fpath + fig_sulfix[j], dpi=300)
     plt.show()
 
 
-def run_calc_fields(phase):
+def run_calc_fields(phase, rx_init):
 
     papu = create_model(phase)
 
@@ -256,8 +267,9 @@ def run_calc_fields(phase):
     # --- calc field on axis
     data = get_field_on_axis(papu=papu, data=data, rz=rz)
 
-    # --- calc field on on-axis trajectory
-    data = get_field_on_trajectory(papu=papu, data=data, max_rz=max_rz)
+    # --- calc field on trajectory
+    data = get_field_on_trajectory(
+        papu=papu, data=data, max_rz=max_rz, rx_init=rx_init)
 
     # --- save data
     save_data(data)
@@ -279,16 +291,13 @@ def run_generate_kickmap(papu=None,
     return papu
 
 
-def run_plot_data(phase):
+def run_plot_data(phase, rx_init):
 
-    fpath = utils.FOLDER_DATA
-    phase_str = utils.get_phase_str(phase)
-    fpath = fpath.replace('data/', 'data/phase_{}/'.format(phase_str))
+    fpath = create_path(phase)
     fname = fpath + 'field_data_PAPU50.pickle'
-    print(fname)
     data = load_pickle(fname)
 
-    plot_rk_traj(data=data)
+    plot_rk_traj(data=data, rx_init=rx_init)
     plot_field_roll_off(data=data)
     plot_field_on_axis(data=data)
 
@@ -296,6 +305,7 @@ def run_plot_data(phase):
 if __name__ == "__main__":
 
     phase = 25
-    papu, max_rz = run_calc_fields(phase)
+    rx_init = [-10e-3, 0, 10e-3]  # High beta's worst initial conditions [m]
+    papu, max_rz = run_calc_fields(phase, rx_init)
     papu = run_generate_kickmap(papu=papu, max_rz=max_rz)
-    # run_plot_data(phase=phase)
+    run_plot_data(phase=phase, rx_init=rx_init)
