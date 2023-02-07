@@ -4,16 +4,33 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from idanalysis import IDKickMap
+from idanalysis.fmap import FieldmapOnAxisAnalysis as fm
 from mathphys.functions import save_pickle, load_pickle
 
 import utils
 
 BEAM_ENERGY = utils.BEAM_ENERGY
 RK_S_STEP = utils.DEF_RK_S_STEP
+MEAS_FILE = utils.MEAS_FILE
 
 
-def generate_kickmap(phase, gridx, gridy, max_rz):
+def load_fieldmap(phase):
+    fmap_fname = MEAS_FILE
+    fmap_fname = utils.get_fmap_filename(phase)
+    fmap = fm(fieldmap=fmap_fname)
+    fmap.load_fieldmap()
+    return fmap
 
+
+def create_path(phase):
+    fpath = utils.FOLDER_DATA
+    phase_str = utils.get_phase_str(phase)
+    fpath = fpath.replace('model', 'measurements')
+    fpath = fpath.replace('data/', 'data/phase_{}/'.format(phase_str))
+    return fpath
+
+
+def config_traj(phase, max_rz):
     idkickmap = IDKickMap()
     fmap_fname = utils.get_fmap_filename(phase)
     idkickmap.fmap_fname = fmap_fname
@@ -22,12 +39,65 @@ def generate_kickmap(phase, gridx, gridy, max_rz):
     idkickmap.kmap_idlen = 1.3
     idkickmap.traj_init_rz = -max_rz
     idkickmap.traj_rk_min_rz = max_rz
+    return idkickmap
+
+
+def generate_kickmap(phase, gridx, gridy, max_rz):
+
+    # Config trajectory parameters
+    idkickmap = config_traj(phase, max_rz)
     idkickmap.fmap_calc_kickmap(posx=gridx, posy=gridy)
+
+    # Generate kickmap file
     fname = utils.get_kmap_filename(phase, meas_flag=True)
     idkickmap.save_kickmap_file(kickmap_filename=fname)
 
 
-def get_field_on_trajectory(phase, data, rx0):
+def get_field_on_axis(fmap, data, rz, plot_flag=False):
+    by = fmap.By
+    bx = fmap.Bx
+    bz = fmap.Bz
+    rz = fmap.rz
+
+    if plot_flag:
+        plt.plot(rz, bx, label='Bx')
+        plt.plot(rz, by, label='By')
+        plt.plot(rz, bz, label='Bz')
+        plt.xlabel('rz [mm]')
+        plt.ylabel('Field [T]')
+        plt.legend()
+        plt.grid()
+        plt.show()
+
+    data['onaxis_by'] = by
+    data['onaxis_bx'] = bx
+    data['onaxis_bz'] = bz
+    data['onaxis_rz'] = rz
+
+    return data
+
+
+def get_field_roll_off(fmap, data, rx, peak_idx):
+    """."""
+    by = fmap.By
+    idxmax = np.argmax(by[2000:10000])
+    idxmax += 2000
+    by_x = np.array(fmap.field.by)
+    by = by_x[0, :, idxmax]
+    rx = fmap.field.rx
+    rx0idx = np.argmin(np.abs(rx))
+    rxr_idx = np.argmin(np.abs(rx - utils.ROLL_OFF_RX))
+    roff = 100*np.abs(by[rxr_idx]/by[rx0idx]-1)
+    print(f'roll off = {100*roff:.2f} %')
+
+    data['rolloff_by'] = by
+    data['rolloff_rx'] = rx
+    data['rolloff_value'] = roff
+
+    return data
+
+
+def get_field_on_trajectory(phase, data, max_rz, rx0):
     """Calculate RK for set of EPU configurations."""
     s = dict()
     bx, by, bz = dict(), dict(), dict()
@@ -35,15 +105,7 @@ def get_field_on_trajectory(phase, data, rx0):
     px, py, pz = dict(), dict(), dict()
 
     # create IDKickMap and calc trajectory
-    MEAS_FILE = utils.MEAS_FILE
-    idkickmap = IDKickMap()
-    fmap_fname = MEAS_FILE
-    fmap_fname = fmap_fname.replace('phase0', 'phase{}'.format(phase))
-    idkickmap.fmap_fname = fmap_fname
-    idkickmap.beam_energy = 3.0
-    idkickmap.traj_init_rz = -739
-    idkickmap.traj_rk_min_rz = 739
-    idkickmap.rk_s_step = 0.2
+    idkickmap = config_traj(phase, max_rz)
     config = idkickmap.fmap_calc_trajectory(
         traj_init_rx=rx0, traj_init_ry=0,
         traj_init_px=0, traj_init_py=0)
@@ -54,12 +116,18 @@ def get_field_on_trajectory(phase, data, rx0):
     rx, ry, rz = traj.rx, traj.ry, traj.rz
     px, py, pz = traj.px, traj.py, traj.pz
 
-    data[('ontraj_bx', rx0)], data[('ontraj_by', rx0)] = bx, by
-    data[('ontraj_bz', rx0)] = bz
     data[('ontraj_s', rx0)] = s
-    data[('ontraj_rx', rx0)], data[('ontraj_ry', rx0)] = rx, ry
+
+    data[('ontraj_rx', rx0)] = rx
+    data[('ontraj_ry', rx0)] = ry
     data[('ontraj_rz', rx0)] = rz
-    data[('ontraj_px', rx0)], data[('ontraj_py', rx0)] = px, py
+
+    data[('ontraj_bx', rx0)] = bx
+    data[('ontraj_by', rx0)] = by
+    data[('ontraj_bz', rx0)] = bz
+
+    data[('ontraj_px', rx0)] = px
+    data[('ontraj_py', rx0)] = py
     data[('ontraj_pz', rx0)] = pz
 
     return data

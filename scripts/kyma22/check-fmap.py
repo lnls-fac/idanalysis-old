@@ -134,8 +134,6 @@ def compare_model(fmap, phase):
     figname = utils.FOLDER_DATA + 'Roll_off_shift_phase{}'.format(phase)
     plt.savefig(figname, dpi=300)
 
-
-
     plt.show()
 
 

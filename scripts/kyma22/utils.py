@@ -34,13 +34,15 @@ def get_kmap_filename(phase, meas_flag=False):
     fpath = fpath.replace('model/data/', 'model/')
     if meas_flag:
         fpath = fpath.replace('model', 'measurements')
-    fname = fpath + 'kickmap-ID-kyma22-phase{}.txt'.format(phase)
+    phase_str = get_phase_str(phase)
+    fname = fpath + 'kickmap-ID-kyma22-phase{}.txt'.format(phase_str)
     return fname
 
 
 def get_fmap_filename(phase):
     fmap_fname = MEAS_FILE
-    fname = fmap_fname.replace('phase0', 'phase{}'.format(phase))
+    phase_str = get_phase_str(phase)
+    fname = fmap_fname.replace('phase0', 'phase{}'.format(phase_str))
     return fname
 
 

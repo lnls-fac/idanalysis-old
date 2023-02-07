@@ -12,6 +12,15 @@ import utils
 SOLVE_FLAG = utils.SOLVE_FLAG
 RK_S_STEP = utils.DEF_RK_S_STEP
 BEAM_ENERGY = utils.BEAM_ENERGY
+NR_PERIODS = utils.NR_PERIODS
+
+
+def create_model(phase):
+    """."""
+    kyma = utils.generate_radia_model(
+            phase,
+            nr_periods=NR_PERIODS)
+    return kyma
 
 
 def create_path(phase):
@@ -21,26 +30,50 @@ def create_path(phase):
     return fpath
 
 
-def generate_kickmap(gridx, gridy, radia_model, max_rz):
-
-    phase = radia_model.dg
+def config_traj(radia_model, max_rz):
     idkickmap = IDKickMap()
     idkickmap.radia_model = radia_model
     idkickmap.beam_energy = BEAM_ENERGY
     idkickmap.rk_s_step = RK_S_STEP
+    idkickmap.kmap_idlen = 0.13
     idkickmap.traj_init_rz = -max_rz
     idkickmap.traj_rk_min_rz = max_rz
+    return idkickmap
+
+
+def generate_kickmap(gridx, gridy, radia_model, max_rz):
+
+    # Config trajectory parameters
+    idkickmap = config_traj(radia_model, max_rz)
     idkickmap.fmap_calc_kickmap(posx=gridx, posy=gridy)
+
+    # Generate kickmap file
+    phase = idkickmap.radia_model.dp
     fname = utils.get_kmap_filename(phase)
     idkickmap.save_kickmap_file(kickmap_filename=fname)
 
 
-def create_model(phase, nr_periods):
-    """."""
-    kyma = utils.generate_radia_model(
-            phase,
-            nr_periods=nr_periods)
-    return kyma
+def get_field_on_axis(kyma, data, rz, plot_flag=False):
+    field = kyma.get_field(0, 0, rz)
+    by = field[:, 1]
+    bx = field[:, 0]
+    bz = field[:, 2]
+
+    if plot_flag:
+        plt.plot(rz, bx, label='Bx')
+        plt.plot(rz, by, label='By')
+        plt.xlabel('rz [mm]')
+        plt.ylabel('Field [T]')
+        plt.legend()
+        plt.grid()
+        plt.show()
+
+    data['onaxis_by'] = by
+    data['onaxis_bx'] = bx
+    data['onaxis_bz'] = bz
+    data['onaxis_rz'] = rz
+
+    return data
 
 
 def get_field_roll_off(kyma, data, rx, peak_idx, filter='on'):
@@ -79,30 +112,7 @@ def get_field_roll_off(kyma, data, rx, peak_idx, filter='on'):
     return data
 
 
-def get_field_on_axis(kyma, data, rz, plot_flag=False):
-    field = kyma.get_field(0, 0, rz)
-    by = field[:, 1]
-    bx = field[:, 0]
-    bz = field[:, 2]
-
-    if plot_flag:
-        plt.plot(rz, bx, label='Bx')
-        plt.plot(rz, by, label='By')
-        plt.xlabel('rz [mm]')
-        plt.ylabel('Field [T]')
-        plt.legend()
-        plt.grid()
-        plt.show()
-
-    data['onaxis_by'] = by
-    data['onaxis_bx'] = bx
-    data['onaxis_bz'] = bz
-    data['onaxis_rz'] = rz
-
-    return data
-
-
-def get_field_on_trajectory(kyma, data, max_rz):
+def get_field_on_trajectory(kyma, data, max_rz, rx0=0):
     """Calculate RK for set of EPU configurations."""
     s = dict()
     bx, by, bz = dict(), dict(), dict()
@@ -110,28 +120,30 @@ def get_field_on_trajectory(kyma, data, max_rz):
     px, py, pz = dict(), dict(), dict()
 
     # create IDKickMap and calc trajectory
-    idkickmap = IDKickMap()
-    idkickmap.radia_model = kyma
-    idkickmap.beam_energy = utils.BEAM_ENERGY
-    idkickmap._radia_model_config.traj_init_px = 0
-    idkickmap._radia_model_config.traj_init_py = 0
-    idkickmap.traj_init_rz = -max_rz
-    idkickmap.traj_rk_min_rz = max_rz
-    idkickmap.rk_s_step = RK_S_STEP
-    idkickmap.fmap_calc_trajectory(
-        traj_init_rx=0, traj_init_ry=0,
+    idkickmap = config_traj(radia_model=kyma, max_rz=max_rz)
+    config = idkickmap.fmap_calc_trajectory(
+        traj_init_rx=rx0, traj_init_ry=0,
         traj_init_px=0, traj_init_py=0)
-    traj = idkickmap.traj
+    traj = config.traj
 
     s = traj.s
     bx, by, bz = traj.bx, traj.by, traj.bz
     rx, ry, rz = traj.rx, traj.ry, traj.rz
     px, py, pz = traj.px, traj.py, traj.pz
 
-    data['ontraj_bx'], data['ontraj_by'], data['ontraj_bz'] = bx, by, bz
-    data['ontraj_s'] = s
-    data['ontraj_rx'], data['ontraj_ry'], data['ontraj_rz'] = rx, ry, rz
-    data['ontraj_px'], data['ontraj_py'], data['ontraj_pz'] = px, py, pz
+    data[('ontraj_s', rx0)] = s
+
+    data[('ontraj_rx', rx0)] = rx
+    data[('ontraj_ry', rx0)] = ry
+    data[('ontraj_rz', rx0)] = rz
+
+    data[('ontraj_bx', rx0)] = bx
+    data[('ontraj_by', rx0)] = by
+    data[('ontraj_bz', rx0)] = bz
+
+    data[('ontraj_px', rx0)] = px
+    data[('ontraj_py', rx0)] = py
+    data[('ontraj_pz', rx0)] = pz
 
     return data
 
@@ -175,20 +187,22 @@ def plot_field_roll_off(data):
     plt.legend()
     plt.xlabel('x [mm]')
     plt.ylabel('By [T]')
-    plt.title('Kyma22 field rolloff (@ x = {} mm) for phase {:+.3f} mm'.format(utils.ROLL_OFF_RX, phase))
+    plt.title(
+        'Kyma22 field rolloff (@ x = {} mm) for phase {:+.3f} mm'.format(
+            utils.ROLL_OFF_RX, phase))
     plt.grid()
     plt.savefig(fpath + 'field_roll_off', dpi=300)
     plt.show()
 
 
-def plot_rk_traj(data):
+def plot_rk_traj(data, rx0=0):
     phase = data['phase']
     fpath = create_path(phase)
-    rz = data['ontraj_rz']
-    rx = data['ontraj_rx']
-    ry = data['ontraj_ry']
-    px = 1e6*data['ontraj_px']
-    py = 1e6*data['ontraj_py']
+    rz = data[('ontraj_rz', rx0)]
+    rx = data[('ontraj_rx', rx0)]
+    ry = data[('ontraj_ry', rx0)]
+    px = 1e6*data[('ontraj_px', rx0)]
+    py = 1e6*data[('ontraj_py', rx0)]
 
     plt.figure(1)
     plt.plot(
@@ -196,7 +210,8 @@ def plot_rk_traj(data):
     plt.xlabel('rz [mm]')
     plt.ylabel('rx [mm]')
     plt.grid()
-    plt.title('Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
+    plt.title(
+        'Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
     plt.savefig(fpath + 'traj_rx', dpi=300)
 
     plt.figure(2)
@@ -205,7 +220,8 @@ def plot_rk_traj(data):
     plt.xlabel('rz [mm]')
     plt.ylabel('ry [mm]')
     plt.grid()
-    plt.title('Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
+    plt.title(
+        'Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
     plt.savefig(fpath + 'traj_ry', dpi=300)
 
     plt.figure(3)
@@ -214,7 +230,8 @@ def plot_rk_traj(data):
     plt.xlabel('rz [mm]')
     plt.ylabel('px [urad]')
     plt.grid()
-    plt.title('Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
+    plt.title(
+        'Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
     plt.savefig(fpath + 'traj_px', dpi=300)
 
     plt.figure(4)
@@ -223,7 +240,8 @@ def plot_rk_traj(data):
     plt.xlabel('rz [mm]')
     plt.ylabel('py [urad]')
     plt.grid()
-    plt.title('Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
+    plt.title(
+        'Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
     plt.savefig(fpath + 'traj_py', dpi=300)
 
     plt.show()
@@ -235,7 +253,7 @@ def run_calc_fields(phase):
 
     rx = utils.ROLL_OFF_RX * np.linspace(-3, 3, 4*81)  # [mm]
 
-    max_rz = utils.ID_PERIOD*utils.NR_PREIODS + 40
+    max_rz = utils.ID_PERIOD*utils.NR_PERIODS + 40
     rz = np.linspace(-max_rz, max_rz, 2001)
 
     data = dict(phase=phase)
