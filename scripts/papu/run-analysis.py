@@ -21,11 +21,27 @@ RESCALE_LENGTH = utils.RESCALE_LENGTH
 MEAS_FLAG = False
 
 
+FITTED_MODEL = True
+CALC_TYPES = utils.CALC_TYPES
+
+
 def create_path(phase):
     fpath = utils.FOLDER_DATA
     phase_str = utils.get_phase_str(phase)
-    fpath = fpath.replace('data/', 'data/phase{}/'.format(phase_str))
+    fpath = fpath.replace('data/', 'data/phase_{}/'.format(phase_str))
     return fpath
+
+
+def create_model_nominal(fitted_model=False):
+    """."""
+    model0 = pymodels.si.create_accelerator()
+    if fitted_model:
+        model0 = \
+            pymodels.si.fitted_models.vertical_dispersion_and_coupling(
+                model0)
+    model0.cavity_on = False
+    model0.radiation_on = 0
+    return model0
 
 
 def create_model_ids(phase, fitted_model=False):
@@ -36,7 +52,9 @@ def create_model_ids(phase, fitted_model=False):
         rescale_kicks=RESCALE_KICKS*1,
         rescale_length=RESCALE_LENGTH)
     model = pymodels.si.create_accelerator(ids=ids)
-    model = pymodels.si.fitted_models.vertical_dispersion_and_coupling(model)
+    if fitted_model:
+        model = pymodels.si.fitted_models.vertical_dispersion_and_coupling(
+            model)
     model.cavity_on = False
     model.radiation_on = 0
     twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
@@ -53,25 +71,6 @@ def create_model_ids(phase, fitted_model=False):
         knobs, locs_beta = None, None
 
     return model, knobs, locs_beta, straight_nr
-
-
-def create_models(phase, fitted_model=False):
-
-    # create unperturbed model for reference
-    model0 = pymodels.si.create_accelerator()
-    if fitted_model:
-        model0 = \
-            pymodels.si.fitted_models.vertical_dispersion_and_coupling(
-                model0)
-    model0.cavity_on = False
-    model0.radiation_on = 0
-
-    # create model with id
-    model1, knobs, locs_beta, straight_nr = create_model_ids(
-        phase, fitted_model)
-
-    # return
-    return model0, model1, knobs, locs_beta, straight_nr
 
 
 def calc_dtune_betabeat(twiss0, twiss1):
@@ -127,7 +126,7 @@ def analysis_uncorrected_perturbation(
 
 
 def plot_beta_beating(
-        phase, twiss0, twiss1, twiss2, twiss3, stg):
+        phase, twiss0, twiss1, twiss2, twiss3, stg, fitted_model):
     """."""
 
     fpath = create_path(phase)
@@ -144,18 +143,24 @@ def plot_beta_beating(
     print(f'bbetay: {bbeaty_rms:04.3f} % rms, {bbeaty_absmax:04.3f} % absmax')
     print()
 
+    plt.clf()
+
+    label1 = {False:'-nominal', True:'-fittedmodel'}[fitted_model]
+
     plt.figure(1)
+    stg_tune = f'dtunex: {dtunex:+0.04f}\n' + f'dtuney: {dtuney:+0.04f}'
     labelx = f'X ({bbeatx_rms:.3f} % rms)'
     labely = f'Y ({bbeaty_rms:.3f} % rms)'
     plt.plot(twiss0.spos, bbeatx, color='b', alpha=1.0, label=labelx)
     plt.plot(twiss0.spos, bbeaty, color='r', alpha=0.8, label=labely)
     plt.xlabel('spos [m]')
     plt.ylabel('Beta Beating [%]')
-    plt.title('Beta Beating from ID PAPU50')
-    plt.suptitle('Not symmetrized optics')
+    plt.title('Tune shift' + '\n' + stg_tune)
+    plt.suptitle('PAPU50 - Non-symmetrized optics')
+    plt.tight_layout()
     plt.legend()
     plt.grid()
-    plt.savefig(fpath + 'Not_symm_opt', dpi=300)
+    plt.savefig(fpath + 'opt{}-ids-nonsymm'.format(label1), dpi=300)
 
     # Compare optics between nominal value and symmetrized optics
     results = calc_dtune_betabeat(twiss0, twiss2)
@@ -177,11 +182,12 @@ def plot_beta_beating(
     plt.plot(twiss0.spos, bbeaty, color='r', alpha=0.8, label=labely)
     plt.xlabel('spos [m]')
     plt.ylabel('Beta Beating [%]')
-    plt.title('Beta Beating from ID PAPU50')
-    plt.suptitle('Symmetrized optics and uncorrect tunes')
+    plt.title('Beta Beating')
+    plt.suptitle('PAPU50 - Symmetrized optics and uncorrected tunes')
     plt.legend()
     plt.grid()
-    plt.savefig(fpath + 'Symm_opt', dpi=300)
+    plt.tight_layout()
+    plt.savefig(fpath + 'opt{}-ids-symm'.format(label1), dpi=300)
 
     # Compare optics between nominal value and all corrected
     results = calc_dtune_betabeat(twiss0, twiss3)
@@ -189,7 +195,7 @@ def plot_beta_beating(
     bbeatx, bbeaty = results[2], results[3]
     bbeatx_rms, bbeaty_rms = results[4], results[5]
     bbeatx_absmax, bbeaty_absmax = results[6], results[7]
-    print('symmetrized optics and correct tunes:')
+    print('symmetrized optics and corrected tunes:')
     print(f'dtunex: {dtunex:+.0e}')
     print(f'dtuney: {dtuney:+.0e}')
     print(f'bbetax: {bbeatx_rms:04.3f} % rms, {bbeatx_absmax:04.3f} % absmax')
@@ -202,22 +208,24 @@ def plot_beta_beating(
     plt.plot(twiss0.spos, bbeaty, color='r', alpha=0.8, label=labely)
     plt.xlabel('spos [m]')
     plt.ylabel('Beta Beating [%]')
-    plt.title('Beta Beating from ID PAPU50 ' + '\n' + stg)
-    plt.suptitle('Symmetrized optics and correct tunes')
-    plt.tight_layout()
+    plt.title('Beta Beating' + '\n' + stg)
+    plt.suptitle('PAPU50 - Symmetrized optics and corrected tunes')
     plt.legend()
     plt.grid()
-    plt.savefig(fpath + 'Symm_opt_and_corr_tunes', dpi=300)
+    plt.tight_layout()
+    plt.savefig(fpath + 'opt{}-ids-symm-tunes'.format(label1), dpi=300)
     plt.show()
 
+    plt.clf()
 
-def analysis_dynapt(phase, model1):
 
-    model1.radiation_on = 0
-    model1.cavity_on = False
-    model1.vchamber_on = True
+def analysis_dynapt(phase, model, calc_type, fitted_model):
 
-    dynapxy = DynapXY(model1)
+    model.radiation_on = 0
+    model.cavity_on = False
+    model.vchamber_on = True
+
+    dynapxy = DynapXY(model)
     dynapxy.params.x_nrpts = 40
     dynapxy.params.y_nrpts = 20
     dynapxy.params.nrturns = 1*1024
@@ -228,13 +236,13 @@ def analysis_dynapt(phase, model1):
     fig.show()
 
     fpath = create_path(phase)
-    fig_name = fpath + 'dynapt-kickmap-symmetrized.png'
+    label1 = ['', '-ids-nonsymm', '-ids-symm'][calc_type]
+    label2 = {False:'-nominal', True:'-fittedmodel'}[fitted_model]
+    fig_name = fpath + 'dynapt{}{}.png'.format(label2, label1)
     fig.savefig(fig_name, dpi=300, format='png')
 
 
-def symmetrize(phase, plot_flag=True, fitted_model=False):
-    """."""
-    def correct_optics(model1, straight_nr, knobs, goal_beta, goal_alpha):
+def correct_beta(model1, straight_nr, knobs, goal_beta, goal_alpha):
         dk_tot = np.zeros(len(knobs))
         for i in range(7):
             dk = optics.correct_symmetry_withbeta(
@@ -249,66 +257,96 @@ def symmetrize(phase, plot_flag=True, fitted_model=False):
         print()
         return twiss2, stg
 
-    def correct_tunes(model1, twiss1, goal_tunes):
-        tunes = twiss1.mux[-1]/np.pi/2, twiss1.muy[-1]/np.pi/2
-        print('init    tunes: {:.9f} {:.9f}'.format(tunes[0], tunes[1]))
-        for i in range(2):
-            optics.correct_tunes_twoknobs(model1, goal_tunes)
-            twiss, *_ = pyacc_opt.calc_twiss(model1)
-            tunes = twiss.mux[-1]/np.pi/2, twiss.muy[-1]/np.pi/2
-            print('iter #{} tunes: {:.9f} {:.9f}'.format(
-                i+1, tunes[0], tunes[1]))
-        print('goal    tunes: {:.9f} {:.9f}'.format(
-            goal_tunes[0], goal_tunes[1]))
-        twiss3, *_ = pyacc_opt.calc_twiss(model1, indices='closed')
-        print()
-        return twiss3
 
-    def calc_symmetrization(phase, fitted_model=False):
-        model0, model1, knobs, locs_beta, straight_nr = create_models(
-            phase, fitted_model)
-        twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
-        print('local quadrupole fams: ', knobs)
-        print('element indices for straight section begin and end: ',
-              locs_beta)
+def correct_tunes(model1, twiss1, goal_tunes):
+    tunes = twiss1.mux[-1]/np.pi/2, twiss1.muy[-1]/np.pi/2
+    print('init    tunes: {:.9f} {:.9f}'.format(tunes[0], tunes[1]))
+    for i in range(2):
+        optics.correct_tunes_twoknobs(model1, goal_tunes)
+        twiss, *_ = pyacc_opt.calc_twiss(model1)
+        tunes = twiss.mux[-1]/np.pi/2, twiss.muy[-1]/np.pi/2
+        print('iter #{} tunes: {:.9f} {:.9f}'.format(
+            i+1, tunes[0], tunes[1]))
+    print('goal    tunes: {:.9f} {:.9f}'.format(
+        goal_tunes[0], goal_tunes[1]))
+    twiss3, *_ = pyacc_opt.calc_twiss(model1, indices='closed')
+    print()
+    return twiss3
 
-        # calculate nominal twiss
-        goal_tunes = np.array(
-            [twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
-        goal_beta = np.array(
-            [twiss0.betax[locs_beta], twiss0.betay[locs_beta]])
-        goal_alpha = np.array(
-            [twiss0.alphax[locs_beta], twiss0.alphay[locs_beta]])
-        print(goal_beta)
 
-        # # correct orbit
-        # orbcorr.correct_orbit_local(
-        #     model0, model1, 'APU22', correction_plane='both', plot=False)
+def correct_optics(phase, beta_flag=True, fitted_model=False):
+    """."""
+    # create unperturbed model for reference
+    model0 = create_model_nominal(fitted_model=fitted_model)
 
-        orb_res = orbcorr.correct_orbit_fb(
-            model0, model1, 'PAPU50', corr_system='SOFB', nr_steps=1)
+    twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
 
-        # calculate beta beating and delta tunes
-        twiss1 = analysis_uncorrected_perturbation(
-            model1, twiss0=twiss0, plot_flag=False)
+    # create model with ID
+    model1, knobs, locs_beta, straight_nr = create_model_ids(
+        phase, fitted_model=fitted_model)
 
-        # symmetrize optics (local quad fam knobs)
-        twiss2, stg = correct_optics(
+    print('local quadrupole fams: ', knobs)
+    print('element indices for straight section begin and end: ',
+            locs_beta)
+
+    # calculate nominal twiss
+    goal_tunes = np.array(
+        [twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
+    goal_beta = np.array(
+        [twiss0.betax[locs_beta], twiss0.betay[locs_beta]])
+    goal_alpha = np.array(
+        [twiss0.alphax[locs_beta], twiss0.alphay[locs_beta]])
+    print(goal_beta)
+
+    # correct orbit
+    orb_res = orbcorr.correct_orbit_fb(
+        model0, model1, 'PAPU50', corr_system='SOFB', nr_steps=1)
+
+    # calculate beta beating and delta tunes
+    twiss1 = analysis_uncorrected_perturbation(
+        model1, twiss0=twiss0, plot_flag=False)
+
+    # symmetrize optics (local quad fam knobs)
+    if beta_flag:
+        twiss2, stg = correct_beta(
             model1, straight_nr, knobs, goal_beta, goal_alpha)
 
         # correct tunes
         twiss3 = correct_tunes(model1, twiss1, goal_tunes)
 
         plot_beta_beating(
-            phase, twiss0, twiss1, twiss2, twiss3, stg)
+            phase, twiss0, twiss1, twiss2, twiss3, stg, fitted_model)
 
-        return model1
+    return model1
 
-    model1 = calc_symmetrization(phase, fitted_model)
-    analysis_dynapt(phase, model1)
+
+def run_analysis_dynapt(phase, fitted_model, calc_type):
+    """."""
+    if calc_type == CALC_TYPES.nominal:
+        model = create_model_nominal(fitted_model)
+    elif calc_type in (
+            CALC_TYPES.symmetrized, CALC_TYPES.nonsymmetrized):
+        beta_flag = calc_type == CALC_TYPES.symmetrized
+        model = correct_optics(
+            phase, beta_flag=beta_flag, fitted_model=fitted_model)
+    else:
+        raise ValueError('Invalid calc_type')
+
+    analysis_dynapt(phase, model, calc_type, fitted_model)
 
 
 if __name__ == '__main__':
 
-    phase = 25
-    symmetrize(phase, plot_flag=False. fitted_model=False)
+    phase = utils.ID_PERIOD/2  # vertical field
+
+    # calc_type = CALC_TYPES.nominal
+    # run_analysis_dynapt(
+    #     phase, fitted_model=FITTED_MODEL, calc_type=calc_type)
+
+    # calc_type = CALC_TYPES.symmetrized
+    # run_analysis_dynapt(
+    #     phase, fitted_model=FITTED_MODEL, calc_type=calc_type)
+
+    calc_type = CALC_TYPES.nonsymmetrized
+    run_analysis_dynapt(
+        phase, fitted_model=FITTED_MODEL, calc_type=calc_type)

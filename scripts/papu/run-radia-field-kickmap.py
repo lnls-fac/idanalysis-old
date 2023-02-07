@@ -173,7 +173,7 @@ def plot_field_on_axis(data):
     plt.legend()
     plt.grid()
     plt.title('PAPU50 field profile for phase {:+.3f} mm'.format(phase))
-    plt.savefig(fpath + 'field profile', dpi=300)
+    plt.savefig(fpath + 'field-profile', dpi=300)
     plt.show()
 
 
@@ -194,7 +194,7 @@ def plot_field_roll_off(data):
         'PAPU50 field rolloff (@ x = +- {} mm) for phase {:+.3f} mm'.format(
             utils.ROLL_OFF_RX, phase))
     plt.grid()
-    plt.savefig(fpath + 'field_roll_off', dpi=300)
+    plt.savefig(fpath + 'field-rolloff', dpi=300)
     plt.show()
 
 
@@ -237,7 +237,7 @@ def plot_rk_traj(data, rx_init=0):
     xlabel = 'rz [mm]'
     ylabel = ['rx [um]', 'ry [um]', 'px [urad]', 'py [urad]']
     tlt = 'PAPU50 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase)
-    fig_sulfix = ['traj_rx', 'traj_ry', 'traj_px', 'traj_py']
+    fig_sulfix = ['traj-rx', 'traj-ry', 'traj-px', 'traj-py']
     for j, i in enumerate([1, 2, 3, 4]):
         plt.figure(i)
         plt.xlabel(xlabel)

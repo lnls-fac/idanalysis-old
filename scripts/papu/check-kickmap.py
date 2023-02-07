@@ -17,7 +17,7 @@ def get_figname_plane(phase, posy, kick_plane):
     posy_str = '{:05.1f}'.format(posy).replace('.', 'p')
     fpath_fig = utils.FOLDER_DATA
     phase_str = utils.get_phase_str(phase)
-    fpath_fig = fpath_fig.replace('data/', 'data/phase{}/'.format(phase_str))
+    fpath_fig = fpath_fig.replace('data/', 'data/phase_{}/'.format(phase_str))
     fname_fig = fpath_fig + 'kick{}-posy{}.png'.format(
         kick_plane, posy_str)
     return fname_fig
@@ -26,8 +26,8 @@ def get_figname_plane(phase, posy, kick_plane):
 def get_figname_allplanes(phase):
     fpath = utils.FOLDER_DATA
     phase_str = utils.get_phase_str(phase)
-    fpath = fpath.replace('data/', 'data/phase{}/'.format(phase_str))
-    fname_fig = fpath + 'kickx_all_planes'
+    fpath = fpath.replace('data/', 'data/phase_{}/'.format(phase_str))
+    fname_fig = fpath + 'kickx-all-planes'
     return fname_fig
 
 

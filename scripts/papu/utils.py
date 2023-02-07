@@ -25,8 +25,16 @@ RESCALE_KICKS = 1  # Radia simulations could have fewer ID periods
 RESCALE_LENGTH = 1/0.75  # RK traj is not calculated in free field regions
 ROLL_OFF_RX = 10.0  # [mm]
 SOLVE_FLAG = False
+FITTED_MODEL = False
 
 FOLDER_DATA = './results/model/data/'
+
+
+class CALC_TYPES:
+    """."""
+    nominal = 0
+    nonsymmetrized = 1
+    symmetrized = 2
 
 
 def get_phase_str(gap):
@@ -40,7 +48,7 @@ def get_kmap_filename(phase):
     fpath = FOLDER_DATA + 'kickmaps/'
     fpath = fpath.replace('model/data/', 'model/')
     phase_str = get_phase_str(phase)
-    fname = fpath + 'kickmap-papu50-phase{}.txt'.format(phase_str)
+    fname = fpath + 'kickmap-papu50-phase_{}.txt'.format(phase_str)
     return fname
 
 
