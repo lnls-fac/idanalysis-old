@@ -25,7 +25,8 @@ def get_figname_plane(phase, posy, kick_plane):
 
 def get_figname_allplanes(phase):
     fpath = utils.FOLDER_DATA
-    fpath = fpath.replace('data/', 'data/phase{}/'.format(phase))
+    phase_str = utils.get_phase_str(phase)
+    fpath = fpath.replace('data/', 'data/phase{}/'.format(phase_str))
     fname_fig = fpath + 'kickx_all_planes'
     return fname_fig
 
@@ -50,9 +51,10 @@ def plot_kick_at_plane(phase, posy, kick_plane='X'):
     fname_fig = get_figname_plane(phase, posy, kick_plane)
     fname = utils.get_kmap_filename(phase)
     id_kickmap = IDKickMap(fname)
-    posy_zero_idx = list(id_kickmap.posy).index(0)
+    posy *= 1e-3
+    posy_idx = list(id_kickmap.posy).index(posy)
     rx0, ry0, pxf, pyf, rxf, ryf = calc_idkmap_kicks(
-        idkmap=id_kickmap, plane_idx=posy_zero_idx)
+        idkmap=id_kickmap, plane_idx=posy_idx)
     pxf *= RESCALE_KICKS
     pyf *= RESCALE_KICKS
 
@@ -77,7 +79,7 @@ def plot_kick_at_plane(phase, posy, kick_plane='X'):
     plt.show()
 
 
-def plot_kick_all_planes(phase):
+def plot_kick_all_planes(phase, kick_plane='x'):
     """."""
     fname_fig = get_figname_allplanes(phase)
     fname = utils.get_kmap_filename(phase)
@@ -85,7 +87,6 @@ def plot_kick_all_planes(phase):
     posy_zero_idx = list(id_kickmap.posy).index(0)
     rx0, _, pxf, pyf, *_ = calc_idkmap_kicks(
             idkmap=id_kickmap, plane_idx=posy_zero_idx)
-
     for plane_idx, posy in enumerate(id_kickmap.posy):
         if posy < 0:
             continue
@@ -93,12 +94,13 @@ def plot_kick_all_planes(phase):
             idkmap=id_kickmap, plane_idx=plane_idx)
         pxf *= RESCALE_KICKS
         pyf *= RESCALE_KICKS
+        pf, klabel = (pxf, 'px') if kick_plane.lower() == 'x' else (pyf, 'py')
 
         label = 'posy = {:+.3f} mm'.format(1e3*posy)
         plt.plot(
-            1e3*rx0, 1e6*pxf, '.-', label=label)
+            1e3*rx0, 1e6*pf, '.-', label=label)
         plt.xlabel('x0 [mm]')
-        plt.ylabel('final px [urad]')
+        plt.ylabel('final {} [urad]'.format(klabel))
         plt.title('Kicks')
         plt.legend()
         plt.grid()
@@ -110,4 +112,5 @@ def plot_kick_all_planes(phase):
 if __name__ == '__main__':
     phase = 25
     plot_kick_at_plane(
-        phase=phase, posy=0, kick_plane='x')
+        phase=phase, posy=0, kick_plane='y')
+    plot_kick_all_planes(phase, kick_plane='y')
