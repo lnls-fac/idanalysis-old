@@ -91,7 +91,7 @@ def create_model_ids(
 def generate_radia_model(phase, nr_periods=5, solve=SOLVE_FLAG):
     """."""
     kyma = Kyma22(nr_periods=nr_periods)
-    kyma.set_cassete_positions(dp=phase)
+    kyma.dp = phase
     if solve:
         kyma.solve()
 
