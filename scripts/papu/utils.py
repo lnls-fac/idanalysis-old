@@ -32,15 +32,15 @@ FOLDER_DATA = './results/model/data/'
 def get_phase_str(gap):
     """."""
     phase_str = '{:+07.3f}'.format(gap).replace('.', 'p')
-    phase_str = phase_str.replace('+', 'pos').replace('-', 'neg')
+    phase_str = phase_str.replace('+', '_pos').replace('-', '_neg')
     return phase_str
 
 
 def get_kmap_filename(phase):
-    # fpath = FOLDER_DATA + 'kickmaps/'
-    # fpath = fpath.replace('model/data/', 'model/')
-    # fname = fpath + 'kickmap-ID-PAPU50-phase{}.txt'.format(phase)
-    fname = 'kickmap-ID-PAPU50-phase{}.txt'.format(phase)
+    fpath = FOLDER_DATA + 'kickmaps/'
+    fpath = fpath.replace('model/data/', 'model/')
+    phase_str = get_phase_str(phase)
+    fname = fpath + 'kickmap-ID-PAPU50-phase{}.txt'.format(phase_str)
     return fname
 
 
@@ -60,24 +60,23 @@ def create_ids(
     kicky_down = idkmap.kicky_downstream  # [T².m²]
     termination_kicks = [kickx_up, kicky_up, kickx_down, kicky_down]
     IDModel = pymodels.si.IDModel
-    kyma22 = IDModel(
-        subsec=IDModel.SUBSECTIONS.ID09SA,
+    papu50 = IDModel(
+        subsec=IDModel.SUBSECTIONS.ID05SA,
         file_name=fname,
-        fam_name='APU22', nr_steps=nr_steps,
+        fam_name='PAPU50', nr_steps=nr_steps,
         rescale_kicks=rescale_kicks, rescale_length=rescale_length,
         termination_kicks=termination_kicks)
-    ids = [kyma22, ]
+    ids = [papu50, ]
     return ids
 
 
 def create_model_ids(
         phase=0,
         rescale_kicks=RESCALE_KICKS,
-        rescale_length=RESCALE_LENGTH, meas_flag=True):
+        rescale_length=RESCALE_LENGTH):
     ids = create_ids(
         rescale_kicks=rescale_kicks,
-        rescale_length=rescale_length,
-        meas_flag=meas_flag)
+        rescale_length=rescale_length)
     model = pymodels.si.create_accelerator(ids=ids)
     return model, ids
 

@@ -13,6 +13,23 @@ import utils
 RESCALE_KICKS = utils.RESCALE_KICKS
 
 
+def get_figname_plane(phase, posy, kick_plane):
+    posy_str = '{:05.1f}'.format(posy).replace('.', 'p')
+    fpath_fig = utils.FOLDER_DATA
+    phase_str = utils.get_phase_str(phase)
+    fpath_fig = fpath_fig.replace('data/', 'data/phase{}/'.format(phase_str))
+    fname_fig = fpath_fig + 'kick{}-posy{}.png'.format(
+        kick_plane, posy_str)
+    return fname_fig
+
+
+def get_figname_allplanes(phase):
+    fpath = utils.FOLDER_DATA
+    fpath = fpath.replace('data/', 'data/phase{}/'.format(phase))
+    fname_fig = fpath + 'kickx_all_planes'
+    return fname_fig
+
+
 def calc_idkmap_kicks(plane_idx=0, idkmap=None):
     """."""
     beam = Beam(energy=3.0)
@@ -30,11 +47,7 @@ def calc_idkmap_kicks(plane_idx=0, idkmap=None):
 
 def plot_kick_at_plane(phase, posy, kick_plane='X'):
     """."""
-    posy_str = '{:05.1f}'.format(posy).replace('.', 'p')
-    fpath_fig = utils.FOLDER_DATA
-    fpath_fig = fpath_fig.replace('data/', 'data/phase{}/'.format(phase))
-    fname_fig = fpath_fig + 'kick{}-posy{}.png'.format(
-        kick_plane, posy_str)
+    fname_fig = get_figname_plane(phase, posy, kick_plane)
     fname = utils.get_kmap_filename(phase)
     id_kickmap = IDKickMap(fname)
     posy_zero_idx = list(id_kickmap.posy).index(0)
@@ -46,15 +59,14 @@ def plot_kick_at_plane(phase, posy, kick_plane='X'):
     pf, klabel = (pxf, 'px') if kick_plane.lower() == 'x' else (pyf, 'py')
     pfit = np.polyfit(rx0, pf, 23)
     pf_fit = np.polyval(pfit, rx0)
+    print('Multipoles: ')
     print(pfit[::-1])
 
     plt.figure(1)
     plt.plot(
-        1e3*rx0, 1e6*pf, '.-')
+        1e3*rx0, 1e6*pf, '.-', color='b')
     plt.plot(
-        1e3*rx0, 1e6*pf_fit, '-', alpha=0.6)
-
-    plt.figure(1)
+        1e3*rx0, 1e6*pf_fit, '-', color='r', alpha=0.4)
     plt.xlabel('x0 [mm]')
     plt.ylabel('final {} [urad]'.format(klabel))
     plt.title('Kick{}, at posy {:+.3f} mm'.format(
@@ -67,10 +79,8 @@ def plot_kick_at_plane(phase, posy, kick_plane='X'):
 
 def plot_kick_all_planes(phase):
     """."""
+    fname_fig = get_figname_allplanes(phase)
     fname = utils.get_kmap_filename(phase)
-    fpath = utils.FOLDER_DATA
-    fpath = fpath.replace('data/', 'data/phase{}/'.format(phase))
-    fname_fig = fpath + 'kickx_all_planes'
     id_kickmap = IDKickMap(fname)
     posy_zero_idx = list(id_kickmap.posy).index(0)
     rx0, _, pxf, pyf, *_ = calc_idkmap_kicks(
