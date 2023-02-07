@@ -19,10 +19,10 @@ BEAM_ENERGY = 3.0  # [GeV]
 
 ID_PERIOD = 50  # [mm]
 NR_PERIODS = 18  # [mm]
-ID_KMAP_LEN = 1.200  # [m]
+ID_KMAP_LEN = 0.9  # [m]
 DEF_RK_S_STEP = 1  # [mm] seems converged for the measurement fieldmap grids
 RESCALE_KICKS = 1  # Radia simulations could have fewer ID periods
-RESCALE_LENGTH = 1  # Radia simulations could have fewer ID periods
+RESCALE_LENGTH = 1/0.75  # RK traj is not calculated in free field regions
 ROLL_OFF_RX = 10.0  # [mm]
 SOLVE_FLAG = True
 
@@ -71,12 +71,13 @@ def create_ids(
 
 
 def create_model_ids(
-        phase=0,
+        phase=25,
         rescale_kicks=RESCALE_KICKS,
         rescale_length=RESCALE_LENGTH):
     ids = create_ids(
-        rescale_kicks=rescale_kicks,
-        rescale_length=rescale_length)
+            phase=phase,
+            rescale_kicks=rescale_kicks,
+            rescale_length=rescale_length)
     model = pymodels.si.create_accelerator(ids=ids)
     return model, ids
 
