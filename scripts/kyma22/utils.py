@@ -1,31 +1,38 @@
 """."""
-import pyaccel
-import pymodels
-import numpy as np
-
+# imports
 from imaids.models import Kyma22
-from idanalysis import IDKickMap
+from matplotlib import pyplot as plt
 
+import pymodels
+from idanalysis import IDKickMap
 
 BEAM_ENERGY = 3.0  # [GeV]
 
 ID_PERIOD = 22  # [mm]
+NR_PERIODS = 5  #
 ID_KMAP_LEN = 0.13  # [m]
 DEF_RK_S_STEP = 1  # [mm] seems converged for the measurement fieldmap grids
 RESCALE_KICKS = 1  # Radia simulations have fewer ID periods
 RESCALE_LENGTH = 10  # Radia simulations have fewer ID periods
 SOLVE_FLAG = True
 ROLL_OFF_RX = 10.0  # [mm]
+SOLVE_FLAG = False
+FITTED_MODEL = False
 
-# FOLDER_BASE = '/home/gabriel/repos-dev/'
-FOLDER_BASE = '/home/ximenes/repos-dev/'
 FOLDER_DATA = './results/model/data/'
 MEAS_FILE = './results/measurements/fieldmap_phase0.dat'
 
 
-def get_phase_str(gap):
+class CALC_TYPES:
     """."""
-    phase_str = '{:+07.3f}'.format(gap).replace('.', 'p')
+    nominal = 0
+    nonsymmetrized = 1
+    symmetrized = 2
+
+
+def get_phase_str(phase):
+    """."""
+    phase_str = '{:+07.3f}'.format(phase).replace('.', 'p')
     phase_str = phase_str.replace('+', 'pos').replace('-', 'neg')
     return phase_str
 
@@ -33,7 +40,8 @@ def get_phase_str(gap):
 def get_kmap_filename(phase):
     fpath = FOLDER_DATA + 'kickmaps/'
     fpath = fpath.replace('model/data/', 'model/')
-    fname = fpath + 'kickmap-ID-kyma22-phase{}.txt'.format(phase)
+    phase_str = get_phase_str(phase)
+    fname = fpath + 'kickmap-ID-kyma22-phase{}.txt'.format(phase_str)
     return fname
 
 
