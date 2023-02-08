@@ -308,4 +308,4 @@ if __name__ == "__main__":
     rx_init = [-10e-3, 0, 10e-3]  # High beta's worst initial conditions [m]
     papu, max_rz = run_calc_fields(phase, rx_init)
     run_plot_data(phase=phase, rx_init=rx_init)
-    papu = run_generate_kickmap(papu=papu, max_rz=max_rz)
+    # papu = run_generate_kickmap(papu=papu, max_rz=max_rz)
