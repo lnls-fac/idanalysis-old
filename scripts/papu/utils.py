@@ -140,6 +140,8 @@ def generate_radia_model(phase=0, solve_flag=False):
                              end_blocks_distance=end_blocks_distance,
                              init_radia_object=False)
     papu.create_radia_object(magnetization_dict=magnetization_dict)
+    papu.cassettes_ref['cs'].shift([-0.7, 0, 0])
+    papu.cassettes_ref['ci'].shift([-0.7, 0, 0])
     papu.dp = phase
 
     if solve_flag:

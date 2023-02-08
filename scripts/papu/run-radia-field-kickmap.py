@@ -153,7 +153,7 @@ def save_data(data):
     """."""
     phase = data['phase']
     fpath = create_path(phase)
-    fname = fpath + 'field_data_PAPU50'
+    fname = fpath + 'field_data_papu50'
     save_pickle(data, fname, overwrite=True, makedirs=True)
 
 
@@ -185,7 +185,7 @@ def plot_field_roll_off(data):
     fpath = create_path(phase)
     plt.figure(1)
     plt.plot(
-        rx, by, color='b', label='roll off = {:.2f}, {:.2f} %'.format(
+        rx, by, '.-', color='b',  label='roll off = {:.2f}, {:.2f} %'.format(
             100*roffn, 100*roffp))
     plt.legend()
     plt.xlabel('x [mm]')
