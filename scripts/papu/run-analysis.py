@@ -21,7 +21,7 @@ RESCALE_LENGTH = utils.RESCALE_LENGTH
 MEAS_FLAG = False
 
 
-FITTED_MODEL = True
+FITTED_MODEL = utils.FITTED_MODEL
 CALC_TYPES = utils.CALC_TYPES
 
 
@@ -284,6 +284,7 @@ def correct_optics(phase, beta_flag=True, fitted_model=False):
     # create model with ID
     model1, knobs, locs_beta, straight_nr = create_model_ids(
         phase, fitted_model=fitted_model)
+    print(locs_beta)
 
     print('local quadrupole fams: ', knobs)
     print('element indices for straight section begin and end: ',
@@ -350,10 +351,10 @@ if __name__ == '__main__':
     # run_analysis_dynapt(
     #     phase, fitted_model=FITTED_MODEL, calc_type=calc_type)
 
-    # calc_type = CALC_TYPES.symmetrized
-    # run_analysis_dynapt(
-    #     phase, fitted_model=FITTED_MODEL, calc_type=calc_type)
-
-    calc_type = CALC_TYPES.nonsymmetrized
+    calc_type = CALC_TYPES.symmetrized
     run_analysis_dynapt(
         phase, fitted_model=FITTED_MODEL, calc_type=calc_type)
+
+    # calc_type = CALC_TYPES.nonsymmetrized
+    # run_analysis_dynapt(
+    #     phase, fitted_model=FITTED_MODEL, calc_type=calc_type)

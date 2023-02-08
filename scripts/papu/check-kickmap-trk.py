@@ -102,7 +102,7 @@ if __name__ == '__main__':
 
     rescale_kicks = utils.RESCALE_KICKS
     rescale_length = utils.RESCALE_LENGTH
-    phase = 25
+    phase = 0
     check_kick_at_plane(phase=phase,
                         rescale_kicks=rescale_kicks,
                         rescale_length=rescale_length)

@@ -48,7 +48,7 @@ def get_kmap_filename(phase):
     fpath = FOLDER_DATA + 'kickmaps/'
     fpath = fpath.replace('model/data/', 'model/')
     phase_str = get_phase_str(phase)
-    fname = fpath + 'kickmap-papu50-phase_{}_test.txt'.format(phase_str)
+    fname = fpath + 'kickmap-papu50-phase_{}.txt'.format(phase_str)
     return fname
 
 
@@ -95,6 +95,15 @@ def create_ids(
             rescale_kicks=rescale_kicks, rescale_length=rescale_length,
             termination_kicks=termination_kicks)
         ids.append(papu50_13)
+
+    if insert_kyma:
+        kyma22 = IDModel(
+            subsec=IDModel.SUBSECTIONS.ID09SA,
+            file_name=fname,
+            fam_name='APU22', nr_steps=nr_steps,
+            rescale_kicks=rescale_kicks, rescale_length=rescale_length,
+            termination_kicks=termination_kicks)
+        ids.append(kyma22)
 
     return ids
 
@@ -161,8 +170,8 @@ def generate_radia_model(phase=0, solve_flag=False):
                              end_blocks_distance=end_blocks_distance,
                              init_radia_object=False)
     papu.create_radia_object(magnetization_dict=magnetization_dict)
-    papu.cassettes_ref['cs'].shift([-0.7, 0, 0])
-    papu.cassettes_ref['ci'].shift([-0.7, 0, 0])
+    papu.cassettes_ref['cs'].shift([-1.465, 0, 0])
+    papu.cassettes_ref['ci'].shift([-1.465, 0, 0])
     papu.dp = phase
 
     if solve_flag:

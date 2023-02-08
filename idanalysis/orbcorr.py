@@ -315,9 +315,15 @@ def correct_orbit_fb(
     famdata = si.get_family_data(model1)
     bpms = np.array([idx[0] for idx in famdata['BPM']['index']])
     spos_bpms = pyaccel.lattice.find_spos(model1, indices=bpms)
-    inds = pyaccel.lattice.find_indices(model1, 'fam_name', id_famname)
+    inds_list = list()
+    for famname in id_famname:
+        inds = pyaccel.lattice.find_indices(model1, 'fam_name', famname)
+        for idx in inds:
+            inds_list.append(idx)
+            print(model1[idx])
+            print()
     inds_id = list()
-    for idx in inds:
+    for idx in inds_list:
         if model1[idx].pass_method == 'kicktable_pass':
             inds_id.append(idx)
     # create orbit corrector
@@ -330,21 +336,23 @@ def correct_orbit_fb(
     ocorr = OrbitCorr(model0, 'SI', params=cparams, corr_system=corr_system)
     orb0 = ocorr.get_orbit()
 
-    kick_step = model1[inds_id[0]].rescale_kicks/nr_steps
-    t_in_step = model1[inds_id[0]].t_in/nr_steps
-    t_out_step = model1[inds_id[-1]].t_out/nr_steps
+    kick_step = list()
+    for i, idx in enumerate(inds_id):
+        kick_step.append(model1[inds_id[i]].rescale_kicks/nr_steps)
+    # t_in_step = model1[inds_id[0]].t_in/nr_steps
+    # t_out_step = model1[inds_id[-1]].t_out/nr_steps
 
     for idx in inds_id:
         model1[idx].rescale_kicks *= 0
-    model1[inds_id[0]].t_in *= 0
-    model1[inds_id[-1]].t_out *= 0
+    # model1[inds_id[0]].t_in *= 0
+    # model1[inds_id[-1]].t_out *= 0
 
     for i in np.arange(nr_steps):
 
-        for idx in inds_id:
-            model1[idx].rescale_kicks += kick_step
-        model1[inds_id[0]].t_in += t_in_step
-        model1[inds_id[-1]].t_out += t_out_step
+        for i, idx in enumerate(inds_id):
+            model1[idx].rescale_kicks += kick_step[i]
+        # model1[inds_id[0]].t_in += t_in_step
+        # model1[inds_id[-1]].t_out += t_out_step
         # get perturbed orbit
         ocorr = OrbitCorr(
             model1, 'SI', params=cparams, corr_system=corr_system)

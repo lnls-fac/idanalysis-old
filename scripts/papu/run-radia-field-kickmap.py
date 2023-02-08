@@ -39,14 +39,14 @@ def config_traj(radia_model, max_rz):
     return idkickmap
 
 
-def generate_kickmap(gridx, gridy, radia_model, max_rz):
+def generate_kickmap(gridx, gridy, phase, radia_model, max_rz):
     # Config trajectory parameters
     idkickmap = config_traj(radia_model=radia_model, max_rz=max_rz)
     idkickmap.fmap_calc_kickmap(posx=gridx, posy=gridy)
 
     # Generate kickmap file
-    phase = idkickmap.radia_model.dp
     fname = utils.get_kmap_filename(phase)
+    fname += '_shift_1p465'
     idkickmap.save_kickmap_file(kickmap_filename=fname)
 
 
@@ -153,7 +153,7 @@ def save_data(data):
     """."""
     phase = data['phase']
     fpath = create_path(phase)
-    fname = fpath + 'field_data_papu50'
+    fname = fpath + 'field_data_papu50_shift_1p465'
     save_pickle(data, fname, overwrite=True, makedirs=True)
 
 
@@ -278,6 +278,7 @@ def run_calc_fields(phase, rx_init):
 
 
 def run_generate_kickmap(papu=None,
+                         phase=25,
                          max_rz=None,
                          gridx=None,
                          gridy=None):
@@ -286,7 +287,7 @@ def run_generate_kickmap(papu=None,
     gridy = gridy or list(np.linspace(-3.5, +3.5, 5) / 1000)  # [m]
 
     generate_kickmap(
-        gridx=gridx, gridy=gridy, radia_model=papu, max_rz=max_rz)
+        gridx=gridx, gridy=gridy, phase=phase, radia_model=papu, max_rz=max_rz)
 
     return papu
 
@@ -294,7 +295,7 @@ def run_generate_kickmap(papu=None,
 def run_plot_data(phase, rx_init):
 
     fpath = create_path(phase)
-    fname = fpath + 'field_data_papu50.pickle'
+    fname = fpath + 'field_data_papu50_shift_1p465.pickle'
     data = load_pickle(fname)
 
     plot_field_on_axis(data=data)
@@ -304,8 +305,8 @@ def run_plot_data(phase, rx_init):
 
 if __name__ == "__main__":
 
-    phase = 25
+    phase = 0
     rx_init = [-10e-3, 0, 10e-3]  # High beta's worst initial conditions [m]
     papu, max_rz = run_calc_fields(phase, rx_init)
     run_plot_data(phase=phase, rx_init=rx_init)
-    # papu = run_generate_kickmap(papu=papu, max_rz=max_rz)
+    papu = run_generate_kickmap(papu=papu, phase=phase, max_rz=max_rz)
