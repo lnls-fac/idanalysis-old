@@ -294,8 +294,9 @@ def run_generate_kickmap(papu=None,
 
 def run_plot_data(phase, rx_init):
 
+    shift_str = utils.get_shift_str(utils.RADIA_MODEL_RX_SHIFT)
     fpath = create_path(phase)
-    fname = fpath + 'field_data_papu50_shift_1p465.pickle'
+    fname = fpath + f'field_data_papu50_shift_{shift_str}.pickle'
     data = load_pickle(fname)
 
     plot_field_on_axis(data=data)
@@ -305,8 +306,8 @@ def run_plot_data(phase, rx_init):
 
 if __name__ == "__main__":
 
-    phase = 0
+    phase = 1 * utils.ID_PERIOD/2
     rx_init = [-10e-3, 0, 10e-3]  # High beta's worst initial conditions [m]
-    papu, max_rz = run_calc_fields(phase, rx_init)
+    # papu, max_rz = run_calc_fields(phase, rx_init)
     run_plot_data(phase=phase, rx_init=rx_init)
-    papu = run_generate_kickmap(papu=papu, phase=phase, max_rz=max_rz)
+    # papu = run_generate_kickmap(papu=papu, phase=phase, max_rz=max_rz)

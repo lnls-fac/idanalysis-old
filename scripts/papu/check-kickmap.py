@@ -23,11 +23,11 @@ def get_figname_plane(phase, posy, kick_plane):
     return fname_fig
 
 
-def get_figname_allplanes(phase):
+def get_figname_allplanes(phase, kick_plane):
     fpath = utils.FOLDER_DATA
     phase_str = utils.get_phase_str(phase)
     fpath = fpath.replace('data/', 'data/phase_{}/'.format(phase_str))
-    fname_fig = fpath + 'kickx-all-planes'
+    fname_fig = fpath + 'kick{}-all-planes'.format(kick_plane.lower())
     return fname_fig
 
 
@@ -81,7 +81,7 @@ def plot_kick_at_plane(phase, posy, kick_plane='X'):
 
 def plot_kick_all_planes(phase, kick_plane='x'):
     """."""
-    fname_fig = get_figname_allplanes(phase)
+    fname_fig = get_figname_allplanes(phase, kick_plane)
     fname = utils.get_kmap_filename(phase)
     id_kickmap = IDKickMap(fname)
     posy_zero_idx = list(id_kickmap.posy).index(0)
@@ -110,7 +110,14 @@ def plot_kick_all_planes(phase, kick_plane='x'):
 
 
 if __name__ == '__main__':
-    phase = 0
+    phase = utils.ID_PERIOD/2
+
+    kick_plane = 'x'
     plot_kick_at_plane(
-        phase=phase, posy=0, kick_plane='x')
-    plot_kick_all_planes(phase, kick_plane='x')
+        phase=phase, posy=0, kick_plane=kick_plane)
+    plot_kick_all_planes(phase, kick_plane=kick_plane)
+
+    kick_plane = 'y'
+    plot_kick_at_plane(
+        phase=phase, posy=0, kick_plane=kick_plane)
+    plot_kick_all_planes(phase, kick_plane=kick_plane)

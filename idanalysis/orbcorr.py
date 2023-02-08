@@ -8,6 +8,19 @@ from pymodels import si
 from apsuite.orbcorr import OrbitCorr, CorrParams
 
 
+IDS_FAMNAMES = ['PAPU50', 'APU22', 'WIG180', 'APU58', 'EPU50']
+
+
+def get_ids_indices(model):
+    inds_list = list()
+    for famname in IDS_FAMNAMES:
+        inds = pyaccel.lattice.find_indices(model, 'fam_name', famname)
+        for idx in inds:
+            if model[idx].pass_method == 'kicktable_pass':
+                inds_list.append(idx)
+    return sorted(inds_list)
+
+
 def correct_orbit_local(
         model0, model1, id_famname, correction_plane='both', plot=True):
     """."""
@@ -308,24 +321,15 @@ def get_fofb_bpms_idx(bpms):
 
 
 def correct_orbit_fb(
-        model0, model1, id_famname, minsingval=0.2,
+        model0, model1, minsingval=0.2,
         nr_steps=1, corr_system='SOFB'):
     """."""
     # calculate structures
     famdata = si.get_family_data(model1)
     bpms = np.array([idx[0] for idx in famdata['BPM']['index']])
     spos_bpms = pyaccel.lattice.find_spos(model1, indices=bpms)
-    inds_list = list()
-    for famname in id_famname:
-        inds = pyaccel.lattice.find_indices(model1, 'fam_name', famname)
-        for idx in inds:
-            inds_list.append(idx)
-            print(model1[idx])
-            print()
-    inds_id = list()
-    for idx in inds_list:
-        if model1[idx].pass_method == 'kicktable_pass':
-            inds_id.append(idx)
+    inds_list = get_ids_indices(model1)
+
     # create orbit corrector
     cparams = CorrParams()
     cparams.minsingval = minsingval
@@ -336,23 +340,15 @@ def correct_orbit_fb(
     ocorr = OrbitCorr(model0, 'SI', params=cparams, corr_system=corr_system)
     orb0 = ocorr.get_orbit()
 
-    kick_step = list()
-    for i, idx in enumerate(inds_id):
-        kick_step.append(model1[inds_id[i]].rescale_kicks/nr_steps)
-    # t_in_step = model1[inds_id[0]].t_in/nr_steps
-    # t_out_step = model1[inds_id[-1]].t_out/nr_steps
+    factors = np.linspace(0, 1, nr_steps+1)
+    rescale_kicks_orig = [model1[idx].rescale_kicks for idx in inds_list]
 
-    for idx in inds_id:
-        model1[idx].rescale_kicks *= 0
-    # model1[inds_id[0]].t_in *= 0
-    # model1[inds_id[-1]].t_out *= 0
+    for factor in factors:
 
-    for i in np.arange(nr_steps):
+        # rescale kicks
+        for idx, rescale_kicks in zip(inds_list, rescale_kicks_orig):
+            model1[idx].rescale_kicks = factor * rescale_kicks
 
-        for i, idx in enumerate(inds_id):
-            model1[idx].rescale_kicks += kick_step[i]
-        # model1[inds_id[0]].t_in += t_in_step
-        # model1[inds_id[-1]].t_out += t_out_step
         # get perturbed orbit
         ocorr = OrbitCorr(
             model1, 'SI', params=cparams, corr_system=corr_system)

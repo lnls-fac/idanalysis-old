@@ -14,15 +14,15 @@ from idanalysis import optics as optics
 
 import utils
 
-from apsuite.dynap import DynapXY, DynapEX, PhaseSpace
+from apsuite.dynap import DynapXY
 
 RESCALE_KICKS = utils.RESCALE_KICKS
 RESCALE_LENGTH = utils.RESCALE_LENGTH
 MEAS_FLAG = False
 
-
 FITTED_MODEL = utils.FITTED_MODEL
 CALC_TYPES = utils.CALC_TYPES
+
 
 
 def create_path(phase):
@@ -44,13 +44,13 @@ def create_model_nominal(fitted_model=False):
     return model0
 
 
-def create_model_ids(phase, fitted_model=False, nr_ids=1):
+def create_model_ids(phase, fitted_model=False):
     """."""
     print('--- model with kickmap ---')
     ids = utils.create_ids(
         phase,
         rescale_kicks=RESCALE_KICKS*1,
-        rescale_length=RESCALE_LENGTH, nr_ids=nr_ids)
+        rescale_length=RESCALE_LENGTH)
     model = pymodels.si.create_accelerator(ids=ids)
     if fitted_model:
         model = pymodels.si.fitted_models.vertical_dispersion_and_coupling(
@@ -61,14 +61,23 @@ def create_model_ids(phase, fitted_model=False, nr_ids=1):
     print('length : {:.4f} m'.format(model.length))
     print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/np.pi))
     print('tuney  : {:.6f}'.format(twiss.muy[-1]/2/np.pi))
-    straight_nr = int(ids[0].subsec[2:4])
 
-    # get knobs and beta locations
-    if straight_nr is not None:
-        _, knobs, _ = optics.symm_get_knobs(model, straight_nr)
-        locs_beta = optics.symm_get_locs_beta(knobs)
-    else:
-        knobs, locs_beta = None, None
+    straight_nr = dict()
+    knobs = dict()
+    locs_beta = dict()
+    for id_ in ids:
+        straight_nr_ = int(id_.subsec[2:4])
+
+        # get knobs and beta locations
+        if straight_nr_ is not None:
+            _, knobs_, _ = optics.symm_get_knobs(model, straight_nr_)
+            locs_beta_ = optics.symm_get_locs_beta(knobs_)
+        else:
+            knobs_, locs_beta_ = None, None
+
+        straight_nr[id_.subsec] = straight_nr_
+        knobs[id_.subsec] = knobs_
+        locs_beta[id_.subsec] = locs_beta_
 
     return model, knobs, locs_beta, straight_nr
 
@@ -284,46 +293,81 @@ def correct_optics(phase, beta_flag=True, fitted_model=False):
     # create model with ID
     model1, knobs, locs_beta, straight_nr = create_model_ids(
         phase, fitted_model=fitted_model)
-    print(locs_beta)
 
-    print('local quadrupole fams: ', knobs)
-    print('element indices for straight section begin and end: ',
-            locs_beta)
+    print('element indices for straight section begin and end:')
+    for idsubsec, locs_beta_ in locs_beta.items():
+        print(idsubsec, locs_beta_)
 
-    # calculate nominal twiss
-    goal_tunes = np.array(
-        [twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
-    goal_beta = np.array(
-        [twiss0.betax[locs_beta], twiss0.betay[locs_beta]])
-    goal_alpha = np.array(
-        [twiss0.alphax[locs_beta], twiss0.alphay[locs_beta]])
-    print(goal_beta)
+    print('local quadrupole fams: ')
+    for idsubsec, knobs_ in knobs.items():
+        print(idsubsec, knobs_)
 
     # correct orbit
-    ids_famname = list(['PAPU50', 'APU22'])
-    orb_res = orbcorr.correct_orbit_fb(
-        model0, model1, ids_famname, corr_system='SOFB', nr_steps=1)
-    spos = orb_res[1]
-    orbc = orb_res[2]
-    orbu = orb_res[4]
-    plt.plot(spos, orbc)
-    plt.plot(spos, orbu)
-    plt.show()
+    kicks, spos_bpms, codx_c, cody_c, codx_u, cody_u, bpms = \
+        orbcorr.correct_orbit_fb(
+            model0, model1, corr_system='SOFB', nr_steps=1)
+    # plt.plot(spos_bpms, 1e6*codx_u, label='uncorrected')
+    # plt.plot(spos_bpms, 1e6*codx_c, label='corrected')
+    # plt.legend()
+    # plt.xlabel('pos [m]')
+    # plt.ylabel('codx [um')
+    # plt.show()
 
     # calculate beta beating and delta tunes
     twiss1 = analysis_uncorrected_perturbation(
         model1, twiss0=twiss0, plot_flag=False)
 
-    # symmetrize optics (local quad fam knobs)
-    if beta_flag:
-        twiss2, stg = correct_beta(
-            model1, straight_nr, knobs, goal_beta, goal_alpha)
+    # get list of ID model indices and set rescale_kicks to zero
+    ids_ind_all = orbcorr.get_ids_indices(model1)
+    rescale_kicks_orig = list()
+    for idx in range(len(ids_ind_all)//2):
+        ind_id = ids_ind_all[2*idx:2*(idx+1)]
+        rescale_kicks_orig.append(model1[ind_id[0]].rescale_kicks)
+        model1[ind_id[0]].rescale_kicks = 0
+        model1[ind_id[1]].rescale_kicks = 0
 
-        # correct tunes
-        twiss3 = correct_tunes(model1, twiss1, goal_tunes)
+    # loop over IDs turning rescale_kicks on, one by one.
+    for idx in range(len(ids_ind_all)//2):
 
-        plot_beta_beating(
-            phase, twiss0, twiss1, twiss2, twiss3, stg, fitted_model)
+        # turn rescale_kicks on for ID index idx
+        ind_id = ids_ind_all[2*idx:2*(idx+1)]
+        model1[ind_id[0]].rescale_kicks = rescale_kicks_orig[idx]
+        model1[ind_id[1]].rescale_kicks = rescale_kicks_orig[idx]
+        fam_name = model1[ind_id[0]].fam_name
+        # print(idx, ind_id)
+        # continue
+
+        # search knob and straight_nr for ID index idx
+        for subsec in knobs:
+            straight_nr_ = straight_nr[subsec]
+            knobs_ = knobs[subsec]
+            locs_beta_ = locs_beta[subsec]
+            if min(locs_beta_) < ind_id[0] and ind_id[1] < max(locs_beta_):
+                break
+
+        print()
+        print('symmetrizing ID {} in subsec {}'.format(fam_name, subsec))
+
+        # calculate nominal twiss
+        goal_tunes = np.array(
+            [twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
+        goal_beta = np.array(
+            [twiss0.betax[locs_beta_], twiss0.betay[locs_beta_]])
+        goal_alpha = np.array(
+            [twiss0.alphax[locs_beta_], twiss0.alphay[locs_beta_]])
+        print('goal_beta:')
+        print(goal_beta)
+
+        # symmetrize optics (local quad fam knobs)
+        if beta_flag:
+            twiss2, stg = correct_beta(
+                model1, straight_nr_, knobs_, goal_beta, goal_alpha)
+
+    # correct tunes
+    twiss3 = correct_tunes(model1, twiss1, goal_tunes)
+
+    plot_beta_beating(
+        phase, twiss0, twiss1, twiss2, twiss3, stg, fitted_model)
 
     return model1
 

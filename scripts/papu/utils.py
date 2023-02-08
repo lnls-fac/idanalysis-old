@@ -26,9 +26,18 @@ RESCALE_LENGTH = 1/0.75  # RK traj is not calculated in free field regions
 ROLL_OFF_RX = 10.0  # [mm]
 SOLVE_FLAG = False
 FITTED_MODEL = False
+RADIA_MODEL_RX_SHIFT = -0.7  # [mm] as to centralize maximum field
+# RADIA_MODEL_RX_SHIFT = -1.465  # [mm] as to centralize rolloff
 
 FOLDER_DATA = './results/model/data/'
+KYMA22_KMAP_FILENAME = (
+    '/opt/insertion-devices/kyma22/results/'
+    'model/kickmaps/kickmap-ID-kyma22-phase_pos00p000.txt')
 
+INSERT_KYMA = False
+KYMA_RESCALE_KICKS = 1  # Radia simulations have fewer ID periods
+KYMA_RESCALE_LENGTH = 10  # Radia simulations have fewer ID periods
+NR_PAPU = 2
 
 class CALC_TYPES:
     """."""
@@ -44,41 +53,73 @@ def get_phase_str(gap):
     return phase_str
 
 
+def get_shift_str(shift):
+    """."""
+    # print('ok')
+    # shift_str = '{:+6.3f}'.format(shift)
+    # print(shift_str)
+    shift_str = '{:+6.3f}'.format(shift).replace('.', 'p')
+    shift_str = shift_str.replace('+', 'pos').replace('-', 'neg')
+    return shift_str
+
+
 def get_kmap_filename(phase):
     fpath = FOLDER_DATA + 'kickmaps/'
     fpath = fpath.replace('model/data/', 'model/')
     phase_str = get_phase_str(phase)
-    fname = fpath + 'kickmap-papu50-phase_{}.txt'.format(phase_str)
+    shift_str = get_shift_str(RADIA_MODEL_RX_SHIFT)
+    fname = fpath + 'kickmap-papu50-phase_{}-shift_{}.txt'.format(
+        phase_str, shift_str)
     return fname
 
 
-def create_ids(
-        phase=0, nr_steps=None, rescale_kicks=RESCALE_KICKS,
-        rescale_length=RESCALE_LENGTH, nr_ids=1, insert_kyma=False):
-    # create IDs
-    nr_steps = nr_steps or 40
-    rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
-    rescale_length = \
-        rescale_length if rescale_length is not None else 1
-    fname = get_kmap_filename(phase)
+def get_termination_kicks(fname):
     idkmap = IDKickMap(kmap_fname=fname)
     kickx_up = idkmap.kickx_upstream  # [T².m²]
     kicky_up = idkmap.kicky_upstream  # [T².m²]
     kickx_down = idkmap.kickx_downstream  # [T².m²]
     kicky_down = idkmap.kicky_downstream  # [T².m²]
     termination_kicks = [kickx_up, kicky_up, kickx_down, kicky_down]
-    IDModel = pymodels.si.IDModel
+    return termination_kicks
+
+
+def create_ids(
+        phase=0, nr_steps=None, rescale_kicks=RESCALE_KICKS,
+        rescale_length=RESCALE_LENGTH):
+    # create IDs
     ids = list()
+    IDModel = pymodels.si.IDModel
 
-    papu50_17 = IDModel(
-        subsec=IDModel.SUBSECTIONS.ID17SA,
-        file_name=fname,
-        fam_name='PAPU50', nr_steps=nr_steps,
-        rescale_kicks=rescale_kicks, rescale_length=rescale_length,
-        termination_kicks=termination_kicks)
-    ids.append(papu50_17)
+    nr_steps = nr_steps or 40
+    
+    if INSERT_KYMA:
+        fname = KYMA22_KMAP_FILENAME
+        termination_kicks = get_termination_kicks(fname)
+        kyma22 = IDModel(
+            subsec=IDModel.SUBSECTIONS.ID09SA,
+            file_name=fname,
+            fam_name='APU22', nr_steps=nr_steps,
+            rescale_kicks=KYMA_RESCALE_KICKS,
+            rescale_length=KYMA_RESCALE_LENGTH,
+            termination_kicks=termination_kicks)
+        ids.append(kyma22)
 
-    if nr_ids > 1:
+    rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
+    rescale_length = \
+        rescale_length if rescale_length is not None else 1
+    fname = get_kmap_filename(phase)
+    termination_kicks = get_termination_kicks(fname)
+    
+    if NR_PAPU > 0:
+        papu50_17 = IDModel(
+            subsec=IDModel.SUBSECTIONS.ID17SA,
+            file_name=fname,
+            fam_name='PAPU50', nr_steps=nr_steps,
+            rescale_kicks=rescale_kicks, rescale_length=rescale_length,
+            termination_kicks=termination_kicks)
+        ids.append(papu50_17)
+
+    if NR_PAPU > 1:
         papu50_05 = IDModel(
             subsec=IDModel.SUBSECTIONS.ID05SA,
             file_name=fname,
@@ -87,7 +128,7 @@ def create_ids(
             termination_kicks=termination_kicks)
         ids.append(papu50_05)
 
-    if nr_ids > 2:
+    if NR_PAPU > 2:
         papu50_13 = IDModel(
             subsec=IDModel.SUBSECTIONS.ID13SA,
             file_name=fname,
@@ -95,16 +136,7 @@ def create_ids(
             rescale_kicks=rescale_kicks, rescale_length=rescale_length,
             termination_kicks=termination_kicks)
         ids.append(papu50_13)
-
-    if insert_kyma:
-        kyma22 = IDModel(
-            subsec=IDModel.SUBSECTIONS.ID09SA,
-            file_name=fname,
-            fam_name='APU22', nr_steps=nr_steps,
-            rescale_kicks=rescale_kicks, rescale_length=rescale_length,
-            termination_kicks=termination_kicks)
-        ids.append(kyma22)
-
+    
     return ids
 
 
@@ -170,8 +202,9 @@ def generate_radia_model(phase=0, solve_flag=False):
                              end_blocks_distance=end_blocks_distance,
                              init_radia_object=False)
     papu.create_radia_object(magnetization_dict=magnetization_dict)
-    papu.cassettes_ref['cs'].shift([-1.465, 0, 0])
-    papu.cassettes_ref['ci'].shift([-1.465, 0, 0])
+    shift = [RADIA_MODEL_RX_SHIFT, 0, 0]
+    papu.cassettes_ref['cs'].shift(shift[:])
+    papu.cassettes_ref['ci'].shift(shift[:])
     papu.dp = phase
 
     if solve_flag:
