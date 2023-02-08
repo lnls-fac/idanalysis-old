@@ -61,6 +61,7 @@ def check_kick_at_plane(phase, rescale_kicks, rescale_length):
     # shift model
     idx = famdata['PAPU50']['index']
 
+    print(idx)
     idx_begin = idx[-1][0]
     idx_dif = 2
 

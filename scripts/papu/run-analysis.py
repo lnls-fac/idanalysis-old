@@ -44,13 +44,13 @@ def create_model_nominal(fitted_model=False):
     return model0
 
 
-def create_model_ids(phase, fitted_model=False):
+def create_model_ids(phase, fitted_model=False, nr_ids=1):
     """."""
     print('--- model with kickmap ---')
     ids = utils.create_ids(
         phase,
         rescale_kicks=RESCALE_KICKS*1,
-        rescale_length=RESCALE_LENGTH)
+        rescale_length=RESCALE_LENGTH, nr_ids=nr_ids)
     model = pymodels.si.create_accelerator(ids=ids)
     if fitted_model:
         model = pymodels.si.fitted_models.vertical_dispersion_and_coupling(
@@ -145,7 +145,7 @@ def plot_beta_beating(
 
     plt.clf()
 
-    label1 = {False:'-nominal', True:'-fittedmodel'}[fitted_model]
+    label1 = {False: '-nominal', True: '-fittedmodel'}[fitted_model]
 
     plt.figure(1)
     stg_tune = f'dtunex: {dtunex:+0.04f}\n' + f'dtuney: {dtuney:+0.04f}'
@@ -237,25 +237,25 @@ def analysis_dynapt(phase, model, calc_type, fitted_model):
 
     fpath = create_path(phase)
     label1 = ['', '-ids-nonsymm', '-ids-symm'][calc_type]
-    label2 = {False:'-nominal', True:'-fittedmodel'}[fitted_model]
+    label2 = {False: '-nominal', True: '-fittedmodel'}[fitted_model]
     fig_name = fpath + 'dynapt{}{}.png'.format(label2, label1)
     fig.savefig(fig_name, dpi=300, format='png')
 
 
 def correct_beta(model1, straight_nr, knobs, goal_beta, goal_alpha):
-        dk_tot = np.zeros(len(knobs))
-        for i in range(7):
-            dk = optics.correct_symmetry_withbeta(
-                model1, straight_nr, goal_beta, goal_alpha)
-            print('iteration #{}, dK: {}'.format(i+1, dk))
-            dk_tot += dk
-        stg = str()
-        for i, fam in enumerate(knobs):
-            stg += '{:<9s} dK: {:+9.4f} 1/m² \n'.format(fam, dk_tot[i])
-        print(stg)
-        twiss2, *_ = pyacc_opt.calc_twiss(model1, indices='closed')
-        print()
-        return twiss2, stg
+    dk_tot = np.zeros(len(knobs))
+    for i in range(7):
+        dk = optics.correct_symmetry_withbeta(
+            model1, straight_nr, goal_beta, goal_alpha)
+        print('iteration #{}, dK: {}'.format(i+1, dk))
+        dk_tot += dk
+    stg = str()
+    for i, fam in enumerate(knobs):
+        stg += '{:<9s} dK: {:+9.4f} 1/m² \n'.format(fam, dk_tot[i])
+    print(stg)
+    twiss2, *_ = pyacc_opt.calc_twiss(model1, indices='closed')
+    print()
+    return twiss2, stg
 
 
 def correct_tunes(model1, twiss1, goal_tunes):
@@ -299,8 +299,15 @@ def correct_optics(phase, beta_flag=True, fitted_model=False):
     print(goal_beta)
 
     # correct orbit
+    ids_famname = list(['PAPU50', 'APU22'])
     orb_res = orbcorr.correct_orbit_fb(
-        model0, model1, 'PAPU50', corr_system='SOFB', nr_steps=1)
+        model0, model1, ids_famname, corr_system='SOFB', nr_steps=1)
+    spos = orb_res[1]
+    orbc = orb_res[2]
+    orbu = orb_res[4]
+    plt.plot(spos, orbc)
+    plt.plot(spos, orbu)
+    plt.show()
 
     # calculate beta beating and delta tunes
     twiss1 = analysis_uncorrected_perturbation(

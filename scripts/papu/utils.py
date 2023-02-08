@@ -48,13 +48,13 @@ def get_kmap_filename(phase):
     fpath = FOLDER_DATA + 'kickmaps/'
     fpath = fpath.replace('model/data/', 'model/')
     phase_str = get_phase_str(phase)
-    fname = fpath + 'kickmap-papu50-phase_{}.txt'.format(phase_str)
+    fname = fpath + 'kickmap-papu50-phase_{}_test.txt'.format(phase_str)
     return fname
 
 
 def create_ids(
         phase=0, nr_steps=None, rescale_kicks=RESCALE_KICKS,
-        rescale_length=RESCALE_LENGTH):
+        rescale_length=RESCALE_LENGTH, nr_ids=1, insert_kyma=False):
     # create IDs
     nr_steps = nr_steps or 40
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
@@ -68,13 +68,34 @@ def create_ids(
     kicky_down = idkmap.kicky_downstream  # [T².m²]
     termination_kicks = [kickx_up, kicky_up, kickx_down, kicky_down]
     IDModel = pymodels.si.IDModel
-    papu50 = IDModel(
-        subsec=IDModel.SUBSECTIONS.ID05SA,
+    ids = list()
+
+    papu50_17 = IDModel(
+        subsec=IDModel.SUBSECTIONS.ID17SA,
         file_name=fname,
         fam_name='PAPU50', nr_steps=nr_steps,
         rescale_kicks=rescale_kicks, rescale_length=rescale_length,
         termination_kicks=termination_kicks)
-    ids = [papu50, ]
+    ids.append(papu50_17)
+
+    if nr_ids > 1:
+        papu50_05 = IDModel(
+            subsec=IDModel.SUBSECTIONS.ID05SA,
+            file_name=fname,
+            fam_name='PAPU50', nr_steps=nr_steps,
+            rescale_kicks=rescale_kicks, rescale_length=rescale_length,
+            termination_kicks=termination_kicks)
+        ids.append(papu50_05)
+
+    if nr_ids > 2:
+        papu50_13 = IDModel(
+            subsec=IDModel.SUBSECTIONS.ID13SA,
+            file_name=fname,
+            fam_name='PAPU50', nr_steps=nr_steps,
+            rescale_kicks=rescale_kicks, rescale_length=rescale_length,
+            termination_kicks=termination_kicks)
+        ids.append(papu50_13)
+
     return ids
 
 

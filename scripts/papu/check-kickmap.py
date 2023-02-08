@@ -112,5 +112,5 @@ def plot_kick_all_planes(phase, kick_plane='x'):
 if __name__ == '__main__':
     phase = 25
     plot_kick_at_plane(
-        phase=phase, posy=0, kick_plane='y')
-    plot_kick_all_planes(phase, kick_plane='y')
+        phase=phase, posy=0, kick_plane='x')
+    plot_kick_all_planes(phase, kick_plane='x')
