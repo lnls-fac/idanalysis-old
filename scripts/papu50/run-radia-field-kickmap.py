@@ -153,7 +153,8 @@ def save_data(data):
     """."""
     phase = data['phase']
     fpath = create_path(phase)
-    fname = fpath + 'field_data_papu50_shift_1p465'
+    shift = utils.get_shift_str(utils.RADIA_MODEL_RX_SHIFT)
+    fname = fpath + f'field_data_papu50_shift_{shift}'
     save_pickle(data, fname, overwrite=True, makedirs=True)
 
 

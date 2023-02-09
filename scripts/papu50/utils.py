@@ -160,11 +160,6 @@ def generate_radia_model(phase=0, solve_flag=False):
         [[-14, 0], [-14, -6], [14, -34], [20, -34], [20, 0]]
     ]
 
-    shape = [
-        [[-14, -6], [-20, -6], [-20, -40], [14, -40], [14, -34]],
-        [[-14, 0], [-14, -6], [14, -34], [20, -34], [20, 0]]
-    ]
-
     shape_flip = np.array(shape)
     shape_flip[:, :, 1] = shape_flip[:, :, 1]*(-1)-40
     shape_flip = shape_flip.tolist()
