@@ -110,7 +110,7 @@ def plot_kick_all_planes(phase, kick_plane='x'):
 
 
 if __name__ == '__main__':
-    phase = utils.ID_PERIOD/2
+    phase = 0 * utils.ID_PERIOD/2
 
     kick_plane = 'x'
     plot_kick_at_plane(

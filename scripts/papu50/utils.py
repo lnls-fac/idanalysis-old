@@ -37,7 +37,7 @@ KYMA22_KMAP_FILENAME = (
 INSERT_KYMA = False
 KYMA_RESCALE_KICKS = 1  # Radia simulations have fewer ID periods
 KYMA_RESCALE_LENGTH = 10  # Radia simulations have fewer ID periods
-NR_PAPU = 2
+NR_PAPU = 1
 
 class CALC_TYPES:
     """."""
@@ -154,6 +154,11 @@ def create_model_ids(
 
 def generate_radia_model(phase=0, solve_flag=False):
     """."""
+
+    shape = [
+        [[-14, -6], [-20, -6], [-20, -40], [14, -40], [14, -34]],
+        [[-14, 0], [-14, -6], [14, -34], [20, -34], [20, 0]]
+    ]
 
     shape = [
         [[-14, -6], [-20, -6], [-20, -40], [14, -40], [14, -34]],
