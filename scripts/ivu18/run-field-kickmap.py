@@ -42,7 +42,7 @@ def create_models(gaps, widths):
     for gap in gaps:
         for width in widths:
             print(f'creating model for gap {gap} mm and width {width} mm')
-            termination_parameters = get_termination_parameters(width)
+            termination_parameters = get_termination_parameters(68)
             ivu = utils.generate_radia_model(
                 gap=gap, width=width,
                 termination_parameters=termination_parameters,
@@ -188,10 +188,16 @@ def plot_field_roll_off(data):
         rx = data[width]['rolloff_rx']
         roff = data[width]['rolloff_value']
         label = "width {}, {:.4f} %".format(width, 100*roff)
+        irx0 = np.argmin(np.abs(rx))
+        by0 = by[irx0]
+        roll_off = 100*(by/by0 - 1)
         print(label)
-        plt.plot(rx, by, label=label, color=colors[i])
+        plt.plot(rx, roll_off, label=label, color=colors[i])
     plt.xlabel('x [mm]')
-    plt.ylabel('By [T]')
+    # plt.ylabel('By [T]')
+    plt.ylabel('roll off [%]')
+    plt.xlim(-6, 6)
+    plt.ylim(-0.03, 0.01)
     plt.title('Field rolloff at x = 6 mm for Gap 4.2 mm')
     plt.legend()
     plt.grid()
@@ -285,31 +291,31 @@ def run_generate_kickmap(models=None, gaps=None,
     return models
 
 
-def run_plot_data(gap, widths):
+def run_plot_data(gap, widths, sub):
 
     data_plot = dict()
     gap_str = utils.get_gap_str(gap)
     for width in widths:
         fname = utils.FOLDER_DATA
-        fname += 'field_data_gap{}_width{}'.format(gap_str, width)
+        fname += 'field_data_gap{}_width{}_sub{}'.format(gap_str, width, sub)
         fdata = load_pickle(fname)
         data_plot[width] = fdata
 
-    plot_rk_traj(data=data_plot)
+    # plot_rk_traj(data=data_plot)
     plot_field_roll_off(data=data_plot)
-    plot_field_on_axis(data=data_plot)
+    # plot_field_on_axis(data=data_plot)
 
 
 if __name__ == "__main__":
 
     models = dict()
-    gaps = [4.2, 20.0]  # [mm]
-    widths = [68, 63, 58, 53, 48, 43]  # [mm]
+    gaps = [4.3]  # [mm]
+    widths = [64, 54]  # [mm]
     gridx = list(np.array([-12, 0, 12]) / 1000)  # [m]
     gridy = list(np.array([-2, 0, 2]) / 1000)  # [m]
 
     models = run_calc_fields(
         models=models, gaps=gaps, widths=widths, rx=None, rz=None)
-    run_plot_data(gap=4.2, widths=widths)
-    models = run_generate_kickmap(
-        models=models, gaps=gaps, widths=widths, gridx=gridx, gridy=gridy)
+    # run_plot_data(gap=4.3, widths=widths, sub=14)
+    # models = run_generate_kickmap(
+        # models=models, gaps=gaps, widths=widths, gridx=gridx, gridy=gridy)

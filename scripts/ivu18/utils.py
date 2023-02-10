@@ -21,6 +21,8 @@ ROLL_OFF_RX = 6.0  # [mm]
 FOLDER_BASE = '/home/ximenes/repos-dev/'
 FOLDER_DATA = './results/model/data/'
 
+SUB = 14
+
 
 def get_gap_str(gap):
     """."""
@@ -110,8 +112,11 @@ def generate_radia_model(gap, width, termination_parameters, solve=True):
 
     ]
 
-    block_subdivision = [8, 4, 3]
-    pole_subdivision = [12, 12, 3]
+    # block_subdivision = [8, 4, 3]
+    # pole_subdivision = [12, 12, 3]
+
+    block_subdivision = [16, 8, 3]
+    pole_subdivision = [32, 16, 3]
 
     b1t, b2t, b3t, dist1, dist2 = termination_parameters
 
@@ -132,6 +137,6 @@ def generate_radia_model(gap, width, termination_parameters, solve=True):
                  end_blocks_distance=end_blocks_distance,
                  trf_on_blocks=True)
     if solve:
-        ivu.solve()
+        ivu.solve_by_sections()
 
     return ivu

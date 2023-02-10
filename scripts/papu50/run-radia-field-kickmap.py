@@ -46,7 +46,6 @@ def generate_kickmap(gridx, gridy, phase, radia_model, max_rz):
 
     # Generate kickmap file
     fname = utils.get_kmap_filename(phase)
-    fname += '_shift_1p465'
     idkickmap.save_kickmap_file(kickmap_filename=fname)
 
 
