@@ -262,10 +262,10 @@ class IDKickMap:
         opt = _curve_fit(self._plateau_function, self.posx, p)[0]
         return opt
 
-    def filter_kmap(self, posx, order=8):
+    def filter_kmap(self, posx, order=4, plot_flag=False):
+        self._load_kmap()
         kickx = _np.zeros((len(self.posy), len(posx)))
         fposx = _np.zeros((len(self.posy), len(posx)))
-        colors = ['b', 'g', 'y', 'C1', 'r', 'k']
         for i, ryi in enumerate(self.posy):
             opt = _np.polyfit(self.posx, self.kickx[i, :], order)
             pxf = _np.polyval(opt, posx)
@@ -274,13 +274,15 @@ class IDKickMap:
             kickx[i, :] = pxf
             fposx[i, :] = xf
             label = 'y = {:.2f} mm'.format(1e3*ryi)
-        #     _plt.plot(1e3*self.posx, 1e6*self.kickx[i, :],
-        #               '.-', label=label)
-        #     _plt.plot(1e3*posx, 1e6*kickx[i, :])
-        # _plt.xlabel('x pos [mm]')
-        # _plt.ylabel('kicks [Tm²]')
-        # _plt.legend()
-        # _plt.show()
+            if plot_flag:
+                _plt.plot(1e3*self.posx, 1e6*self.kickx[i, :],
+                          '.-', label=label)
+                _plt.plot(1e3*posx, 1e6*kickx[i, :])
+        if plot_flag:
+            _plt.xlabel('x pos [mm]')
+            _plt.ylabel('kicks [Tm²]')
+            _plt.legend()
+            _plt.show()
 
         kicky = _np.zeros((len(self.posy), len(posx)))
         fposy = _np.zeros((len(self.posy), len(posx)))
@@ -291,17 +293,20 @@ class IDKickMap:
             yf = _np.polyval(yfit, posx)
             kicky[i, :] = pyf
             fposy[i, :] = yf
-        #     _plt.plot(1e3*self.posx, 1e6*self.kicky[i, :],
-        #               '.-', label=label)
-        #     _plt.plot(1e3*posx, 1e6*kicky[i, :])
-        # _plt.xlabel('x pos [mm]')
-        # _plt.ylabel('kicks [Tm²]')
-        # _plt.legend()
-        # _plt.show()
+            if plot_flag:
+                _plt.plot(1e3*self.posx, 1e6*self.kicky[i, :],
+                          '.-', label=label)
+                _plt.plot(1e3*posx, 1e6*kicky[i, :])
+        if plot_flag:
+            _plt.xlabel('x pos [mm]')
+            _plt.ylabel('kicks [Tm²]')
+            _plt.legend()
+            _plt.show()
+
+        self.posx = posx
 
         self.kickx = kickx
         self.fposx = fposx
-        self.posx = posx
 
         self.kicky = kicky
         self.fposy = fposy

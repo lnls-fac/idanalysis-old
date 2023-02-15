@@ -11,6 +11,25 @@ from fieldmaptrack import Beam
 import utils
 
 
+def get_figname_plane(gap, posy, kick_plane):
+    posy_str = '{:05.1f}'.format(posy).replace('.', 'p')
+    gap_str = utils.get_gap_str(gap)
+    fpath_fig = utils.FOLDER_DATA
+    fpath_fig = fpath_fig.replace('data/', 'data/general/')
+    fname_fig = fpath_fig + 'kick{}-gap{}mm-posy{}.png'.format(
+        kick_plane, gap_str, posy_str)
+    return fname_fig
+
+
+def get_figname_allplanes(gap, width, kick_plane):
+    fpath = utils.FOLDER_DATA
+    gap_str = utils.get_gap_str(gap)
+    fpath = fpath.replace('data/', 'data/width_{}/gap_{}/'.format(
+        width, gap_str))
+    fname_fig = fpath + 'kick{}-all-planes'.format(kick_plane.lower())
+    return fname_fig
+
+
 def calc_idkmap_kicks(plane_idx=0, idkmap=None):
     """."""
     beam = Beam(energy=3)
@@ -26,18 +45,13 @@ def calc_idkmap_kicks(plane_idx=0, idkmap=None):
     return rx0, ry0, pxf, pyf, rxf, ryf
 
 
-def plot_kick_at_plane(gap, widths, posy, kick_plane='X', shift_flag=True):
+def plot_kick_at_plane(
+        gap, widths, posy, kick_plane='X', save_flag=False):
     """."""
-    gap_str = utils.get_gap_str(gap)
-    posy_str = '{:05.1f}'.format(posy).replace('.', 'p')
-    fpath_fig = utils.FOLDER_DATA.replace('data/model/', 'model/')
-    fname_fig = fpath_fig + 'kick{}-gap{}mm-posy{}.png'.format(
-        kick_plane, gap_str, posy_str)
+    fname_fig = get_figname_plane(gap=gap, posy=posy, kick_plane=kick_plane)
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
     for width, color in zip(widths, colors):
         fname = utils.get_kmap_filename(gap, width)
-        if shift_flag:
-            fname = fname.replace('.txt', '_shifted_on_axis.txt')
         id_kickmap = IDKickMap(fname)
         posy_zero_idx = list(id_kickmap.posy).index(0)
         rx0, _, pxf, pyf, *_ = calc_idkmap_kicks(
@@ -46,7 +60,7 @@ def plot_kick_at_plane(gap, widths, posy, kick_plane='X', shift_flag=True):
         pyf *= utils.RESCALE_KICKS
 
         pf, klabel = (pxf, 'px') if kick_plane.lower() == 'x' else (pyf, 'py')
-        pfit = np.polyfit(rx0, pf, 5)
+        pfit = np.polyfit(rx0, pf, 21)
         pf_fit = np.polyval(pfit, rx0)
 
         label = 'width = {} mm'.format(width)
@@ -64,20 +78,19 @@ def plot_kick_at_plane(gap, widths, posy, kick_plane='X', shift_flag=True):
     plt.legend()
     plt.grid()
     plt.tight_layout()
-    plt.savefig(fname_fig, dpi=300)
+    if save_flag:
+        plt.savefig(fname_fig, dpi=300)
     plt.show()
 
 
-def plot_kick_all_planes(gap, width, shift_flag=True):
+def plot_kick_all_planes(gap, width, kick_plane='x', save_flag=False):
     """."""
     fname = utils.get_kmap_filename(gap, width)
-    if shift_flag:
-        fname = fname.replace('.txt', '_shifted_on_axis.txt')
     id_kickmap = IDKickMap(fname)
     posy_zero_idx = list(id_kickmap.posy).index(0)
     rx0, _, pxf, pyf, *_ = calc_idkmap_kicks(
             idkmap=id_kickmap, plane_idx=posy_zero_idx)
-
+    fname_fig = get_figname_allplanes(gap, width=width, kick_plane=kick_plane)
     for plane_idx, posy in enumerate(id_kickmap.posy):
         if posy < 0:
             continue
@@ -85,23 +98,24 @@ def plot_kick_all_planes(gap, width, shift_flag=True):
             idkmap=id_kickmap, plane_idx=plane_idx)
         pxf *= utils.RESCALE_KICKS
         pyf *= utils.RESCALE_KICKS
+        pf, klabel = (pxf, 'px') if kick_plane.lower() == 'x' else (pyf, 'py')
 
         label = 'posy = {:+.3f} mm'.format(1e3*posy)
         plt.plot(
-            1e3*rx0, 1e6*pxf, '.-', label=label)
+            1e3*rx0, 1e6*pf, '.-', label=label)
         plt.xlabel('x0 [mm]')
-        plt.ylabel('final px [urad]')
+        plt.ylabel('final {} [urad]'.format(klabel))
         plt.title('Kicks for gap {} mm, width {} mm'.format(gap, width))
-        plt.legend()
-        plt.grid()
-        plt.tight_layout()
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    if save_flag:
+        plt.savefig(fname_fig, dpi=300)
     plt.show()
 
 
 if __name__ == '__main__':
-    widths = [68, 63, 58, 53, 48, 43]
-    shift_flag = True
+    widths = [64]
     plot_kick_at_plane(
-        gap=4.2, widths=widths, posy=0,
-        kick_plane='x', shift_flag=shift_flag)
-    plot_kick_all_planes(gap=4.2, width=68, shift_flag=shift_flag)
+        gap=20, widths=widths, posy=0, kick_plane='x')
+    plot_kick_all_planes(gap=20, width=widths[0])

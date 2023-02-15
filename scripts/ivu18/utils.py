@@ -11,17 +11,26 @@ BEAM_ENERGY = 3.0  # [GeV]
 
 ID_PERIOD = 18.5  # [mm]
 NOMINAL_GAP = 4.2  # [mm]
-ID_KMAP_LEN = 0.116  # [m]
-DEF_RK_S_STEP = 2  # [mm] seems converged for the measurement fieldmap grids
-RESCALE_KICKS = 15.3846  # Radia simulations have fewer ID periods
-SOLVE_FLAG = True
+ID_KMAP_LEN = 0.250  # [m]
+DEF_RK_S_STEP = 0.5  # [mm] seems converged for the measurement fieldmap grids
+RESCALE_KICKS = 21.6  # Radia simulations have fewer ID periods
+RESCALE_LENGTH = 1  # Radia simulations have fewer ID periods
 ROLL_OFF_RX = 6.0  # [mm]
+SOLVE_FLAG = True
 
-# FOLDER_BASE = '/home/gabriel/repos-dev/'
-FOLDER_BASE = '/home/ximenes/repos-dev/'
 FOLDER_DATA = './results/model/data/'
 
-SUB = 14
+SHIFT_FLAG = True
+FILTER_FLAG = False
+
+FITTED_MODEL = True
+
+
+class CALC_TYPES:
+    """."""
+    nominal = 0
+    nonsymmetrized = 1
+    symmetrized = 2
 
 
 def get_gap_str(gap):
@@ -30,25 +39,27 @@ def get_gap_str(gap):
     return gap_str
 
 
-def get_kmap_filename(gap, width):
+def get_kmap_filename(gap, width, shift_flag=SHIFT_FLAG, filter=FILTER_FLAG):
     fpath = FOLDER_DATA + 'kickmaps/'
     fpath = fpath.replace('model/data/', 'model/')
     gap_str = get_gap_str(gap)
-    fname = fpath + f'kickmap-ID-{width}-gap{gap_str}mm-filter.txt'
+    fname = fpath + f'kickmap-ID-{width}-gap{gap_str}mm.txt'
+    if shift_flag:
+        fname = fname.replace('.txt', '-shifted_on_axis.txt')
+    if filter:
+        fname = fname.replace('.txt', '-filtered.txt')
     return fname
 
 
 def create_ids(
         gap, width, nr_steps=None, rescale_kicks=RESCALE_KICKS,
-        rescale_length=RESCALE_KICKS, shift_flag=True):
+        rescale_length=RESCALE_LENGTH):
     # create IDs
     nr_steps = nr_steps or 40
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
     rescale_length = \
         rescale_length if rescale_length is not None else 1
     fname = get_kmap_filename(gap=gap, width=width)
-    if shift_flag:
-        fname = fname.replace('.txt', '_shifted_on_axis.txt')
     idkmap = IDKickMap(kmap_fname=fname)
     kickx_up = idkmap.kickx_upstream  # [T².m²]
     kicky_up = idkmap.kicky_upstream  # [T².m²]
@@ -67,12 +78,15 @@ def create_ids(
 
 
 def create_model_ids(gap, width, rescale_kicks=RESCALE_KICKS,
-                     rescale_length=RESCALE_KICKS, shift_flag=True):
+                     rescale_length=RESCALE_LENGTH):
     ids = create_ids(
         gap, width, rescale_kicks=rescale_kicks,
-        rescale_length=rescale_length,
-        shift_flag=shift_flag)
+        rescale_length=rescale_length)
     model = pymodels.si.create_accelerator(ids=ids)
+    twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
+    print('length : {:.4f} m'.format(model.length))
+    print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/np.pi))
+    print('tuney  : {:.6f}'.format(twiss.muy[-1]/2/np.pi))
     return model, ids
 
 
@@ -112,11 +126,9 @@ def generate_radia_model(gap, width, termination_parameters, solve=True):
 
     ]
 
-    # block_subdivision = [8, 4, 3]
-    # pole_subdivision = [12, 12, 3]
-
-    block_subdivision = [16, 8, 3]
-    pole_subdivision = [32, 16, 3]
+    block_subdivision = [8, 4, 4]
+    pole_subdivision = [34, 5, 5]
+    # pole_subdivision = [8, 5, 5]
 
     b1t, b2t, b3t, dist1, dist2 = termination_parameters
 
@@ -137,6 +149,6 @@ def generate_radia_model(gap, width, termination_parameters, solve=True):
                  end_blocks_distance=end_blocks_distance,
                  trf_on_blocks=True)
     if solve:
-        ivu.solve_by_sections()
+        ivu.solve()
 
     return ivu

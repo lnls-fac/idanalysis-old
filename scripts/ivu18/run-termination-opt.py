@@ -10,7 +10,7 @@ import utils
 
 SOLVE_FLAG = utils.SOLVE_FLAG
 RK_S_STEP = utils.DEF_RK_S_STEP
-GAP = 4.2  # [mm]
+GAP = 4.3  # [mm]
 
 # these are the nominal termination parameters for
 # HybridPlanar as of 2023-01
@@ -167,7 +167,7 @@ def calc_termination_parameters(width, respm, nr_iters=7):
 
 def run_optimize_termination(widths=None):
     """."""
-    widths = widths or [68, 63, 58, 53, 48, 43]  # [mm]
+    widths = widths or [64]  # [mm]
     for width in widths:
         print('optimizing termination for width {} mm ...'.format(width))
         fname = utils.FOLDER_DATA + 'respm_termination_{}.pickle'.format(width)

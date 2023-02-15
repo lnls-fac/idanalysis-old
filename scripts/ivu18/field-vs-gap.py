@@ -13,7 +13,7 @@ SOLVE_FLAG = utils.SOLVE_FLAG
 NOMINAL_GAP = utils.NOMINAL_GAP
 
 
-def get_termination_parameters(width):
+def get_termination_parameters(width=64):
     """."""
     fname = utils.FOLDER_DATA + 'respm_termination_{}.pickle'.format(width)
     term = load_pickle(fname)
@@ -147,5 +147,5 @@ def plot_field_roff(widths):
 
 
 if __name__ == '__main__':
-    widths = [68, 63, 58, 53, 48, 43]
+    widths = [64]
     plot_field_roff(widths=widths)

@@ -22,9 +22,12 @@ def plot_field_roll_off(data):
         by = data[sub]['rolloff_by']
         rx = data[sub]['rolloff_rx']
         roff = data[sub]['rolloff_value']
+        irx0 = np.argmin(np.abs(rx))
+        by0 = by[irx0]
+        roll_off = 100*(by/by0 - 1)
         label = "subdiv: {}, {:.4f} %".format(sub, 100*roff)
         print(label)
-        plt.plot(rx, by, label=label, color=colors[i])
+        plt.plot(rx, roll_off, label=label, color=colors[i])
     plt.xlabel('x [mm]')
     plt.ylabel('By [T]')
     plt.title('Field rolloff at x = 6 mm for Gap 4.2 mm')
@@ -51,6 +54,6 @@ if __name__ == "__main__":
     models = dict()
     gaps = [4.3]  # [mm]
     widths = [64, 54]  # [mm]
-    subs = [6, 10, 14]
+    subs = [10, 17, 25, 27, 31, 34]
 
-    run_plot_data(gap=4.3, width=54, subs=subs)
+    run_plot_data(gap=4.3, width=64, subs=subs)

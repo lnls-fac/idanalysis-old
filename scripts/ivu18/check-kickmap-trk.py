@@ -29,11 +29,10 @@ def calc_idkmap_kicks(plane_idx=0, idkmap=None):
     return rx0, ry0, pxf, pyf, rxf, ryf
 
 
-def create_model_ids(gap, width, rescale_kicks, shift_flag):
+def create_model_ids(gap, width, rescale_kicks):
     """."""
     print('--- model with kickmap ---')
-    ids = utils.create_ids(
-        gap, width, rescale_kicks=rescale_kicks, shift_kicks=shift_flag)
+    ids = utils.create_ids(gap, width, rescale_kicks=rescale_kicks)
     model = pymodels.si.create_accelerator(ids=ids)
     twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
     print('length : {:.4f} m'.format(model.length))
@@ -42,11 +41,9 @@ def create_model_ids(gap, width, rescale_kicks, shift_flag):
     return model, twiss, ids
 
 
-def check_kick_at_plane(gap, width, rescale_kicks, shift_flag=False):
+def check_kick_at_plane(gap, width, rescale_kicks):
     """."""
     fname = utils.get_kmap_filename(gap, width)
-    if shift_flag:
-        fname = fname.replace('.txt', '_shifted_on_axis.txt')
     id_kickmap = IDKickMap(fname)
     plane_idx = list(id_kickmap.posy).index(0)
     rx0, _, pxf, pyf, *_ = calc_idkmap_kicks(
@@ -57,8 +54,7 @@ def check_kick_at_plane(gap, width, rescale_kicks, shift_flag=False):
     # lattice with IDs
     model, _ = utils.create_model_ids(
                     gap=gap, width=width,
-                    rescale_kicks=rescale_kicks,
-                    shift_flag=shift_flag)
+                    rescale_kicks=rescale_kicks)
 
     famdata = pymodels.si.get_family_data(model)
     # shift model
@@ -101,9 +97,8 @@ def check_kick_at_plane(gap, width, rescale_kicks, shift_flag=False):
 
 
 if __name__ == '__main__':
-    width = 48
-    gap = 4.2
+    width = 59
+    gap = 20
     rescale_kicks = utils.RESCALE_KICKS
     check_kick_at_plane(gap=gap, width=width,
-                        rescale_kicks=rescale_kicks,
-                        shift_flag=False)
+                        rescale_kicks=rescale_kicks)

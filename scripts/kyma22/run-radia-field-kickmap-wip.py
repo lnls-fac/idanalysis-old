@@ -154,7 +154,7 @@ def save_data(data):
     """."""
     phase = data['phase']
     fpath = create_path(phase)
-    fname = fpath + 'field_data_kyma50'
+    fname = fpath + 'field_data_kyma22'
     save_pickle(data, fname, overwrite=True, makedirs=True)
 
 
@@ -237,7 +237,7 @@ def plot_rk_traj(data, rx_init=0):
 
     xlabel = 'rz [mm]'
     ylabel = ['rx [um]', 'ry [um]', 'px [urad]', 'py [urad]']
-    tlt = 'kyma50 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase)
+    tlt = 'kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase)
     fig_sulfix = ['traj-rx', 'traj-ry', 'traj-px', 'traj-py']
     for j, i in enumerate([1, 2, 3, 4]):
         plt.figure(i)
@@ -295,7 +295,7 @@ def run_generate_kickmap(kyma=None,
 def run_plot_data(phase, rx_init):
 
     fpath = create_path(phase)
-    fname = fpath + 'field_data_kyma50.pickle'
+    fname = fpath + 'field_data_kyma22.pickle'
     data = load_pickle(fname)
 
     plot_field_on_axis(data=data)
@@ -305,8 +305,8 @@ def run_plot_data(phase, rx_init):
 
 if __name__ == "__main__":
 
-    phase = 0
+    phase = 0 * utils.ID_PERIOD/2
     rx_init = [-10e-3, 0, 10e-3]  # High beta's worst initial conditions [m]
     kyma, max_rz = run_calc_fields(phase, rx_init)
     run_plot_data(phase=phase, rx_init=rx_init)
-    # kyma = run_generate_kickmap(kyma=kyma, max_rz=max_rz)
+    kyma = run_generate_kickmap(kyma=kyma, max_rz=max_rz)

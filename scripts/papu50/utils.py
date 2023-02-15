@@ -1,17 +1,9 @@
 """."""
 # imports
 import imaids
-import os
-import sys
-import time
-import traceback
-import numpy
-import json
 import numpy as np
-import radia as _rad
-from copy import deepcopy
-from matplotlib import pyplot as plt
 
+import pyaccel
 import pymodels
 from idanalysis import IDKickMap
 
@@ -25,7 +17,7 @@ RESCALE_KICKS = 1  # Radia simulations could have fewer ID periods
 RESCALE_LENGTH = 1/0.75  # RK traj is not calculated in free field regions
 ROLL_OFF_RX = 10.0  # [mm]
 SOLVE_FLAG = False
-FITTED_MODEL = False
+FITTED_MODEL = True
 RADIA_MODEL_RX_SHIFT = -0.7  # [mm] as to centralize maximum field
 # RADIA_MODEL_RX_SHIFT = -1.465  # [mm] as to centralize rolloff
 
@@ -38,6 +30,7 @@ INSERT_KYMA = False
 KYMA_RESCALE_KICKS = 1  # Radia simulations have fewer ID periods
 KYMA_RESCALE_LENGTH = 10  # Radia simulations have fewer ID periods
 NR_PAPU = 1
+
 
 class CALC_TYPES:
     """."""
@@ -55,9 +48,6 @@ def get_phase_str(gap):
 
 def get_shift_str(shift):
     """."""
-    # print('ok')
-    # shift_str = '{:+6.3f}'.format(shift)
-    # print(shift_str)
     shift_str = '{:+6.3f}'.format(shift).replace('.', 'p')
     shift_str = shift_str.replace('+', 'pos').replace('-', 'neg')
     return shift_str
@@ -91,7 +81,7 @@ def create_ids(
     IDModel = pymodels.si.IDModel
 
     nr_steps = nr_steps or 40
-    
+
     if INSERT_KYMA:
         fname = KYMA22_KMAP_FILENAME
         termination_kicks = get_termination_kicks(fname)
@@ -109,7 +99,7 @@ def create_ids(
         rescale_length if rescale_length is not None else 1
     fname = get_kmap_filename(phase)
     termination_kicks = get_termination_kicks(fname)
-    
+
     if NR_PAPU > 0:
         papu50_17 = IDModel(
             subsec=IDModel.SUBSECTIONS.ID17SA,
@@ -136,7 +126,7 @@ def create_ids(
             rescale_kicks=rescale_kicks, rescale_length=rescale_length,
             termination_kicks=termination_kicks)
         ids.append(papu50_13)
-    
+
     return ids
 
 
@@ -149,6 +139,10 @@ def create_model_ids(
         rescale_kicks=rescale_kicks,
         rescale_length=rescale_length)
     model = pymodels.si.create_accelerator(ids=ids)
+    twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
+    print('length : {:.4f} m'.format(model.length))
+    print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/np.pi))
+    print('tuney  : {:.6f}'.format(twiss.muy[-1]/2/np.pi))
     return model, ids
 
 

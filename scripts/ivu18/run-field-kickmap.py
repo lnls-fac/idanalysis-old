@@ -15,9 +15,14 @@ RK_S_STEP = utils.DEF_RK_S_STEP
 
 def get_termination_parameters(width):
     """."""
-    fname = utils.FOLDER_DATA + 'respm_termination_{}.pickle'.format(width)
-    term = load_pickle(fname)
-    b1t, b2t, b3t, dist1, dist2 = term['results']
+    # fname = utils.FOLDER_DATA + 'respm_termination_{}.pickle'.format(width)
+    # term = load_pickle(fname)
+    # b1t, b2t, b3t, dist1, dist2 = term['results']
+    b1t = 3.23984075
+    b2t = 1.32192705
+    b3t = 6.37505471
+    dist1 = 2.92053472
+    dist2 = 2.90297251
     return list([b1t, b2t, b3t, dist1, dist2])
 
 
@@ -42,7 +47,7 @@ def create_models(gaps, widths):
     for gap in gaps:
         for width in widths:
             print(f'creating model for gap {gap} mm and width {width} mm')
-            termination_parameters = get_termination_parameters(68)
+            termination_parameters = get_termination_parameters(63)
             ivu = utils.generate_radia_model(
                 gap=gap, width=width,
                 termination_parameters=termination_parameters,
@@ -51,7 +56,7 @@ def create_models(gaps, widths):
     return models
 
 
-def get_field_roll_off(models, data, rx, peak_idx, filter='off'):
+def get_field_roll_off(models, data, rx, peak_idx):
     """."""
     by_x = dict()
     rx_avg_dict = dict()
@@ -67,25 +72,13 @@ def get_field_roll_off(models, data, rx, peak_idx, filter='off'):
         rz_at_max = rz[by_max_idx] + peak_idx*period
         field = ivu.get_field(rx, 0, rz_at_max)
         by = field[:, 1]
-        if filter == 'on':
-            for i in range(len(rx)):
-                if i >= 6 and i <= len(rx)-7:
-                    by_temp = by[i-6] + by[i-5] + by[i-4] + by[i-3]
-                    by_temp += by[i-2] + by[i-1] + by[i] + by[i+1] + by[i+2]
-                    by_temp += by[i+3] + by[i+4] + by[i+5] + by[i+6]
-                    by_temp = by_temp/13
-                    by_list.append(by_temp)
-            by_avg = np.array(by_list)
-            rx_avg = rx[6:-6]
-        else:
-            by_avg = by
-            rx_avg = rx
-        rx6_idx = np.argmin(np.abs(rx_avg - utils.ROLL_OFF_RX))
-        rx0_idx = np.argmin(np.abs(rx_avg))
-        roff = np.abs(by_avg[rx6_idx]/by_avg[rx0_idx]-1)
 
-        by_x[(gap, width)] = by_avg
-        rx_avg_dict[(gap, width)] = rx_avg
+        rx6_idx = np.argmin(np.abs(rx - utils.ROLL_OFF_RX))
+        rx0_idx = np.argmin(np.abs(rx))
+        roff = np.abs(by[rx6_idx]/by[rx0_idx]-1)
+
+        by_x[(gap, width)] = by
+        rx_avg_dict[(gap, width)] = rx
         roll_off[(gap, width)] = roff
 
     data['rolloff_rx'] = rx_avg_dict
@@ -176,31 +169,47 @@ def plot_field_on_axis(data):
     plt.ylabel('By [T]')
     plt.legend()
     plt.grid()
+    plt.savefig(utils.FOLDER_DATA + 'field-profile', dpi=300)
     plt.show()
 
 
-def plot_field_roll_off(data):
+def plot_field_roll_off(data, filter='off'):
     plt.figure(1)
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
     widths = list(data.keys())
     for i, width in enumerate(widths):
         by = data[width]['rolloff_by']
         rx = data[width]['rolloff_rx']
-        roff = data[width]['rolloff_value']
-        label = "width {}, {:.4f} %".format(width, 100*roff)
+        by_list = list()
+        if filter == 'on':
+            for j in range(len(rx)):
+                if j >= 6 and j <= len(rx)-7:
+                    by_temp = by[j-6] + by[j-5] + by[j-4] + by[j-3]
+                    by_temp += by[j-2] + by[j-1] + by[j] + by[j+1] + by[j+2]
+                    by_temp += by[j+3] + by[j+4] + by[j+5] + by[j+6]
+                    by_temp = by_temp/13
+                    by_list.append(by_temp)
+            by = np.array(by_list)
+            rx = rx[6:-6]
+        rx6_idx = np.argmin(np.abs(rx - utils.ROLL_OFF_RX))
+        rx0_idx = np.argmin(np.abs(rx))
+        roff = np.abs(by[rx6_idx]/by[rx0_idx]-1)
+        label = "width {}, {:.3f} %".format(width, 100*roff)
         irx0 = np.argmin(np.abs(rx))
         by0 = by[irx0]
         roll_off = 100*(by/by0 - 1)
         print(label)
-        plt.plot(rx, roll_off, label=label, color=colors[i])
+        plt.plot(rx, roll_off, '.-', label=label, color=colors[i])
+        # plt.plot(rx, by, label=label, color=colors[i])
     plt.xlabel('x [mm]')
     # plt.ylabel('By [T]')
     plt.ylabel('roll off [%]')
     plt.xlim(-6, 6)
-    plt.ylim(-0.03, 0.01)
-    plt.title('Field rolloff at x = 6 mm for Gap 4.2 mm')
+    plt.ylim(-0.04, 0.001)
+    plt.title('Field rolloff at x = 6 mm for Gap 4.3 mm')
     plt.legend()
     plt.grid()
+    plt.savefig(utils.FOLDER_DATA + 'field-rolloff', dpi=300)
     plt.show()
 
 
@@ -235,15 +244,17 @@ def plot_rk_traj(data):
         plt.plot(s, py, color=colors[i], label=label)
         plt.xlabel('s [mm]')
         plt.ylabel('py [urad]')
-
+    sulfix = ['traj-rx', 'traj-ry', 'traj-px', 'traj-py']
     for i in [1, 2, 3, 4]:
         plt.figure(i)
         plt.legend()
         plt.grid()
+        plt.savefig(utils.FOLDER_DATA + sulfix[i-1], dpi=300)
     plt.show()
 
 
-def run_calc_fields(models=None, gaps=None, widths=None, rx=None, rz=None):
+def run_calc_fields(
+        models=None, gaps=None, widths=None, rx=None, rz=None):
     """."""
     if not models:
         gaps = gaps or [4.2, 20.0]  # [mm]
@@ -252,14 +263,14 @@ def run_calc_fields(models=None, gaps=None, widths=None, rx=None, rz=None):
         # --- create radia models for various gaps/widths
         models = create_models(gaps, widths)
 
-    rx = rx or np.linspace(-40, 40, 4*81)
+    rx = rx or np.linspace(-40, 40, 4*81+1)
     rz = rz or np.linspace(-100, 100, 200)
 
     data = dict()
 
     # --- calc field rolloffs for models
     data = get_field_roll_off(
-        models=models, data=data, rx=rx, peak_idx=0, filter='on')
+        models=models, data=data, rx=rx, peak_idx=0)
 
     # --- calc field on axis
     data = get_field_on_axis(models=models, data=data, rz=rz)
@@ -279,8 +290,8 @@ def run_generate_kickmap(models=None, gaps=None,
     """."""
     gaps = gaps or [4.2, 20.0]  # [mm]
     widths = widths or [68, 63, 58, 53, 48, 43]  # [mm]
-    gridx = gridx or list(np.arange(-12, +13, 1) / 1000)  # [m]
-    gridy = gridy or list(np.linspace(-2, +2, 9) / 1000)  # [m]
+    gridx = gridx or list(np.arange(-10, +11, 1) / 1000)  # [m]
+    gridy = gridy or list(np.linspace(-2, +2, 11) / 1000)  # [m]
     models = models or create_models()
 
     for (gap, width), ivu in models.items():
@@ -291,31 +302,29 @@ def run_generate_kickmap(models=None, gaps=None,
     return models
 
 
-def run_plot_data(gap, widths, sub):
+def run_plot_data(gap, widths):
 
     data_plot = dict()
     gap_str = utils.get_gap_str(gap)
     for width in widths:
         fname = utils.FOLDER_DATA
-        fname += 'field_data_gap{}_width{}_sub{}'.format(gap_str, width, sub)
+        fname += 'field_data_gap{}_width{}'.format(gap_str, width)
         fdata = load_pickle(fname)
         data_plot[width] = fdata
 
-    # plot_rk_traj(data=data_plot)
+    plot_rk_traj(data=data_plot)
     plot_field_roll_off(data=data_plot)
-    # plot_field_on_axis(data=data_plot)
+    plot_field_on_axis(data=data_plot)
 
 
 if __name__ == "__main__":
 
     models = dict()
-    gaps = [4.3]  # [mm]
-    widths = [64, 54]  # [mm]
-    gridx = list(np.array([-12, 0, 12]) / 1000)  # [m]
-    gridy = list(np.array([-2, 0, 2]) / 1000)  # [m]
+    gaps = [4.3, 20]  # [mm]
+    widths = [64, 59, 54, 50]  # [mm]
 
-    models = run_calc_fields(
-        models=models, gaps=gaps, widths=widths, rx=None, rz=None)
-    # run_plot_data(gap=4.3, widths=widths, sub=14)
+    # models = run_calc_fields(
+        # models=models, gaps=gaps, widths=widths, rx=None, rz=None)
+    run_plot_data(gap=4.3, widths=widths)
     # models = run_generate_kickmap(
-        # models=models, gaps=gaps, widths=widths, gridx=gridx, gridy=gridy)
+        # models=models, gaps=gaps, widths=widths)

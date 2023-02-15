@@ -24,7 +24,6 @@ FITTED_MODEL = utils.FITTED_MODEL
 CALC_TYPES = utils.CALC_TYPES
 
 
-
 def create_path(phase):
     fpath = utils.FOLDER_DATA
     phase_str = utils.get_phase_str(phase)
@@ -306,12 +305,12 @@ def correct_optics(phase, beta_flag=True, fitted_model=False):
     kicks, spos_bpms, codx_c, cody_c, codx_u, cody_u, bpms = \
         orbcorr.correct_orbit_fb(
             model0, model1, corr_system='SOFB', nr_steps=1)
-    # plt.plot(spos_bpms, 1e6*codx_u, label='uncorrected')
-    # plt.plot(spos_bpms, 1e6*codx_c, label='corrected')
-    # plt.legend()
-    # plt.xlabel('pos [m]')
-    # plt.ylabel('codx [um')
-    # plt.show()
+    plt.plot(spos_bpms, 1e6*codx_u, label='uncorrected')
+    plt.plot(spos_bpms, 1e6*codx_c, label='corrected')
+    plt.legend()
+    plt.xlabel('pos [m]')
+    plt.ylabel('codx [um]')
+    plt.show()
 
     # calculate beta beating and delta tunes
     twiss1 = analysis_uncorrected_perturbation(
@@ -363,11 +362,11 @@ def correct_optics(phase, beta_flag=True, fitted_model=False):
             twiss2, stg = correct_beta(
                 model1, straight_nr_, knobs_, goal_beta, goal_alpha)
 
-    # correct tunes
-    twiss3 = correct_tunes(model1, twiss1, goal_tunes)
+            # correct tunes
+            twiss3 = correct_tunes(model1, twiss1, goal_tunes)
 
-    plot_beta_beating(
-        phase, twiss0, twiss1, twiss2, twiss3, stg, fitted_model)
+            plot_beta_beating(
+                phase, twiss0, twiss1, twiss2, twiss3, stg, fitted_model)
 
     return model1
 

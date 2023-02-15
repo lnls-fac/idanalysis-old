@@ -1,8 +1,9 @@
 """."""
 # imports
 from imaids.models import Kyma22
-from matplotlib import pyplot as plt
+import numpy as np
 
+import pyaccel
 import pymodels
 from idanalysis import IDKickMap
 
@@ -17,10 +18,11 @@ RESCALE_LENGTH = 10  # Radia simulations have fewer ID periods
 SOLVE_FLAG = True
 ROLL_OFF_RX = 10.0  # [mm]
 SOLVE_FLAG = False
-FITTED_MODEL = False
+FITTED_MODEL = True
 
 FOLDER_DATA = './results/model/data/'
 MEAS_FILE = './results/measurements/fieldmap_phase0.dat'
+MEAS_FLAG = False
 
 
 class CALC_TYPES:
@@ -40,9 +42,21 @@ def get_phase_str(phase):
 def get_kmap_filename(phase):
     fpath = FOLDER_DATA + 'kickmaps/'
     fpath = fpath.replace('model/data/', 'model/')
+    if MEAS_FLAG:
+        fpath = fpath.replace('model/', 'measurements/')
     phase_str = get_phase_str(phase)
-    fname = fpath + 'kickmap-ID-kyma22-phase{}.txt'.format(phase_str)
+    fname = fpath + 'kickmap-ID-kyma22-phase_{}.txt'.format(phase_str)
     return fname
+
+
+def get_termination_kicks(fname):
+    idkmap = IDKickMap(kmap_fname=fname)
+    kickx_up = idkmap.kickx_upstream  # [T².m²]
+    kicky_up = idkmap.kicky_upstream  # [T².m²]
+    kickx_down = idkmap.kickx_downstream  # [T².m²]
+    kicky_down = idkmap.kicky_downstream  # [T².m²]
+    termination_kicks = [kickx_up, kicky_up, kickx_down, kicky_down]
+    return termination_kicks
 
 
 def create_ids(
@@ -54,15 +68,9 @@ def create_ids(
     rescale_length = \
         rescale_length if rescale_length is not None else 1
     fname = get_kmap_filename(phase)
-    if meas_flag:
-        fname = fname.replace('model/', 'measurements/')
-        rescale_length = rescale_length/rescale_length
-    idkmap = IDKickMap(kmap_fname=fname)
-    kickx_up = idkmap.kickx_upstream  # [T².m²]
-    kicky_up = idkmap.kicky_upstream  # [T².m²]
-    kickx_down = idkmap.kickx_downstream  # [T².m²]
-    kicky_down = idkmap.kicky_downstream  # [T².m²]
-    termination_kicks = [kickx_up, kicky_up, kickx_down, kicky_down]
+    if MEAS_FLAG:
+        rescale_length = 1
+    termination_kicks = get_termination_kicks(fname)
     IDModel = pymodels.si.IDModel
     kyma22 = IDModel(
         subsec=IDModel.SUBSECTIONS.ID09SA,
@@ -83,6 +91,10 @@ def create_model_ids(
         rescale_length=rescale_length,
         meas_flag=meas_flag)
     model = pymodels.si.create_accelerator(ids=ids)
+    twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
+    print('length : {:.4f} m'.format(model.length))
+    print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/np.pi))
+    print('tuney  : {:.6f}'.format(twiss.muy[-1]/2/np.pi))
     return model, ids
 
 
