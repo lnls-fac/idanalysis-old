@@ -32,6 +32,13 @@ class CALC_TYPES:
     symmetrized = 2
 
 
+def get_folder_data():
+    data_path = FOLDER_DATA
+    if MEAS_FLAG:
+        data_path = data_path.replace('model/', 'measurements/')
+    return data_path
+
+
 def get_phase_str(phase):
     """."""
     phase_str = '{:+07.3f}'.format(phase).replace('.', 'p')

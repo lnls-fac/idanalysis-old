@@ -39,6 +39,11 @@ class CALC_TYPES:
     symmetrized = 2
 
 
+def get_folder_data():
+    data_path = FOLDER_DATA
+    return data_path
+
+
 def get_phase_str(gap):
     """."""
     phase_str = '{:+07.3f}'.format(gap).replace('.', 'p')

@@ -205,8 +205,8 @@ def plot_field_roll_off(data, filter='off'):
     # plt.ylabel('By [T]')
     plt.ylabel('roll off [%]')
     plt.xlim(-6, 6)
-    plt.ylim(-0.04, 0.001)
-    plt.title('Field rolloff at x = 6 mm for Gap 4.3 mm')
+    plt.ylim(-0.4, 0.01)
+    plt.title('Field rolloff at x = 6 mm for Gap 20 mm')
     plt.legend()
     plt.grid()
     plt.savefig(utils.FOLDER_DATA + 'field-rolloff', dpi=300)
@@ -325,6 +325,6 @@ if __name__ == "__main__":
 
     # models = run_calc_fields(
         # models=models, gaps=gaps, widths=widths, rx=None, rz=None)
-    run_plot_data(gap=4.3, widths=widths)
+    run_plot_data(gap=20, widths=widths)
     # models = run_generate_kickmap(
         # models=models, gaps=gaps, widths=widths)

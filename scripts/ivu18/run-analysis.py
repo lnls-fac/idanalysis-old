@@ -391,17 +391,17 @@ def run_analysis_dynapt(gap, width, fitted_model, calc_type):
 if __name__ == '__main__':
 
     gaps = [20]
-    widths = [54]
+    widths = [50]
 
     for gap in gaps:
         for width in widths:
-            calc_type = CALC_TYPES.nominal
-            run_analysis_dynapt(
-                gap, width, fitted_model=FITTED_MODEL, calc_type=calc_type)
-
-            # calc_type = CALC_TYPES.symmetrized
+            # calc_type = CALC_TYPES.nominal
             # run_analysis_dynapt(
                 # gap, width, fitted_model=FITTED_MODEL, calc_type=calc_type)
+
+            calc_type = CALC_TYPES.symmetrized
+            run_analysis_dynapt(
+                gap, width, fitted_model=FITTED_MODEL, calc_type=calc_type)
 
             # calc_type = CALC_TYPES.nonsymmetrized
             # run_analysis_dynapt(

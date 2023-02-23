@@ -23,7 +23,7 @@ FOLDER_DATA = './results/model/data/'
 SHIFT_FLAG = True
 FILTER_FLAG = False
 
-FITTED_MODEL = True
+FITTED_MODEL = False
 
 
 class CALC_TYPES:
