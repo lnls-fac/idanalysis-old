@@ -20,7 +20,7 @@ SOLVE_FLAG = True
 
 FOLDER_DATA = './results/model/data/'
 
-SHIFT_FLAG = True
+SHIFT_FLAG = False
 FILTER_FLAG = False
 
 FITTED_MODEL = False

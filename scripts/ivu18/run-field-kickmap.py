@@ -15,14 +15,9 @@ RK_S_STEP = utils.DEF_RK_S_STEP
 
 def get_termination_parameters(width):
     """."""
-    # fname = utils.FOLDER_DATA + 'respm_termination_{}.pickle'.format(width)
-    # term = load_pickle(fname)
-    # b1t, b2t, b3t, dist1, dist2 = term['results']
-    b1t = 3.23984075
-    b2t = 1.32192705
-    b3t = 6.37505471
-    dist1 = 2.92053472
-    dist2 = 2.90297251
+    fname = utils.FOLDER_DATA + 'respm_termination_{}.pickle'.format(width)
+    term = load_pickle(fname)
+    b1t, b2t, b3t, dist1, dist2 = term['results']
     return list([b1t, b2t, b3t, dist1, dist2])
 
 
@@ -320,11 +315,10 @@ def run_plot_data(gap, widths):
 if __name__ == "__main__":
 
     models = dict()
-    gaps = [4.3, 20]  # [mm]
-    widths = [64, 59, 54, 50]  # [mm]
-
-    # models = run_calc_fields(
-        # models=models, gaps=gaps, widths=widths, rx=None, rz=None)
-    run_plot_data(gap=20, widths=widths)
-    # models = run_generate_kickmap(
-        # models=models, gaps=gaps, widths=widths)
+    gaps = [4.3]  # [mm]
+    widths = [40]  # [mm]
+    models = run_calc_fields(
+            models=models, gaps=gaps, widths=widths, rx=None, rz=None)
+    # run_plot_data(gap=4.3, widths=widths)
+    models = run_generate_kickmap(
+            models=models, gaps=gaps, widths=widths)
