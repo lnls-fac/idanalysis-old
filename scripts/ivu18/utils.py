@@ -20,10 +20,10 @@ SOLVE_FLAG = True
 
 FOLDER_DATA = './results/model/data/'
 
-SHIFT_FLAG = False
+SHIFT_FLAG = True
 FILTER_FLAG = False
 
-FITTED_MODEL = False
+FITTED_MODEL = True
 
 
 class CALC_TYPES:

@@ -390,8 +390,8 @@ def run_analysis_dynapt(gap, width, fitted_model, calc_type):
 
 if __name__ == '__main__':
 
-    gaps = [20]
-    widths = [50]
+    gaps = [10, 20]
+    widths = [29, 31]
 
     for gap in gaps:
         for width in widths:

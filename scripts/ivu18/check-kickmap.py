@@ -143,8 +143,8 @@ def plot_kick_all_planes(gap, width, var='x', kick_plane='x', save_flag=False):
 if __name__ == '__main__':
     save_flag = True
     planes = ['x', 'y']
-    gaps = [4.3, 20]
-    widths = [64, 59, 54, 50]
+    gaps = [4.3]
+    widths = [64, 31, 29]
     for var in planes:
         for kick_plane in planes:
             print(kick_plane)

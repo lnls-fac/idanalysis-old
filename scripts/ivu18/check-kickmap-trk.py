@@ -97,8 +97,8 @@ def check_kick_at_plane(gap, width, rescale_kicks):
 
 
 if __name__ == '__main__':
-    width = 59
-    gap = 20
+    width = 40
+    gap = 4.3
     rescale_kicks = utils.RESCALE_KICKS
     check_kick_at_plane(gap=gap, width=width,
                         rescale_kicks=rescale_kicks)

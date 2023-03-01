@@ -168,7 +168,7 @@ def plot_field_on_axis(data):
     plt.show()
 
 
-def plot_field_roll_off(data, filter='off'):
+def plot_field_roll_off(data, gap, filter='off'):
     plt.figure(1)
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
     widths = list(data.keys())
@@ -189,7 +189,7 @@ def plot_field_roll_off(data, filter='off'):
         rx6_idx = np.argmin(np.abs(rx - utils.ROLL_OFF_RX))
         rx0_idx = np.argmin(np.abs(rx))
         roff = np.abs(by[rx6_idx]/by[rx0_idx]-1)
-        label = "width {}, {:.3f} %".format(width, 100*roff)
+        label = "width {}, roll-off = {:.2f} %".format(width, 100*roff)
         irx0 = np.argmin(np.abs(rx))
         by0 = by[irx0]
         roll_off = 100*(by/by0 - 1)
@@ -200,8 +200,8 @@ def plot_field_roll_off(data, filter='off'):
     # plt.ylabel('By [T]')
     plt.ylabel('roll off [%]')
     plt.xlim(-6, 6)
-    plt.ylim(-0.4, 0.01)
-    plt.title('Field rolloff at x = 6 mm for Gap 20 mm')
+    plt.ylim(-1.2, 0.02)
+    plt.title('Field roll-off at x = 6 mm for Gap {:.1f} mm'.format(gap))
     plt.legend()
     plt.grid()
     plt.savefig(utils.FOLDER_DATA + 'field-rolloff', dpi=300)
@@ -308,17 +308,17 @@ def run_plot_data(gap, widths):
         data_plot[width] = fdata
 
     plot_rk_traj(data=data_plot)
-    plot_field_roll_off(data=data_plot)
+    plot_field_roll_off(data=data_plot, gap=gap)
     plot_field_on_axis(data=data_plot)
 
 
 if __name__ == "__main__":
 
     models = dict()
-    gaps = [4.3]  # [mm]
-    widths = [40]  # [mm]
-    models = run_calc_fields(
-            models=models, gaps=gaps, widths=widths, rx=None, rz=None)
-    # run_plot_data(gap=4.3, widths=widths)
-    models = run_generate_kickmap(
-            models=models, gaps=gaps, widths=widths)
+    gaps = [4.3, 10, 20]  # [mm]
+    widths = [31, 29]  # [mm]
+    # models = run_calc_fields(
+            # models=models, gaps=gaps, widths=widths, rx=None, rz=None)
+    run_plot_data(gap=10, widths=widths)
+    # models = run_generate_kickmap(
+            # models=models, gaps=gaps, widths=widths)

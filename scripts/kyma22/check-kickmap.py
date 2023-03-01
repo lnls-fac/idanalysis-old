@@ -68,9 +68,9 @@ def plot_kick_at_plane(
         fname = utils.get_kmap_filename(phase)
         id_kickmap = IDKickMap(fname)
         if var.lower() == 'x':
-            pos_zero_idx = list(id_kickmap.posy).index(0)
+            pos_zero_idx = list(id_kickmap.posy).index(pos)
         elif var.lower() == 'y':
-            pos_zero_idx = list(id_kickmap.posx).index(0)
+            pos_zero_idx = list(id_kickmap.posx).index(pos)
         rx0, ry0, pxf, pyf, *_ = calc_idkmap_kicks(
             idkmap=id_kickmap, var=var, plane_idx=pos_zero_idx)
         pxf *= utils.RESCALE_KICKS
