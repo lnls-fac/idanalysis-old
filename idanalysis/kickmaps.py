@@ -633,11 +633,6 @@ class IDKickMap:
     def _linear_function(x, a, b):
         return a*x + b
 
-    @staticmethod
-    def _plateau_function(x, a, b, c):
-        k = a/_np.pi*_np.sin(_np.pi/(2*a))
-        f = k*(1/(1+x**(2*a)))*b + c
-        return f
 
     @staticmethod
     def _find_value_idx(data, value):
