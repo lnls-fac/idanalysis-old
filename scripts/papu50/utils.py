@@ -1,6 +1,6 @@
 """."""
 # imports
-import imaids
+from imaids.models import PAPU
 import numpy as np
 
 import pyaccel
@@ -17,9 +17,7 @@ RESCALE_KICKS = 1  # Radia simulations could have fewer ID periods
 RESCALE_LENGTH = 1/0.75  # RK traj is not calculated in free field regions
 ROLL_OFF_RX = 10.0  # [mm]
 SOLVE_FLAG = False
-FITTED_MODEL = True
-RADIA_MODEL_RX_SHIFT = -0.7  # [mm] as to centralize maximum field
-# RADIA_MODEL_RX_SHIFT = -1.465  # [mm] as to centralize rolloff
+FITTED_MODEL = False
 
 FOLDER_DATA = './results/model/data/'
 KYMA22_KMAP_FILENAME = (
@@ -51,20 +49,12 @@ def get_phase_str(gap):
     return phase_str
 
 
-def get_shift_str(shift):
-    """."""
-    shift_str = '{:+6.3f}'.format(shift).replace('.', 'p')
-    shift_str = shift_str.replace('+', 'pos').replace('-', 'neg')
-    return shift_str
-
-
 def get_kmap_filename(phase):
     fpath = FOLDER_DATA + 'kickmaps/'
     fpath = fpath.replace('model/data/', 'model/')
     phase_str = get_phase_str(phase)
-    shift_str = get_shift_str(RADIA_MODEL_RX_SHIFT)
-    fname = fpath + 'kickmap-papu50-phase_{}-shift_{}.txt'.format(
-        phase_str, shift_str)
+    fname = fpath + 'kickmap-papu50-phase_.txt'.format(
+        phase_str)
     return fname
 
 
@@ -153,59 +143,8 @@ def create_model_ids(
 
 def generate_radia_model(phase=0, solve_flag=False):
     """."""
-
-    shape = [
-        [[-14, -6], [-20, -6], [-20, -40], [14, -40], [14, -34]],
-        [[-14, 0], [-14, -6], [14, -34], [20, -34], [20, 0]]
-    ]
-
-    shape_flip = np.array(shape)
-    shape_flip[:, :, 1] = shape_flip[:, :, 1]*(-1)-40
-    shape_flip = shape_flip.tolist()
-
-    subdivision = [[3, 3, 2], [3, 3, 2]]
-
-    mr = 1.25
-    gap = 7.5
-    nr_periods = 18
-    period_length = 50
-    longitudinal_distance = 0.2
-
-    start_blocks_length = [3.075, 3.075, 3.075, 3.075, 3.075, 3.075, 12.3]
-    start_blocks_distance = [6, 0, 2.9, 1, 0, 0.2, 0.2]
-    start_blocks_magnetization = [
-        [0, mr, 0], [0, 0, -mr], [0, 0, -mr], [0, -mr, 0],
-        [0, -mr, 0], [0, -mr, 0], [0, 0, mr]]
-
-    end_blocks_length = [3.075, 3.075, 3.075, 3.075, 3.075, 3.075]
-    end_blocks_distance = [0.2, 0, 1, 2.9, 0, 6]
-    end_blocks_magnetization = [
-        [0, mr, 0], [0, mr, 0], [0, mr, 0], [0, 0, -mr],
-        [0, 0, -mr], [0, -mr, 0]]
-
-    mags = (
-            start_blocks_magnetization
-            + 18*[[0, mr, 0], [0, 0, -mr], [0, -mr, 0], [0, 0, mr]]
-            + end_blocks_magnetization)
-    magnetization_dict = {'cs': mags, 'ci': mags}
-
-    papu = imaids.models.APU(cs_block_shape=shape_flip,
-                             ci_block_shape=shape, mr=mr,
-                             gap=gap, nr_periods=nr_periods,
-                             period_length=period_length,
-                             block_subdivision=subdivision,
-                             longitudinal_distance=longitudinal_distance,
-                             start_blocks_length=start_blocks_length,
-                             start_blocks_distance=start_blocks_distance,
-                             end_blocks_length=end_blocks_length,
-                             end_blocks_distance=end_blocks_distance,
-                             init_radia_object=False)
-    papu.create_radia_object(magnetization_dict=magnetization_dict)
-    shift = [RADIA_MODEL_RX_SHIFT, 0, 0]
-    papu.cassettes_ref['cs'].shift(shift[:])
-    papu.cassettes_ref['ci'].shift(shift[:])
+    papu = PAPU()
     papu.dp = phase
-
     if solve_flag:
         papu.solve()
     return papu

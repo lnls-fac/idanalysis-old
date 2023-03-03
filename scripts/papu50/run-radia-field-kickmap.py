@@ -49,7 +49,7 @@ def generate_kickmap(gridx, gridy, phase, radia_model, max_rz):
     idkickmap.save_kickmap_file(kickmap_filename=fname)
 
 
-def get_field_roll_off(papu, data, rx, peak_idx, filter='on'):
+def get_field_roll_off(papu, data, rx, peak_idx, filter='off'):
     """."""
     period = papu.period_length
     rz = np.linspace(-period/2, period/2, 100)
@@ -152,8 +152,7 @@ def save_data(data):
     """."""
     phase = data['phase']
     fpath = create_path(phase)
-    shift = utils.get_shift_str(utils.RADIA_MODEL_RX_SHIFT)
-    fname = fpath + f'field_data_papu50_shift_{shift}'
+    fname = fpath + f'field_data_papu50'
     save_pickle(data, fname, overwrite=True, makedirs=True)
 
 
@@ -265,11 +264,11 @@ def run_calc_fields(phase, rx_init):
         papu=papu, data=data, rx=rx, peak_idx=0, filter='on')
 
     # --- calc field on axis
-    data = get_field_on_axis(papu=papu, data=data, rz=rz)
+    # data = get_field_on_axis(papu=papu, data=data, rz=rz)
 
     # --- calc field on trajectory
-    data = get_field_on_trajectory(
-        papu=papu, data=data, max_rz=max_rz, rx_init=rx_init)
+    # data = get_field_on_trajectory(
+        # papu=papu, data=data, max_rz=max_rz, rx_init=rx_init)
 
     # --- save data
     save_data(data)
@@ -278,7 +277,7 @@ def run_calc_fields(phase, rx_init):
 
 
 def run_generate_kickmap(papu=None,
-                         phase=25,
+                         phase=0,
                          max_rz=None,
                          gridx=None,
                          gridy=None):
@@ -294,9 +293,8 @@ def run_generate_kickmap(papu=None,
 
 def run_plot_data(phase, rx_init):
 
-    shift_str = utils.get_shift_str(utils.RADIA_MODEL_RX_SHIFT)
     fpath = create_path(phase)
-    fname = fpath + f'field_data_papu50_shift_{shift_str}.pickle'
+    fname = fpath + f'field_data_papu50.pickle'
     data = load_pickle(fname)
 
     plot_field_on_axis(data=data)
@@ -306,8 +304,8 @@ def run_plot_data(phase, rx_init):
 
 if __name__ == "__main__":
 
-    phase = 1 * utils.ID_PERIOD/2
+    phase = 0 * utils.ID_PERIOD/2
     rx_init = [-10e-3, 0, 10e-3]  # High beta's worst initial conditions [m]
-    # papu, max_rz = run_calc_fields(phase, rx_init)
-    run_plot_data(phase=phase, rx_init=rx_init)
-    # papu = run_generate_kickmap(papu=papu, phase=phase, max_rz=max_rz)
+    papu, max_rz = run_calc_fields(phase, rx_init)
+    # run_plot_data(phase=phase, rx_init=rx_init)
+    papu = run_generate_kickmap(papu=papu, phase=phase, max_rz=max_rz)
