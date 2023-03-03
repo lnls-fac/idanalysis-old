@@ -316,9 +316,9 @@ if __name__ == "__main__":
 
     models = dict()
     gaps = [4.3, 10, 20]  # [mm]
-    widths = [31, 29]  # [mm]
+    widths = [64, 31]  # [mm]
     # models = run_calc_fields(
             # models=models, gaps=gaps, widths=widths, rx=None, rz=None)
-    run_plot_data(gap=10, widths=widths)
+    run_plot_data(gap=4.3, widths=widths)
     # models = run_generate_kickmap(
             # models=models, gaps=gaps, widths=widths)
