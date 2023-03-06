@@ -4,6 +4,8 @@ import numpy as _np
 import matplotlib.pyplot as _plt
 from idanalysis import IDKickMap as _IDKickMap
 from scipy import integrate as _integrate
+from mathphys.functions import save_pickle as _save_pickle
+from mathphys.functions import load_pickle as _load_pickle
 
 
 class AnalysisFromRadia:
@@ -27,6 +29,9 @@ class AnalysisFromRadia:
         self.rk_s_step = 1.0  # [mm]
         self.traj_init_rz = None  # [mm]
         self.traj_max_rz = None  # [mm]
+        self.kmap_idlen = None  # [m]
+
+        self.FOLDER_DATA = './results/model/data/'
 
         self._set_var_params(var_params)
         self._set_constant_params(constant_params)
@@ -129,15 +134,19 @@ class AnalysisFromRadia:
             self.model_params[param] = getattr(self.models[key[0]], param)
 
     @idkickmap.setter
-    def _config_traj(self):
+    def _config_traj(self, traj_init_rz, traj_max_rz, kmap_idlen):
         """Set idkickmap config for trajectory."""
         self.idkickmap = _IDKickMap()
         self.idkickmap.beam_energy = self.beam_energy
         self.idkickmap.rk_s_step = self.rk_s_step
-        self.idkickmap.traj_init_rz = self.traj_init_rz
-        self.idkickmap.traj_rk_min_rz = self.traj_max_rz
+        self.idkickmap.traj_init_rz = traj_init_rz
+        self.idkickmap.traj_rk_min_rz = traj_max_rz
+        self.idkickmap.kmap_idlen = kmap_idlen
+        self.traj_init_rz = traj_init_rz
+        self.traj_max_rz = traj_max_rz
+        self.kmap_idlen = kmap_idlen
 
-    def get_field_roll_off(self, rx, peak_idx=0, field_component='by'):
+    def _get_field_roll_off(self, rx, peak_idx=0, field_component='by'):
         """Calculate the roll-off of a field component.
 
         Args:
@@ -155,7 +164,7 @@ class AnalysisFromRadia:
         for var_params, id in self.models.items():
             b_ = list()
             period = self.model_params['period_length']
-            rz = _np.linspace(-period/2, period/2, 100)
+            rz = _np.linspace(-period/2, period/2, 201)
             field = id.get_field(0, 0, rz)
             b = field[:, comp_idx]
             b_max_idx = _np.argmax(b)
@@ -175,7 +184,7 @@ class AnalysisFromRadia:
         self.data['rolloff_{}'.format(field_component)] = b
         self.data['rolloff_value'] = roll_off
 
-    def get_field_on_axis(self, rz):
+    def _get_field_on_axis(self, rz):
         """Get the field along z axis.
 
         Args:
@@ -193,13 +202,91 @@ class AnalysisFromRadia:
         self.data['onaxis_by'] = by_dict
         self.data['onaxis_rz'] = rz_dict
 
+    def _get_field_on_trajectory(self):
+        bx, by, bz = dict(), dict(), dict()
+        rz, rx, ry = dict(), dict(), dict()
+        px, py, pz = dict(), dict(), dict()
+        s = dict()
+        self._config_traj()
+        for var_params, id in self.models.items():
+            # create IDKickMap and calc trajectory
+            self.idkickmap.radia_model = id
+            self.idkickmap.fmap_calc_trajectory(
+                traj_init_rx=0, traj_init_ry=0,
+                traj_init_px=0, traj_init_py=0)
+            traj = self.idkickmap.traj
+            bx[var_params], by[var_params], bz[var_params] =\
+                traj.bx, traj.by, traj.bz
+            rx[var_params], ry[var_params], rz[var_params] =\
+                traj.rx, traj.ry, traj.rz
+            px[var_params], py[var_params], pz[var_params] =\
+                traj.px, traj.py, traj.pz
+            s[var_params] = traj.s
+
+        self.data['ontraj_bx'] = bx
+        self.data['ontraj_by'] = by
+        self.data['ontraj_bz'] = bz
+
+        self.data['ontraj_rx'] = rx
+        self.data['ontraj_ry'] = ry
+        self.data['ontraj_rz'] = rz
+
+        self.data['ontraj_px'] = px
+        self.data['ontraj_py'] = py
+        self.data['ontraj_pz'] = pz
+
+        self.data['ontraj_s'] = s
+
+    def _save_data(self):
+        value = self.data['ontraj_s']
+        fname = self.FOLDER_DATA + 'field_data'
+        for keys in list(value.keys()):
+            fdata = dict()
+            for info, value in self.data.items():
+                fdata[info] = value[keys]
+            for i, parameter in enumerate(keys):
+                if self.var_params[i] == 'gap':
+                    gap_str = self._get_gap_str(parameter)
+                    fname += '_gap{}'.format(gap_str)
+                elif self.var_params[i] == 'phase':
+                    phase_str = self._get_phase_str(parameter)
+                    fname += '_phase{}'.format(phase_str)
+                elif self.var_params[i] == 'width':
+                    width = parameter
+                    fname += '_width{}'.format(width)
+            _save_pickle(fdata, fname, overwrite=True)
+
     def calc_fields(self):
         rx = _np.linspace(-self.rx_max, self.rx_max, self.rx_nrpts)
         rz = _np.linspace(-self.rz_max, self.rz_max, self.rz_nrpts)
 
-        self.get_field_roll_off(rx=rx)
+        self._get_field_roll_off(rx=rx)
+        self._get_field_on_axis(rz=rz)
+        self._get_field_on_trajectory()
+
+        self._save_data()
+
+    # def run_plot_data(self, scan, values):
+    #     data_plot = dict()
+    #     fname = self.FOLDER_DATA
+    #     gap_str = self._get_gap_str(gap)
+    #     for width in widths:
+    #         fname += 'field_data_gap{}_width{}'.format(gap_str, width)
+    #         fdata = _load_pickle(fname)
+    #         data_plot[width] = fdata
 
     @staticmethod
     def _get_field_component_idx(field_component):
         components = {'bx': 0, 'by': 1, 'bz': 2}
         return components[field_component]
+
+    @staticmethod
+    def _get_gap_str(gap):
+        gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
+        return gap_str
+
+    @staticmethod
+    def _get_phase_str(phase):
+        phase_str = '{:+07.3f}'.format(phase).replace('.', 'p')
+        phase_str = phase_str.replace('+', 'pos').replace('-', 'neg')
+        return phase_str
