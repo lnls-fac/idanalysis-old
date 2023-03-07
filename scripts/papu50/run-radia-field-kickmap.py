@@ -15,10 +15,10 @@ BEAM_ENERGY = utils.BEAM_ENERGY
 ROLL_OFF_RX = utils.ROLL_OFF_RX
 
 
-def create_model(phase):
+def create_model(phase, gap):
     """."""
     papu = utils.generate_radia_model(
-            phase, solve_flag=SOLVE_FLAG)
+            phase, solve_flag=SOLVE_FLAG, gap=gap)
     return papu
 
 
@@ -52,11 +52,12 @@ def generate_kickmap(gridx, gridy, phase, radia_model, max_rz):
 def get_field_roll_off(papu, data, rx, peak_idx, filter='off'):
     """."""
     period = papu.period_length
-    rz = np.linspace(-period/2, period/2, 100)
+    rz = np.linspace(-period/2, period/2, 201)
     field = papu.get_field(0, 0, rz)
     by = field[:, 1]
     by_max_idx = np.argmax(by)
     rz_at_max = rz[by_max_idx] + peak_idx*period
+    print('rz: {:.2f}'.format(rz_at_max))
     field = papu.get_field(rx, 0, rz_at_max)
     by = field[:, 1]
     by_list = list()
@@ -181,6 +182,7 @@ def plot_field_roll_off(data):
     by = data['rolloff_by']
     rx = data['rolloff_rx']
     roffp, roffn = data['rolloff_value']
+
     fpath = create_path(phase)
     plt.figure(1)
     plt.plot(
@@ -248,27 +250,27 @@ def plot_rk_traj(data, rx_init=0):
     plt.show()
 
 
-def run_calc_fields(phase, rx_init):
+def run_calc_fields(phase, gap, rx_init):
 
-    papu = create_model(phase)
+    papu = create_model(phase, gap)
 
-    rx = utils.ROLL_OFF_RX * np.linspace(-2, 2, 4*81)  # [mm]
+    rx = utils.ROLL_OFF_RX * np.linspace(-1, 1, 1001)  # [mm]
 
     max_rz = 900  # utils.ID_PERIOD*utils.NR_PERIODS + 40
-    rz = np.linspace(-max_rz, max_rz, 2801)
+    rz = np.linspace(-max_rz, max_rz, 3001)
 
     data = dict(phase=phase)
 
     # --- calc field rolloffs for models
     data = get_field_roll_off(
-        papu=papu, data=data, rx=rx, peak_idx=0, filter='on')
+        papu=papu, data=data, rx=rx, peak_idx=0, filter='off')
 
     # --- calc field on axis
-    # data = get_field_on_axis(papu=papu, data=data, rz=rz)
+    data = get_field_on_axis(papu=papu, data=data, rz=rz)
 
     # --- calc field on trajectory
-    # data = get_field_on_trajectory(
-        # papu=papu, data=data, max_rz=max_rz, rx_init=rx_init)
+    data = get_field_on_trajectory(
+        papu=papu, data=data, max_rz=max_rz, rx_init=rx_init)
 
     # --- save data
     save_data(data)
@@ -305,7 +307,9 @@ def run_plot_data(phase, rx_init):
 if __name__ == "__main__":
 
     phase = 0 * utils.ID_PERIOD/2
+    # phase = 4.93
+    gap = 24.0
     rx_init = [-10e-3, 0, 10e-3]  # High beta's worst initial conditions [m]
-    papu, max_rz = run_calc_fields(phase, rx_init)
-    # run_plot_data(phase=phase, rx_init=rx_init)
-    papu = run_generate_kickmap(papu=papu, phase=phase, max_rz=max_rz)
+    # papu, max_rz = run_calc_fields(phase, gap, rx_init)
+    run_plot_data(phase=phase, rx_init=rx_init)
+    # papu = run_generate_kickmap(papu=papu, phase=phase, max_rz=max_rz)

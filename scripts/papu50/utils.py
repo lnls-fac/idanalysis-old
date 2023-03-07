@@ -16,18 +16,18 @@ DEF_RK_S_STEP = 1  # [mm] seems converged for the measurement fieldmap grids
 RESCALE_KICKS = 1  # Radia simulations could have fewer ID periods
 RESCALE_LENGTH = 1/0.75  # RK traj is not calculated in free field regions
 ROLL_OFF_RX = 10.0  # [mm]
-SOLVE_FLAG = False
+SOLVE_FLAG = True
 FITTED_MODEL = False
 
 FOLDER_DATA = './results/model/data/'
 KYMA22_KMAP_FILENAME = (
     '/opt/insertion-devices/kyma22/results/'
-    'model/kickmaps/kickmap-ID-kyma22-phase_pos00p000.txt')
+    'model/kickmaps/kickmap-ID-kyma22-phase_pos11p000.txt')
 
-INSERT_KYMA = False
+INSERT_KYMA = True
 KYMA_RESCALE_KICKS = 1  # Radia simulations have fewer ID periods
 KYMA_RESCALE_LENGTH = 10  # Radia simulations have fewer ID periods
-NR_PAPU = 1
+NR_PAPU = 3
 
 
 class CALC_TYPES:
@@ -42,9 +42,9 @@ def get_folder_data():
     return data_path
 
 
-def get_phase_str(gap):
+def get_phase_str(phase):
     """."""
-    phase_str = '{:+07.3f}'.format(gap).replace('.', 'p')
+    phase_str = '{:+07.3f}'.format(phase).replace('.', 'p')
     phase_str = phase_str.replace('+', 'pos').replace('-', 'neg')
     return phase_str
 
@@ -53,7 +53,7 @@ def get_kmap_filename(phase):
     fpath = FOLDER_DATA + 'kickmaps/'
     fpath = fpath.replace('model/data/', 'model/')
     phase_str = get_phase_str(phase)
-    fname = fpath + 'kickmap-papu50-phase_.txt'.format(
+    fname = fpath + 'kickmap-papu50-phase_{}.txt'.format(
         phase_str)
     return fname
 
@@ -141,10 +141,10 @@ def create_model_ids(
     return model, ids
 
 
-def generate_radia_model(phase=0, solve_flag=False):
+def generate_radia_model(phase=0, solve_flag=False, gap=8):
     """."""
-    papu = PAPU()
-    papu.dp = phase
+    papu = PAPU(gap=gap)
+    papu.dg = phase
     if solve_flag:
         papu.solve()
     return papu

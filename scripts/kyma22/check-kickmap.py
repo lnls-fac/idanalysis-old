@@ -64,6 +64,8 @@ def plot_kick_at_plane(
     """."""
     for var in planes:
         for kick_plane in kick_planes:
+            print(kick_plane)
+            print(var)
             fname_fig = get_figname_plane(
                 phase, pos=pos, var=var, kick_plane=kick_plane)
             fname = utils.get_kmap_filename(phase)
@@ -156,7 +158,7 @@ def plot_kick_all_planes(
 
 if __name__ == '__main__':
     save_flag = False
-    plt_flag = True
+    plt_flag = False
     planes = ['x', 'y']
     kick_planes = ['x', 'y']
     phase = 0

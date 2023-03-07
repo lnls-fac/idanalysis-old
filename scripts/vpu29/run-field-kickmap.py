@@ -42,7 +42,7 @@ def create_models(gaps, widths):
     for gap in gaps:
         for width in widths:
             print(f'creating model for gap {gap} mm and width {width} mm')
-            termination_parameters = get_termination_parameters(63)
+            termination_parameters = get_termination_parameters(50)
             ivu = utils.generate_radia_model(
                 gap=gap, width=width,
                 termination_parameters=termination_parameters,
@@ -53,31 +53,31 @@ def create_models(gaps, widths):
 
 def get_field_roll_off(models, data, rx, peak_idx):
     """."""
-    by_x = dict()
+    bx_x = dict()
     rx_avg_dict = dict()
     roll_off = dict()
     for (gap, width), ivu in models.items():
         print(f'calc field rolloff for gap {gap} mm and width {width} mm')
-        by_list = list()
+        bx_list = list()
         period = ivu.period_length
         rz = np.linspace(-period/2, period/2, 100)
         field = ivu.get_field(0, 0, rz)
-        by = field[:, 1]
-        by_max_idx = np.argmax(by)
-        rz_at_max = rz[by_max_idx] + peak_idx*period
+        bx = field[:, 0]
+        bx_max_idx = np.argmax(bx)
+        rz_at_max = rz[bx_max_idx] + peak_idx*period
         field = ivu.get_field(rx, 0, rz_at_max)
-        by = field[:, 1]
+        bx = field[:, 0]
 
         rx6_idx = np.argmin(np.abs(rx - utils.ROLL_OFF_RX))
         rx0_idx = np.argmin(np.abs(rx))
-        roff = np.abs(by[rx6_idx]/by[rx0_idx]-1)
+        roff = np.abs(bx[rx6_idx]/bx[rx0_idx]-1)
 
-        by_x[(gap, width)] = by
+        bx_x[(gap, width)] = bx
         rx_avg_dict[(gap, width)] = rx
         roll_off[(gap, width)] = roff
 
     data['rolloff_rx'] = rx_avg_dict
-    data['rolloff_by'] = by_x
+    data['rolloff_bx'] = bx_x
     data['rolloff_value'] = roll_off
 
     return data
@@ -157,11 +157,11 @@ def plot_field_on_axis(data):
     widths = list(data.keys())
     for width in widths:
         label = 'width {}'.format(width)
-        by = data[width]['onaxis_by']
+        bx = data[width]['onaxis_bx']
         rz = data[width]['onaxis_rz']
-        plt.plot(rz, by, label=label)
+        plt.plot(rz, bx, label=label)
     plt.xlabel('z [mm]')
-    plt.ylabel('By [T]')
+    plt.ylabel('Bx [T]')
     plt.legend()
     plt.grid()
     plt.savefig(utils.FOLDER_DATA + 'field-profile', dpi=300)
@@ -173,29 +173,29 @@ def plot_field_roll_off(data, gap, filter='off'):
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
     widths = list(data.keys())
     for i, width in enumerate(widths):
-        by = data[width]['rolloff_by']
+        bx = data[width]['rolloff_bx']
         rx = data[width]['rolloff_rx']
-        by_list = list()
+        bx_list = list()
         if filter == 'on':
             for j in range(len(rx)):
                 if j >= 6 and j <= len(rx)-7:
-                    by_temp = by[j-6] + by[j-5] + by[j-4] + by[j-3]
-                    by_temp += by[j-2] + by[j-1] + by[j] + by[j+1] + by[j+2]
-                    by_temp += by[j+3] + by[j+4] + by[j+5] + by[j+6]
-                    by_temp = by_temp/13
-                    by_list.append(by_temp)
-            by = np.array(by_list)
+                    bx_temp = bx[j-6] + bx[j-5] + bx[j-4] + bx[j-3]
+                    bx_temp += bx[j-2] + bx[j-1] + bx[j] + bx[j+1] + bx[j+2]
+                    bx_temp += bx[j+3] + bx[j+4] + bx[j+5] + bx[j+6]
+                    bx_temp = bx_temp/13
+                    bx_list.append(bx_temp)
+            bx = np.array(bx_list)
             rx = rx[6:-6]
         rx6_idx = np.argmin(np.abs(rx - utils.ROLL_OFF_RX))
         rx0_idx = np.argmin(np.abs(rx))
-        roff = np.abs(by[rx6_idx]/by[rx0_idx]-1)
+        roff = np.abs(bx[rx6_idx]/bx[rx0_idx]-1)
         label = "width {}, roll-off = {:.2f} %".format(width, 100*roff)
         irx0 = np.argmin(np.abs(rx))
-        by0 = by[irx0]
-        roll_off = 100*(by/by0 - 1)
+        bx0 = bx[irx0]
+        roll_off = 100*(bx/bx0 - 1)
         print(label)
         plt.plot(rx, roll_off, '.-', label=label, color=colors[i])
-        # plt.plot(rx, by, label=label, color=colors[i])
+        # plt.plot(rx, bx, label=label, color=colors[i])
     plt.xlabel('x [mm]')
     # plt.ylabel('By [T]')
     plt.ylabel('roll off [%]')
@@ -315,10 +315,10 @@ def run_plot_data(gap, widths):
 if __name__ == "__main__":
 
     models = dict()
-    gaps = [4.3, 10, 20]  # [mm]
-    widths = [64, 31]  # [mm]
+    gaps = [9.7]  # [mm]
+    widths = [60, 50, 40, 30]  # [mm]
     models = run_calc_fields(
             models=models, gaps=gaps, widths=widths, rx=None, rz=None)
-    run_plot_data(gap=4.3, widths=widths)
-    # models = run_generate_kickmap(
-            # models=models, gaps=gaps, widths=widths)
+    run_plot_data(gap=9.7, widths=widths)
+    models = run_generate_kickmap(
+            models=models, gaps=gaps, widths=widths)

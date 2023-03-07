@@ -28,6 +28,13 @@ def create_path(phase):
     fpath = utils.FOLDER_DATA
     phase_str = utils.get_phase_str(phase)
     fpath = fpath.replace('data/', 'data/phase_{}/'.format(phase_str))
+    if utils.INSERT_KYMA:
+        fpath += "kyma22/"
+        if utils.NR_PAPU > 0:
+            fpath = fpath.replace('kyma22/', 'kyma22-{}papu50/'.format(
+                utils.NR_PAPU))
+    else:
+        fpath += 'papu50/'
     return fpath
 
 
@@ -388,8 +395,8 @@ def run_analysis_dynapt(phase, fitted_model, calc_type):
 
 if __name__ == '__main__':
 
-    phase = 1 * utils.ID_PERIOD/2  # vertical field
-
+    # phase = 1 * utils.ID_PERIOD/2  # vertical field
+    phase = 4.93
     # calc_type = CALC_TYPES.nominal
     # run_analysis_dynapt(
     #     phase, fitted_model=FITTED_MODEL, calc_type=calc_type)

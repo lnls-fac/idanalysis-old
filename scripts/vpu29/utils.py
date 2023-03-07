@@ -99,7 +99,7 @@ def generate_radia_model(gap, width, termination_parameters, solve=True):
     chamfer_b = 5
 
     p_width = 0.6*width
-    p_height = 24
+    p_height = 0.6*height
     pole_length = 2.9
     chamfer_p = 3
     y_pos = 0

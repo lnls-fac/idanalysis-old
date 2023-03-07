@@ -18,7 +18,7 @@ RESCALE_LENGTH = 10  # Radia simulations have fewer ID periods
 SOLVE_FLAG = True
 ROLL_OFF_RX = 10.0  # [mm]
 SOLVE_FLAG = False
-FITTED_MODEL = True
+FITTED_MODEL = False
 
 FOLDER_DATA = './results/model/data/'
 MEAS_FILE = './results/measurements/fieldmap_phase0.dat'
