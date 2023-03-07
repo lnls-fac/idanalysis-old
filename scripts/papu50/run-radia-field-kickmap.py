@@ -9,6 +9,8 @@ from idanalysis import IDKickMap
 import utils
 
 
+ID_GAP = utils.ID_GAP
+SIMODEL_ID_LEN = utils.SIMODEL_ID_LEN
 SOLVE_FLAG = utils.SOLVE_FLAG
 RK_S_STEP = utils.DEF_RK_S_STEP
 BEAM_ENERGY = utils.BEAM_ENERGY
@@ -29,19 +31,20 @@ def create_path(phase):
     return fpath
 
 
-def config_traj(radia_model, max_rz):
+def config_traj(radia_model, rz_max):
     idkickmap = IDKickMap()
     idkickmap.radia_model = radia_model
     idkickmap.beam_energy = BEAM_ENERGY
     idkickmap.rk_s_step = RK_S_STEP
-    idkickmap.traj_init_rz = -max_rz
-    idkickmap.traj_rk_min_rz = max_rz
+    idkickmap.traj_init_rz = -rz_max
+    idkickmap.traj_rk_min_rz = rz_max
+    idkickmap.kmap_idlen = SIMODEL_ID_LEN
     return idkickmap
 
 
-def generate_kickmap(gridx, gridy, phase, radia_model, max_rz):
+def generate_kickmap(gridx, gridy, phase, radia_model, rz_max):
     # Config trajectory parameters
-    idkickmap = config_traj(radia_model=radia_model, max_rz=max_rz)
+    idkickmap = config_traj(radia_model=radia_model, rz_max=rz_max)
     idkickmap.fmap_calc_kickmap(posx=gridx, posy=gridy)
 
     # Generate kickmap file
@@ -112,7 +115,7 @@ def get_field_on_axis(papu, data, rz, plot_flag=False):
     return data
 
 
-def get_field_on_trajectory(papu, data, max_rz, rx_init=0):
+def get_field_on_trajectory(papu, data, rz_max, rx_init=0):
     """Calculate RK for set of EPU configurations."""
     s = dict()
     bx, by, bz = dict(), dict(), dict()
@@ -120,7 +123,7 @@ def get_field_on_trajectory(papu, data, max_rz, rx_init=0):
     px, py, pz = dict(), dict(), dict()
 
     # create IDKickMap and calc trajectory
-    idkickmap = config_traj(radia_model=papu, max_rz=max_rz)
+    idkickmap = config_traj(radia_model=papu, rz_max=rz_max)
     for rx0 in rx_init:
         idkickmap.fmap_calc_trajectory(
             traj_init_rx=rx0, traj_init_ry=0,
@@ -199,10 +202,18 @@ def plot_field_roll_off(data):
     plt.show()
 
 
-def plot_rk_traj(data, rx_init=0):
+def plot_rk_traj(data):
     phase = data['phase']
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
     fpath = create_path(phase)
+
+    # reconstruct rx_init list
+    rx_init = list()
+    for keys in data:
+        if isinstance(keys, tuple) and isinstance(keys[1], (int, float)):
+            rx_init.append(keys[1])
+    rx_init = sorted(list(set(rx_init)))
+
     for i, rx0 in enumerate(rx_init):
         rz = data[('ontraj_rz', rx0)]
         rx = data[('ontraj_rx', rx0)]
@@ -250,14 +261,13 @@ def plot_rk_traj(data, rx_init=0):
     plt.show()
 
 
-def run_calc_fields(phase, gap, rx_init):
+def run_calc_fields(phase, gap, rz_max, rx_init):
 
     papu = create_model(phase, gap)
 
     rx = utils.ROLL_OFF_RX * np.linspace(-1, 1, 1001)  # [mm]
 
-    max_rz = 900  # utils.ID_PERIOD*utils.NR_PERIODS + 40
-    rz = np.linspace(-max_rz, max_rz, 3001)
+    rz = np.linspace(-rz_max, rz_max, 3001)
 
     data = dict(phase=phase)
 
@@ -270,30 +280,38 @@ def run_calc_fields(phase, gap, rx_init):
 
     # --- calc field on trajectory
     data = get_field_on_trajectory(
-        papu=papu, data=data, max_rz=max_rz, rx_init=rx_init)
+        papu=papu, data=data, rz_max=rz_max, rx_init=rx_init)
 
     # --- save data
     save_data(data)
 
-    return papu, max_rz
+    return papu
 
 
 def run_generate_kickmap(papu=None,
+                         gap=24,
                          phase=0,
-                         max_rz=None,
+                         rz_max=None,
                          gridx=None,
                          gridy=None):
     """."""
     gridx = gridx or list(np.arange(-10, +11, 1) / 1000)  # [m]
     gridy = gridy or list(np.linspace(-3.5, +3.5, 5) / 1000)  # [m]
 
+    if papu is None:
+        print('create radia model...')
+        papu = create_model(phase, gap)
+
+    print('calc kickmap...')
     generate_kickmap(
-        gridx=gridx, gridy=gridy, phase=phase, radia_model=papu, max_rz=max_rz)
+        gridx=gridx, gridy=gridy,
+        phase=phase, radia_model=papu,
+        rz_max=rz_max)
 
     return papu
 
 
-def run_plot_data(phase, rx_init):
+def run_plot_data(phase):
 
     fpath = create_path(phase)
     fname = fpath + f'field_data_papu50.pickle'
@@ -301,15 +319,15 @@ def run_plot_data(phase, rx_init):
 
     plot_field_on_axis(data=data)
     plot_field_roll_off(data=data)
-    plot_rk_traj(data=data, rx_init=rx_init)
+    plot_rk_traj(data=data)
 
 
 if __name__ == "__main__":
 
     phase = 0 * utils.ID_PERIOD/2
-    # phase = 4.93
-    gap = 24.0
     rx_init = [-10e-3, 0, 10e-3]  # High beta's worst initial conditions [m]
-    # papu, max_rz = run_calc_fields(phase, gap, rx_init)
-    run_plot_data(phase=phase, rx_init=rx_init)
-    # papu = run_generate_kickmap(papu=papu, phase=phase, max_rz=max_rz)
+    rz_max = 900  # utils.ID_PERIOD*utils.NR_PERIODS + 40
+
+    # papu = run_calc_fields(phase, ID_GAP, rz_max, rx_init)
+    # run_plot_data(phase=phase)
+    papu = run_generate_kickmap(papu=None, phase=phase, rz_max=rz_max)

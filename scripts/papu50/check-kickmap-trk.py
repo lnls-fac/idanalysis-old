@@ -18,14 +18,12 @@ def calc_idkmap_kicks(plane_idx=0, idkmap=None):
     """."""
     beam = Beam(energy=3.0)
     brho = beam.brho
-    kickx_end = idkmap.kickx_upstream + idkmap.kickx_downstream
-    kicky_end = idkmap.kicky_upstream + idkmap.kicky_downstream
     rx0 = idkmap.posx
     ry0 = idkmap.posy
     rxf = idkmap.fposx[plane_idx, :]
     ryf = idkmap.fposy[plane_idx, :]
-    pxf = (idkmap.kickx[plane_idx, :] + kickx_end) / brho**2
-    pyf = (idkmap.kicky[plane_idx, :] + kicky_end) / brho**2
+    pxf = idkmap.kickx[plane_idx, :] / brho**2
+    pyf = idkmap.kicky[plane_idx, :] / brho**2
     return rx0, ry0, pxf, pyf, rxf, ryf
 
 
@@ -47,7 +45,7 @@ def check_kick_at_plane(phase, rescale_kicks, rescale_length):
     fname = utils.get_kmap_filename(phase)
     id_kickmap = IDKickMap(fname)
     plane_idx = list(id_kickmap.posy).index(0)
-    rx0, _, pxf, pyf, *_ = calc_idkmap_kicks(
+    rx0, _, pxf, pyf, rxf, ryf = calc_idkmap_kicks(
       idkmap=id_kickmap, plane_idx=plane_idx)
     pxf *= rescale_kicks
     pyf *= rescale_kicks
@@ -66,25 +64,36 @@ def check_kick_at_plane(phase, rescale_kicks, rescale_length):
     idx_dif = 2
 
     pxf_list, pyf_list = list(), list()
-    xf_list, yf_list = list(), list()
+    rxf_list, ryf_list = list(), list()
     model = pyacc_lat.shift(model, start=idx_begin)
     for x0 in rx0:
         coord_ini = np.array([x0, 0, 0, 0, 0, 0])
         coord_fin, *_ = pyaccel.tracking.line_pass(
             model, coord_ini, indices='open')
 
-        x, px = coord_fin[0, :], coord_fin[1, :]
-        y, py = coord_fin[2, :], coord_fin[3, :]
-        xf_trk, pxf_trk = x[idx_dif+1], px[idx_dif+1]
-        yf_trk, pyf_trk = y[idx_dif+1], py[idx_dif+1]
+        rx, px = coord_fin[0, :], coord_fin[1, :]
+        ry, py = coord_fin[2, :], coord_fin[3, :]
+        rxf_trk, pxf_trk = rx[idx_dif+1], px[idx_dif+1]
+        ryf_trk, pyf_trk = ry[idx_dif+1], py[idx_dif+1]
 
-        xf_list.append(xf_trk)
+        rxf_list.append(rxf_trk)
         pxf_list.append(pxf_trk)
-        yf_list.append(yf_trk)
+        ryf_list.append(ryf_trk)
         pyf_list.append(pyf_trk)
 
-    xf_trk, pxf_trk = np.array(xf_list), np.array(pxf_list)
-    yf_trk, pyf_trk = np.array(yf_list), np.array(pyf_list)
+    rxf_trk, pxf_trk = np.array(rxf_list), np.array(pxf_list)
+    ryf_trk, pyf_trk = np.array(ryf_list), np.array(pyf_list)
+
+    plt.plot(1e3*rx0, 1e6*(rxf - x0), '.-', color='C1', label='Pos X  kickmap')
+    plt.plot(1e3*rx0, 1e6*ryf, '.-', color='b', label='Pos Y  kickmap')
+    plt.plot(1e3*rx0, 1e6*(rxf_trk - x0), 'o', color='C1', label='Pos X  tracking')
+    plt.plot(1e3*rx0, 1e6*ryf_trk, 'o', color='b', label='Pos Y  tracking')
+    plt.xlabel('x0 [mm]')
+    plt.ylabel('final dpos [um]')
+    plt.title('dPos')
+    plt.legend()
+    plt.grid()
+    plt.show()
 
     plt.plot(1e3*rx0, 1e6*pxf, '.-', color='C1', label='Kick X  kickmap')
     plt.plot(1e3*rx0, 1e6*pyf, '.-', color='b', label='Kick Y  kickmap')

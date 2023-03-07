@@ -11,23 +11,26 @@ BEAM_ENERGY = 3.0  # [GeV]
 
 ID_PERIOD = 50  # [mm]
 NR_PERIODS = 18  # [mm]
+ID_GAP = 24.0  # [mm] - fixed papu50 gap.
 ID_KMAP_LEN = 0.9  # [m]
 DEF_RK_S_STEP = 1  # [mm] seems converged for the measurement fieldmap grids
 RESCALE_KICKS = 1  # Radia simulations could have fewer ID periods
-RESCALE_LENGTH = 1/0.75  # RK traj is not calculated in free field regions
+RESCALE_LENGTH = 1  # RK traj is not calculated in free field regions
 ROLL_OFF_RX = 10.0  # [mm]
 SOLVE_FLAG = True
-FITTED_MODEL = False
+
+SIMODEL_ID_LEN = 1.2  # [m]
+SIMODEL_FITTED = False
 
 FOLDER_DATA = './results/model/data/'
 KYMA22_KMAP_FILENAME = (
     '/opt/insertion-devices/kyma22/results/'
     'model/kickmaps/kickmap-ID-kyma22-phase_pos11p000.txt')
 
-INSERT_KYMA = True
+INSERT_KYMA = False
 KYMA_RESCALE_KICKS = 1  # Radia simulations have fewer ID periods
 KYMA_RESCALE_LENGTH = 10  # Radia simulations have fewer ID periods
-NR_PAPU = 3
+NR_PAPU = 1
 
 
 class CALC_TYPES:
@@ -58,16 +61,6 @@ def get_kmap_filename(phase):
     return fname
 
 
-def get_termination_kicks(fname):
-    idkmap = IDKickMap(kmap_fname=fname)
-    kickx_up = idkmap.kickx_upstream  # [T².m²]
-    kicky_up = idkmap.kicky_upstream  # [T².m²]
-    kickx_down = idkmap.kickx_downstream  # [T².m²]
-    kicky_down = idkmap.kicky_downstream  # [T².m²]
-    termination_kicks = [kickx_up, kicky_up, kickx_down, kicky_down]
-    return termination_kicks
-
-
 def create_ids(
         phase=0, nr_steps=None, rescale_kicks=RESCALE_KICKS,
         rescale_length=RESCALE_LENGTH):
@@ -79,29 +72,25 @@ def create_ids(
 
     if INSERT_KYMA:
         fname = KYMA22_KMAP_FILENAME
-        termination_kicks = get_termination_kicks(fname)
         kyma22 = IDModel(
             subsec=IDModel.SUBSECTIONS.ID09SA,
             file_name=fname,
             fam_name='APU22', nr_steps=nr_steps,
             rescale_kicks=KYMA_RESCALE_KICKS,
-            rescale_length=KYMA_RESCALE_LENGTH,
-            termination_kicks=termination_kicks)
+            rescale_length=KYMA_RESCALE_LENGTH)
         ids.append(kyma22)
 
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
     rescale_length = \
         rescale_length if rescale_length is not None else 1
     fname = get_kmap_filename(phase)
-    termination_kicks = get_termination_kicks(fname)
 
     if NR_PAPU > 0:
         papu50_17 = IDModel(
             subsec=IDModel.SUBSECTIONS.ID17SA,
             file_name=fname,
             fam_name='PAPU50', nr_steps=nr_steps,
-            rescale_kicks=rescale_kicks, rescale_length=rescale_length,
-            termination_kicks=termination_kicks)
+            rescale_kicks=rescale_kicks, rescale_length=rescale_length)
         ids.append(papu50_17)
 
     if NR_PAPU > 1:
@@ -109,8 +98,7 @@ def create_ids(
             subsec=IDModel.SUBSECTIONS.ID05SA,
             file_name=fname,
             fam_name='PAPU50', nr_steps=nr_steps,
-            rescale_kicks=rescale_kicks, rescale_length=rescale_length,
-            termination_kicks=termination_kicks)
+            rescale_kicks=rescale_kicks, rescale_length=rescale_length)
         ids.append(papu50_05)
 
     if NR_PAPU > 2:
@@ -118,15 +106,14 @@ def create_ids(
             subsec=IDModel.SUBSECTIONS.ID13SA,
             file_name=fname,
             fam_name='PAPU50', nr_steps=nr_steps,
-            rescale_kicks=rescale_kicks, rescale_length=rescale_length,
-            termination_kicks=termination_kicks)
+            rescale_kicks=rescale_kicks, rescale_length=rescale_length)
         ids.append(papu50_13)
 
     return ids
 
 
 def create_model_ids(
-        phase=25,
+        phase=0,
         rescale_kicks=RESCALE_KICKS,
         rescale_length=RESCALE_LENGTH):
     ids = create_ids(
@@ -141,9 +128,9 @@ def create_model_ids(
     return model, ids
 
 
-def generate_radia_model(phase=0, solve_flag=False):
+def generate_radia_model(phase=0, gap=ID_GAP, solve_flag=False):
     """."""
-    papu = PAPU()
+    papu = PAPU(gap=gap)
     papu.dg = phase
     if solve_flag:
         papu.solve()
