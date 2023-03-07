@@ -141,9 +141,9 @@ def create_model_ids(
     return model, ids
 
 
-def generate_radia_model(phase=0, solve_flag=False, gap=8):
+def generate_radia_model(phase=0, solve_flag=False):
     """."""
-    papu = PAPU(gap=gap)
+    papu = PAPU()
     papu.dg = phase
     if solve_flag:
         papu.solve()
