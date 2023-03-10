@@ -390,7 +390,7 @@ def run_analysis_dynapt(phase, fitted_model, calc_type):
 
 if __name__ == '__main__':
 
-    phase = 1 * utils.ID_PERIOD/2  # vertical field
+    phase = 0 * utils.ID_PERIOD/2  # vertical field
 
     # calc_type = CALC_TYPES.nominal
     # run_analysis_dynapt(

@@ -45,7 +45,7 @@ def create_model(phase, nr_periods):
     return kyma
 
 
-def get_field_roll_off(kyma, data, rx, peak_idx, filter='on'):
+def get_field_roll_off(kyma, data, rx, peak_idx):
     """."""
     period = kyma.period_length
     rz = np.linspace(-period/2, period/2, 100)
@@ -56,19 +56,8 @@ def get_field_roll_off(kyma, data, rx, peak_idx, filter='on'):
     field = kyma.get_field(rx, 0, rz_at_max)
     by = field[:, 1]
     by_list = list()
-    if filter == 'on':
-        for i in range(len(rx)):
-            if i >= 6 and i <= len(rx)-7:
-                by_temp = by[i-6] + by[i-5] + by[i-4] + by[i-3]
-                by_temp += by[i-2] + by[i-1] + by[i] + by[i+1] + by[i+2]
-                by_temp += by[i+3] + by[i+4] + by[i+5] + by[i+6]
-                by_temp = by_temp/13
-                by_list.append(by_temp)
-        by_avg = np.array(by_list)
-        rx_avg = rx[6:-6]
-    else:
-        by_avg = by
-        rx_avg = rx
+    by_avg = by
+    rx_avg = rx
     rxr_idx = np.argmin(np.abs(rx_avg - utils.ROLL_OFF_RX))
     rx0_idx = np.argmin(np.abs(rx_avg))
     roff = np.abs(by_avg[rxr_idx]/by_avg[rx0_idx]-1)
@@ -231,7 +220,7 @@ def run_calc_fields(phase, nr_periods=5):
 
     # --- calc field rolloffs for models
     data = get_field_roll_off(
-        kyma=kyma, data=data, rx=rx, peak_idx=0, filter='on')
+        kyma=kyma, data=data, rx=rx, peak_idx=0)
 
     # --- calc field on axis
     data = get_field_on_axis(kyma=kyma, data=data, rz=rz)
@@ -275,8 +264,8 @@ def run_plot_data(phase):
 
 if __name__ == "__main__":
 
-    phase = utils.ID_PERIOD/2
-    kyma, max_rz = run_calc_fields(phase)
-    # kyma = run_generate_kickmap(kyma=kyma, max_rz=max_rz)
-
-    run_plot_data(phase=phase)
+    phases = [0 * utils.ID_PERIOD/2, 1 * utils.ID_PERIOD/2]
+    for phase in phases:
+        kyma, max_rz = run_calc_fields(phase, nr_periods=51)
+        run_plot_data(phase=phase)
+        kyma = run_generate_kickmap(kyma=kyma, max_rz=max_rz)
