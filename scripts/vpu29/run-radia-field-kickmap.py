@@ -51,33 +51,32 @@ def create_models(gaps, widths):
     return models
 
 
-def get_field_roll_off(models, data, rx, peak_idx):
+def get_field_roll_off(models, data, ry, peak_idx):
     """."""
-    bx_x = dict()
+    bx_y = dict()
     rx_avg_dict = dict()
     roll_off = dict()
     for (gap, width), ivu in models.items():
         print(f'calc field rolloff for gap {gap} mm and width {width} mm')
-        bx_list = list()
         period = ivu.period_length
         rz = np.linspace(-period/2, period/2, 100)
         field = ivu.get_field(0, 0, rz)
         bx = field[:, 0]
         bx_max_idx = np.argmax(bx)
         rz_at_max = rz[bx_max_idx] + peak_idx*period
-        field = ivu.get_field(rx, 0, rz_at_max)
+        field = ivu.get_field(0, ry, rz_at_max)
         bx = field[:, 0]
 
-        rx6_idx = np.argmin(np.abs(rx - utils.ROLL_OFF_RX))
-        rx0_idx = np.argmin(np.abs(rx))
-        roff = np.abs(bx[rx6_idx]/bx[rx0_idx]-1)
+        ry6_idx = np.argmin(np.abs(ry - utils.ROLL_OFF_RY))
+        ry0_idx = np.argmin(np.abs(ry))
+        roff = np.abs(bx[ry6_idx]/bx[ry0_idx]-1)
 
-        bx_x[(gap, width)] = bx
-        rx_avg_dict[(gap, width)] = rx
+        bx_y[(gap, width)] = bx
+        rx_avg_dict[(gap, width)] = ry
         roll_off[(gap, width)] = roff
 
     data['rolloff_rx'] = rx_avg_dict
-    data['rolloff_bx'] = bx_x
+    data['rolloff_bx'] = bx_y
     data['rolloff_value'] = roll_off
 
     return data
@@ -168,24 +167,13 @@ def plot_field_on_axis(data):
     plt.show()
 
 
-def plot_field_roll_off(data, gap, filter='off'):
+def plot_field_roll_off(data, gap):
     plt.figure(1)
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
     widths = list(data.keys())
     for i, width in enumerate(widths):
         bx = data[width]['rolloff_bx']
         rx = data[width]['rolloff_rx']
-        bx_list = list()
-        if filter == 'on':
-            for j in range(len(rx)):
-                if j >= 6 and j <= len(rx)-7:
-                    bx_temp = bx[j-6] + bx[j-5] + bx[j-4] + bx[j-3]
-                    bx_temp += bx[j-2] + bx[j-1] + bx[j] + bx[j+1] + bx[j+2]
-                    bx_temp += bx[j+3] + bx[j+4] + bx[j+5] + bx[j+6]
-                    bx_temp = bx_temp/13
-                    bx_list.append(bx_temp)
-            bx = np.array(bx_list)
-            rx = rx[6:-6]
         rx6_idx = np.argmin(np.abs(rx - utils.ROLL_OFF_RX))
         rx0_idx = np.argmin(np.abs(rx))
         roff = np.abs(bx[rx6_idx]/bx[rx0_idx]-1)
@@ -319,6 +307,6 @@ if __name__ == "__main__":
     widths = [60, 50, 40, 30]  # [mm]
     models = run_calc_fields(
             models=models, gaps=gaps, widths=widths, rx=None, rz=None)
-    run_plot_data(gap=9.7, widths=widths)
+    # run_plot_data(gap=9.7, widths=widths)
     models = run_generate_kickmap(
             models=models, gaps=gaps, widths=widths)

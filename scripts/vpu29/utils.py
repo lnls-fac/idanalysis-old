@@ -15,7 +15,7 @@ ID_KMAP_LEN = 0.250  # [m]
 DEF_RK_S_STEP = 0.5  # [mm] seems converged for the measurement fieldmap grids
 RESCALE_KICKS = 21.6  # Radia simulations have fewer ID periods
 RESCALE_LENGTH = 1  # Radia simulations have fewer ID periods
-ROLL_OFF_RX = 6.0  # [mm]
+ROLL_OFF_RY = 6.0  # [mm]
 SOLVE_FLAG = True
 
 FOLDER_DATA = './results/model/data/'
