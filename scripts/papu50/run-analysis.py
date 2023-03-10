@@ -163,7 +163,7 @@ def plot_beta_beating(
     label1 = {False: '-nominal', True: '-fittedmodel'}[fitted_model]
 
     plt.figure(1)
-    stg_tune = f'dtunex: {dtunex:+0.04f}\n' + f'dtuney: {dtuney:+0.04f}'
+    stg_tune = f'dtunex: {dtunex:+0.05f}\n' + f'dtuney: {dtuney:+0.05f}'
     labelx = f'X ({bbeatx_rms:.3f} % rms)'
     labely = f'Y ({bbeaty_rms:.3f} % rms)'
     plt.plot(twiss0.spos, bbeatx, color='b', alpha=1.0, label=labelx)
@@ -217,6 +217,8 @@ def plot_beta_beating(
     print(f'bbetay: {bbeaty_rms:04.3f} % rms, {bbeaty_absmax:04.3f} % absmax')
 
     plt.figure(3)
+    stg_tune = f'dtunex: {dtunex:+0.05f}\n' + f'dtuney: {dtuney:+0.05f}'
+    stg = stg + '\n' + stg_tune
     labelx = f'X ({bbeatx_rms:.3f} % rms)'
     labely = f'Y ({bbeaty_rms:.3f} % rms)'
     plt.plot(twiss0.spos, bbeatx, color='b', alpha=1.0, label=labelx)
