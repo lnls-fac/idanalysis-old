@@ -25,10 +25,10 @@ SIMODEL_FITTED = False
 FOLDER_DATA = './results/model/data/'
 KYMA22_KMAP_FILENAME = (
     '/opt/insertion-devices/kyma22/results/'
-    'model/kickmaps/kickmap-ID-kyma22-phase_pos11p000.txt')
+    'model/kickmaps/kickmap-ID-kyma22-phase_pos00p000.txt')
 
-INSERT_KYMA = False
-KYMA_RESCALE_KICKS = 1  # Radia simulations have fewer ID periods
+INSERT_KYMA = True
+KYMA_RESCALE_KICKS = 10  # Radia simulations have fewer ID periods
 KYMA_RESCALE_LENGTH = 10  # Radia simulations have fewer ID periods
 NR_PAPU = 1
 
