@@ -11,7 +11,7 @@ BEAM_ENERGY = 3.0  # [GeV]
 
 ID_PERIOD = 18.5  # [mm]
 NOMINAL_GAP = 4.2  # [mm]
-ID_KMAP_LEN = 0.250  # [m]
+ID_KMAP_LEN = 2.5  # [m]
 DEF_RK_S_STEP = 0.5  # [mm] seems converged for the measurement fieldmap grids
 RESCALE_KICKS = 21.6  # Radia simulations have fewer ID periods
 RESCALE_LENGTH = 1  # Radia simulations have fewer ID periods
@@ -129,7 +129,6 @@ def generate_radia_model(gap, width, termination_parameters, solve=True):
 
     block_subdivision = [8, 4, 4]
     pole_subdivision = [34, 5, 5]
-    # pole_subdivision = [8, 5, 5]
 
     b1t, b2t, b3t, dist1, dist2 = termination_parameters
 
