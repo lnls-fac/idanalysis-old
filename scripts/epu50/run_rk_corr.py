@@ -9,9 +9,9 @@ from mathphys.functions import save_pickle, load_pickle
 from idanalysis import IDKickMap
 from idanalysis.fmap import FieldmapOnAxisAnalysis
 
-from utils import FOLDER_BASE, DATA_PATH, ID_CONFIGS
+from utils import FOLDER_BASE, MEAS_DATA_PATH, ID_CONFIGS
 from utils import ORDERED_CONFIGS, GAPS, PHASES
-from utils import get_idconfig
+from utils import get_meas_idconfig
 from run_rk_traj import PHASES, GAPS
 
 import utils
@@ -21,12 +21,12 @@ import pyaccel
 
 def create_idkickmap(phase, gap):
     """."""
-    idconfig = get_idconfig(phase, gap)
+    idconfig = get_meas_idconfig(phase, gap)
     # get fieldmap file name
     MEAS_FILE = ID_CONFIGS[idconfig]
     _, meas_id = MEAS_FILE.split('ID=')
     meas_id = meas_id.replace('.dat', '')
-    fmap_fname = FOLDER_BASE + DATA_PATH + MEAS_FILE
+    fmap_fname = FOLDER_BASE + MEAS_DATA_PATH + MEAS_FILE
 
     # create  IDKickMap and set beam energy, fieldmap filename and RK step
     idkickmap = IDKickMap()

@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 from idanalysis import IDKickMap
 
 from utils import FOLDER_BASE
-from utils import DATA_PATH
+from utils import MEAS_DATA_PATH
 from utils import ID_CONFIGS
-from utils import get_idconfig
+from utils import get_meas_idconfig
 
 from imaids.models import AppleII as _AppleII
 from imaids.models import AppleIISabia as _AppleIISabia
@@ -20,12 +20,12 @@ from calibrate_model import RadiaModelCalibration
 def init_objects(phase, gap, mr=1.25, compare=None):
     """."""
     if compare == True:
-        idconfig = get_idconfig(phase, gap)
+        idconfig = get_meas_idconfig(phase, gap)
         MEAS_FILE = ID_CONFIGS[idconfig]
         _, meas_id = MEAS_FILE.split('ID=')
         meas_id = meas_id.replace('.dat', '')
         idkickmap = IDKickMap()
-        fmap_fname = FOLDER_BASE + DATA_PATH + MEAS_FILE
+        fmap_fname = FOLDER_BASE + MEAS_DATA_PATH + MEAS_FILE
         idkickmap.fmap_fname = fmap_fname
         fmap = idkickmap.fmap_config.fmap
     else:

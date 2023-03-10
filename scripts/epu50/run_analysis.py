@@ -17,7 +17,7 @@ from idanalysis import model as model
 from idanalysis import optics as optics
 
 from run_rk_traj import PHASES, GAPS
-from utils import get_idconfig
+from utils import get_meas_idconfig
 # from utils import create_kmap_filename
 
 
@@ -198,7 +198,7 @@ def analysis(plot_flag=True):
     twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
 
     # create model with id
-    idconfig = utils.get_idconfig(phase, gap)
+    idconfig = utils.get_meas_idconfig(phase, gap)
 
     model1, knobs, locs_beta = create_model_ids()
 

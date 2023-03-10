@@ -42,13 +42,15 @@ def calc_field_vs_gap_coeffs(traj_data, phase, datatype='fmap'):
         bx_, by_, = bx[gap], by[gap]
         fraction = int(len(rz_)/4)
 
-        amps = calc_eff_field(rz_[fraction:3*fraction], bx_[fraction:3*fraction])
+        amps = calc_eff_field(
+            rz_[fraction:3*fraction], bx_[fraction:3*fraction])
         beff = np.sqrt(amps[0]**2+amps[1]**2+amps[2]**2)
         keff = ima_utils.calc_deflection_parameter(beff, ID_PERIOD/1000)
         beffx.append(beff)
         keffx.append(keff)
 
-        amps = calc_eff_field(rz_[fraction:3*fraction], by_[fraction:3*fraction])
+        amps = calc_eff_field(
+            rz_[fraction:3*fraction], by_[fraction:3*fraction])
         beff = np.sqrt(amps[0]**2+amps[1]**2+amps[2]**2)
         keff = ima_utils.calc_deflection_parameter(beff, ID_PERIOD/1000)
         beffy.append(beff)
@@ -62,13 +64,13 @@ def calc_field_vs_gap_coeffs(traj_data, phase, datatype='fmap'):
         function_field_vs_gap, gap_array/ID_PERIOD, beffx)[0]
     a, b = curve_fit[:2]
     ax, bx = a*np.exp(-b*g0/ID_PERIOD), b/np.pi
-    
+
     # plot amplitude by
     curve_fit = optimize.curve_fit(
         function_field_vs_gap, gap_array/ID_PERIOD, beffy)[0]
     a, b = curve_fit[:2]
     ay, by = a*np.exp(-b*g0/ID_PERIOD), b/np.pi
-    
+
     return ax, bx, ay, by, beffx, keffx, beffy, keffy
 
 
@@ -133,6 +135,3 @@ if __name__ == "__main__":
 
     for phase in PHASES:
         plot_field_vs_gap(traj_data, phase, show_flag=False)
-    
-
-    

@@ -7,25 +7,24 @@ import matplotlib.pyplot as plt
 from imaids.models import AppleII as _AppleII
 from imaids.models import AppleIISabia as _AppleIISabia
 from imaids.blocks import Block as _Block
-
-import idanalysis
-#idanalysis.FOLDER_BASE = '/home/ximenes/repos-dev/'
-idanalysis.FOLDER_BASE = '/home/gabriel/repos-dev/'
-
 from idanalysis.fmap import EPUOnAxisFieldMap as _EPUOnAxisFieldMap
 from idanalysis import IDKickMap
 
 from utils import FOLDER_BASE
-from utils import DATA_PATH
+from utils import MEAS_DATA_PATH
 from utils import ID_CONFIGS
-from utils import get_idconfig
+from utils import get_meas_idconfig
 
 from run_rk_traj import PHASES, GAPS
+import idanalysis
+# idanalysis.FOLDER_BASE = '/home/ximenes/repos-dev/'
+idanalysis.FOLDER_BASE = '/home/gabriel/repos-dev/'
+
 
 class RadiaModelCalibration:
     """."""
 
-    def __init__(self, fmap : _EPUOnAxisFieldMap, epu : _AppleII):
+    def __init__(self, fmap: _EPUOnAxisFieldMap, epu: _AppleII):
         """."""
         self._fmap = fmap
         self._epu = epu
@@ -122,7 +121,7 @@ class RadiaModelCalibration:
     def set_rz_model(self, nr_pts_period=9):
         """"""
         epu = self._epu
-        field_length = 1.1 * (2 + epu.period_length) * epu.nr_periods + 2 * 5 * epu.gap
+        field_length = 1.1*(2 + epu.period_length)*epu.nr_periods + 2*5*epu.gap
         z_step = self._epu.period_length / (nr_pts_period - 1)
         maxind = int(field_length / z_step)
         inds = _np.arange(-maxind, maxind + 1)
@@ -205,7 +204,11 @@ class RadiaModelCalibration:
         _random.shuffle(inds_cse)
         _random.shuffle(inds_cie)
         _random.shuffle(inds_cid)
-        inds = dict(csd=inds_csd[:self._nrselblocks], cse=inds_cse[:self._nrselblocks], cie=inds_cie[:self._nrselblocks], cid=inds_cid[:self._nrselblocks])
+        inds = dict(
+            csd=inds_csd[:self._nrselblocks],
+            cse=inds_cse[:self._nrselblocks],
+            cie=inds_cie[:self._nrselblocks],
+            cid=inds_cid[:self._nrselblocks])
         return inds
 
     def get_selected_blocks_mags(self, blocks_inds):
@@ -213,7 +216,8 @@ class RadiaModelCalibration:
         for cas, ind in blocks_inds.items():
             mags_ = []
             for idx in ind:
-                mags_.append(self._epu.cassettes_ref[cas].blocks[idx].magnetization)
+                mags_.append(
+                    self._epu.cassettes_ref[cas].blocks[idx].magnetization)
             mags[cas] = mags_
         return mags
 
@@ -225,7 +229,7 @@ class RadiaModelCalibration:
             mags_delta = []
             mags_delta_inv = []
             for mag_old in mags_old:
-                mag_delta = mag_step *2*(_np.random.random(3) - 0.5)
+                mag_delta = mag_step*2*(_np.random.random(3) - 0.5)
                 mag_delta_inv = -1*mag_delta
                 mags_delta.append(mag_delta.tolist())
                 mags_delta_inv.append(mag_delta_inv.tolist())
@@ -274,10 +278,11 @@ class RadiaModelCalibration:
             for idx_mag, idx in enumerate(block_inds[cas.name]):
                 cas.blocks[idx].magnetization = mags_dif[cas.name][idx_mag]
                 # cas.blocks[idx].create_radia_object(magnetization=mags_dif[cas.name][idx_mag])
-                field_dif += cas.blocks[idx].get_field(x=0, y=0, z=self.rz_model)
+                field_dif += cas.blocks[idx].get_field(
+                    x=0, y=0, z=self.rz_model)
 
-        self._by_model += field_dif[:,1]
-        return field_dif[:,1]
+        self._by_model += field_dif[:, 1]
+        return field_dif[:, 1]
 
     def retrogress_model_field(self, block_inds, mags_dif, field_dif):
 
@@ -294,29 +299,33 @@ class RadiaModelCalibration:
         for i in _np.arange(10*1500):
 
             blocks_inds = self.get_blocks_indices()
-            delta_mags, delta_mags_inv = self.gen_mags_dif(blocks_inds=blocks_inds, mag_step=0.2*obj_function_old)
-            by_dif = self.update_model_field(block_inds=blocks_inds, mags_dif=delta_mags)
+            delta_mags, delta_mags_inv = self.gen_mags_dif(
+                blocks_inds=blocks_inds, mag_step=0.2*obj_function_old)
+            by_dif = self.update_model_field(
+                block_inds=blocks_inds, mags_dif=delta_mags)
             obj_function = _np.sum((by_meas_fit - self.by_model)**2)
             if obj_function < obj_function_old:
                 obj_function_old = obj_function
             else:
-                self.retrogress_model_field(block_inds=blocks_inds, mags_dif=delta_mags_inv, field_dif=by_dif)
+                self.retrogress_model_field(
+                    block_inds=blocks_inds, mags_dif=delta_mags_inv,
+                    field_dif=by_dif)
 
-            if i%25 ==0:
-                print('residue:',obj_function_old)
-                print('iteraction:',i)
+            if i % 25 == 0:
+                print('residue:', obj_function_old)
+                print('iteraction:', i)
 
         self.plot_fields(by_meas_fit=by_meas_fit)
 
 
 def get_fmap(phase, gap):
     """."""
-    idconfig = get_idconfig(phase, gap)
+    idconfig = get_meas_idconfig(phase, gap)
     MEAS_FILE = ID_CONFIGS[idconfig]
     _, meas_id = MEAS_FILE.split('ID=')
     meas_id = meas_id.replace('.dat', '')
     idkickmap = IDKickMap()
-    fmap_fname = FOLDER_BASE + DATA_PATH + MEAS_FILE
+    fmap_fname = FOLDER_BASE + MEAS_DATA_PATH + MEAS_FILE
     idkickmap.fmap_fname = fmap_fname
     fmap = idkickmap.fmap_config.fmap
 
@@ -334,13 +343,11 @@ def init_objects(phase, gap):
     block_len = period_length/4 - longitudinal_distance
     start_lengths = [block_len/4, block_len/2, 3*block_len/4, block_len]
     start_distances = [block_len/2, block_len/4, 0, longitudinal_distance]
-    end_lenghts = start_lengths[-2::-1] # Tirar último elemento e inverter
-    end_distances = start_distances[-2::-1] # Tirar último elemento e inverter
+    end_lenghts = start_lengths[-2::-1]  # Tirar último elemento e inverter
+    end_distances = start_distances[-2::-1]  # Tirar último elemento e inverter
     epu = _AppleIISabia(
         gap=gap, nr_periods=nr_periods, period_length=period_length,
-        mr=1.25, block_shape=block_shape, block_subdivision=[[1, 1, 1]])#,
-        # start_blocks_length=start_lengths, start_blocks_distance=start_distances,
-        # end_blocks_length=end_lenghts, end_blocks_distance=end_distances)
+        mr=1.25, block_shape=block_shape, block_subdivision=[[1, 1, 1]])
 
     return epu, fmap
 
@@ -394,7 +401,7 @@ def run_calibrated_kickmap(phase, gap):
     cm.plot_fields()
 
     # generate_kickmap(
-        # posx=posx, posy=posy, phase=phase, gap=gap, radia_model=epu)
+    # posx=posx, posy=posy, phase=phase, gap=gap, radia_model=epu)
 
 
 if __name__ == "__main__":

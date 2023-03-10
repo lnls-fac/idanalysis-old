@@ -6,7 +6,7 @@ import utils
 from idanalysis import IDKickMap
 
 from utils import FOLDER_BASE
-from utils import DATA_PATH
+from utils import MEAS_DATA_PATH
 from utils import ID_CONFIGS
 
 from run_rk_traj import PHASES, GAPS
@@ -14,13 +14,13 @@ from run_rk_traj import PHASES, GAPS
 
 def run(idconfig, posx, posy):
 
-    idconfig = utils.get_idconfig(phase, gap)
+    idconfig = utils.get_meas_idconfig(phase, gap)
     MEAS_FILE = ID_CONFIGS[idconfig]
 
     _, meas_id = MEAS_FILE.split('ID=')
     meas_id = meas_id.replace('.dat', '')
     idkickmap = IDKickMap()
-    fmap_fname = FOLDER_BASE + DATA_PATH + MEAS_FILE
+    fmap_fname = FOLDER_BASE + MEAS_DATA_PATH + MEAS_FILE
     idkickmap.fmap_fname = fmap_fname
     idkickmap.beam_energy = 3.0  # [GeV]
     idkickmap.rk_s_step = 2  # [mm]

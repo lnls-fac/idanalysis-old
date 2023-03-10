@@ -4,11 +4,11 @@ import numpy as np
 
 
 from utils import FOLDER_BASE
-from utils import DATA_PATH
+from utils import MEAS_DATA_PATH
 
-folder_m5 = FOLDER_BASE + DATA_PATH + 'probes 133-14/gap 22.0mm/y=-0.5mm/'
-folder_00 = FOLDER_BASE + DATA_PATH + 'probes 133-14/gap 22.0mm/'
-folder_p5 = FOLDER_BASE + DATA_PATH + 'probes 133-14/gap 22.0mm/y=+0.5mm/'
+folder_m5 = FOLDER_BASE + MEAS_DATA_PATH + 'probes 133-14/gap 22.0mm/y=-0.5mm/'
+folder_00 = FOLDER_BASE + MEAS_DATA_PATH + 'probes 133-14/gap 22.0mm/'
+folder_p5 = FOLDER_BASE + MEAS_DATA_PATH + 'probes 133-14/gap 22.0mm/y=+0.5mm/'
 folder_list = [folder_m5, folder_00, folder_p5]
 
 fname_0_list = ['2022-10-28_EPU_gap22.0_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4113.dat', '2022-10-19_EPU_gap22.0_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4079.dat', '2022-10-31_EPU_gap22.0_fase00.00_X=-20_20mm_Z=-1800_1800mm_ID=4114.dat']

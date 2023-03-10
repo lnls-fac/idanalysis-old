@@ -23,7 +23,7 @@ from idanalysis import optics as optics
 from siriuspy.magnet.factory import NormalizerFactory
 
 from run_rk_traj import PHASES, GAPS
-from utils import get_idconfig
+from utils import get_meas_idconfig
 # from utils import create_kmap_filename
 
 
