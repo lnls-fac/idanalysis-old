@@ -95,11 +95,12 @@ def generate_radia_model(gap, width, termination_parameters, solve=True):
     period_length = 18.5
     br = 1.24
 
-    height = 29
+    # width = 49
+    height = 26
     chamfer_b = 5
 
-    p_width = 0.8*width
-    p_height = 24
+    p_width = 34
+    p_height = 21
     pole_length = 2.9
     chamfer_p = 3
     y_pos = 0
