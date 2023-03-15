@@ -20,7 +20,7 @@ RESCALE_KICKS = utils.RESCALE_KICKS
 RESCALE_LENGTH = utils.RESCALE_LENGTH
 
 CALC_TYPES = utils.CALC_TYPES
-FITTED_MODEL = utils.FITTED_MODEL
+SIMODEL_FITTED = utils.SIMODEL_FITTED
 
 
 def create_path(gap, width):
@@ -390,19 +390,19 @@ def run_analysis_dynapt(gap, width, fitted_model, calc_type):
 
 if __name__ == '__main__':
 
-    gaps = [10, 20]
-    widths = [29, 31]
+    gaps = [4.3]
+    widths = [49]
 
     for gap in gaps:
         for width in widths:
             # calc_type = CALC_TYPES.nominal
             # run_analysis_dynapt(
-                # gap, width, fitted_model=FITTED_MODEL, calc_type=calc_type)
+                # gap, width, fitted_model=SIMODEL_FITTED, calc_type=calc_type)
 
             calc_type = CALC_TYPES.symmetrized
             run_analysis_dynapt(
-                gap, width, fitted_model=FITTED_MODEL, calc_type=calc_type)
+                gap, width, fitted_model=SIMODEL_FITTED, calc_type=calc_type)
 
             # calc_type = CALC_TYPES.nonsymmetrized
             # run_analysis_dynapt(
-                # gap, width, fitted_model=FITTED_MODEL, calc_type=calc_type)
+                # gap, width, fitted_model=SIMODEL_FITTED, calc_type=calc_type)

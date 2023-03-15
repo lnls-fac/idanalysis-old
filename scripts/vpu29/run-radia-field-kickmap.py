@@ -9,8 +9,12 @@ from idanalysis import IDKickMap
 import utils
 
 
-SOLVE_FLAG = utils.SOLVE_FLAG
+BEAM_ENERGY = utils.BEAM_ENERGY
 RK_S_STEP = utils.DEF_RK_S_STEP
+ROLL_OFF_RY = utils.ROLL_OFF_RY
+NOMINAL_GAP = utils.NOMINAL_GAP
+SIMODEL_ID_LEN = utils.SIMODEL_ID_LEN
+SOLVE_FLAG = utils.SOLVE_FLAG
 
 
 def get_termination_parameters(width):
@@ -54,7 +58,7 @@ def create_models(gaps, widths):
 def get_field_roll_off(models, data, ry, peak_idx):
     """."""
     bx_y = dict()
-    rx_avg_dict = dict()
+    ry_avg_dict = dict()
     roll_off = dict()
     for (gap, width), ivu in models.items():
         print(f'calc field rolloff for gap {gap} mm and width {width} mm')
@@ -72,10 +76,10 @@ def get_field_roll_off(models, data, ry, peak_idx):
         roff = np.abs(bx[ry6_idx]/bx[ry0_idx]-1)
 
         bx_y[(gap, width)] = bx
-        rx_avg_dict[(gap, width)] = ry
+        ry_avg_dict[(gap, width)] = ry
         roll_off[(gap, width)] = roff
 
-    data['rolloff_rx'] = rx_avg_dict
+    data['rolloff_ry'] = ry_avg_dict
     data['rolloff_bx'] = bx_y
     data['rolloff_value'] = roll_off
 
@@ -173,18 +177,18 @@ def plot_field_roll_off(data, gap):
     widths = list(data.keys())
     for i, width in enumerate(widths):
         bx = data[width]['rolloff_bx']
-        rx = data[width]['rolloff_rx']
-        rx6_idx = np.argmin(np.abs(rx - utils.ROLL_OFF_RX))
-        rx0_idx = np.argmin(np.abs(rx))
-        roff = np.abs(bx[rx6_idx]/bx[rx0_idx]-1)
+        ry = data[width]['rolloff_ry']
+        ry6_idx = np.argmin(np.abs(ry - utils.ROLL_OFF_RY))
+        ry0_idx = np.argmin(np.abs(ry))
+        roff = np.abs(bx[ry6_idx]/bx[ry0_idx]-1)
         label = "width {}, roll-off = {:.2f} %".format(width, 100*roff)
-        irx0 = np.argmin(np.abs(rx))
-        bx0 = bx[irx0]
+        iry0 = np.argmin(np.abs(ry))
+        bx0 = bx[iry0]
         roll_off = 100*(bx/bx0 - 1)
         print(label)
-        plt.plot(rx, roll_off, '.-', label=label, color=colors[i])
-        # plt.plot(rx, bx, label=label, color=colors[i])
-    plt.xlabel('x [mm]')
+        plt.plot(ry, roll_off, '.-', label=label, color=colors[i])
+        # plt.plot(ry, bx, label=label, color=colors[i])
+    plt.xlabel('y [mm]')
     # plt.ylabel('By [T]')
     plt.ylabel('roll off [%]')
     plt.xlim(-6, 6)
@@ -237,7 +241,7 @@ def plot_rk_traj(data):
 
 
 def run_calc_fields(
-        models=None, gaps=None, widths=None, rx=None, rz=None):
+        models=None, gaps=None, widths=None, ry=None, rz=None):
     """."""
     if not models:
         gaps = gaps or [4.2, 20.0]  # [mm]
@@ -246,14 +250,14 @@ def run_calc_fields(
         # --- create radia models for various gaps/widths
         models = create_models(gaps, widths)
 
-    rx = rx or np.linspace(-40, 40, 4*81+1)
+    ry = ry or np.linspace(-40, 40, 4*81+1)
     rz = rz or np.linspace(-100, 100, 200)
 
     data = dict()
 
     # --- calc field rolloffs for models
     data = get_field_roll_off(
-        models=models, data=data, rx=rx, peak_idx=0)
+        models=models, data=data, ry=ry, peak_idx=0)
 
     # --- calc field on axis
     data = get_field_on_axis(models=models, data=data, rz=rz)
@@ -273,8 +277,8 @@ def run_generate_kickmap(models=None, gaps=None,
     """."""
     gaps = gaps or [4.2, 20.0]  # [mm]
     widths = widths or [68, 63, 58, 53, 48, 43]  # [mm]
-    gridx = gridx or list(np.arange(-10, +11, 1) / 1000)  # [m]
-    gridy = gridy or list(np.linspace(-2, +2, 11) / 1000)  # [m]
+    gridx = gridx or list(np.linspace(-3.7, +3.7, 9) / 1000)  # [m]
+    gridy = gridy or list(np.linspace(-2.15, +2.15, 11) / 1000)  # [m]
     models = models or create_models()
 
     for (gap, width), ivu in models.items():
@@ -305,8 +309,8 @@ if __name__ == "__main__":
     models = dict()
     gaps = [9.7]  # [mm]
     widths = [60, 50, 40, 30]  # [mm]
-    models = run_calc_fields(
-            models=models, gaps=gaps, widths=widths, rx=None, rz=None)
-    # run_plot_data(gap=9.7, widths=widths)
-    models = run_generate_kickmap(
-            models=models, gaps=gaps, widths=widths)
+    # models = run_calc_fields(
+            # models=models, gaps=gaps, widths=widths, ry=None, rz=None)
+    run_plot_data(gap=9.7, widths=widths)
+    # models = run_generate_kickmap(
+            # models=models, gaps=gaps, widths=widths)

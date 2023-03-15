@@ -9,12 +9,12 @@ from idanalysis import IDKickMap
 import utils
 
 
-ID_GAP = utils.ID_GAP
+BEAM_ENERGY = utils.BEAM_ENERGY
+RK_S_STEP = utils.DEF_RK_S_STEP
+ROLL_OFF_RX = utils.ROLL_OFF_RX
+NOMINAL_GAP = utils.NOMINAL_GAP
 SIMODEL_ID_LEN = utils.SIMODEL_ID_LEN
 SOLVE_FLAG = utils.SOLVE_FLAG
-RK_S_STEP = utils.DEF_RK_S_STEP
-BEAM_ENERGY = utils.BEAM_ENERGY
-ROLL_OFF_RX = utils.ROLL_OFF_RX
 
 
 def create_model(phase, gap):
@@ -328,6 +328,6 @@ if __name__ == "__main__":
     rx_init = [-10e-3, 0, 10e-3]  # High beta's worst initial conditions [m]
     rz_max = 900  # utils.ID_PERIOD*utils.NR_PERIODS + 40
 
-    # papu = run_calc_fields(phase, ID_GAP, rz_max, rx_init)
+    # papu = run_calc_fields(phase, NOMINAL_GAP, rz_max, rx_init)
     # run_plot_data(phase=phase)
     papu = run_generate_kickmap(papu=None, phase=phase, rz_max=rz_max)

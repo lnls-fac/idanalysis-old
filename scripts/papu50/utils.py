@@ -1,25 +1,25 @@
 """."""
-# imports
-from imaids.models import PAPU
-import numpy as np
-
 import pyaccel
 import pymodels
+import numpy as np
+
+from imaids.models import PAPU
 from idanalysis import IDKickMap
 
 BEAM_ENERGY = 3.0  # [GeV]
-
-ID_PERIOD = 50  # [mm]
-NR_PERIODS = 18  # [mm]
-ID_GAP = 24.0  # [mm] - fixed papu50 gap.
-ID_KMAP_LEN = 0.9  # [m]
 DEF_RK_S_STEP = 1  # [mm] seems converged for the measurement fieldmap grids
-RESCALE_KICKS = 1  # Radia simulations could have fewer ID periods
-RESCALE_LENGTH = 1  # RK traj is not calculated in free field regions
 ROLL_OFF_RX = 10.0  # [mm]
 SOLVE_FLAG = True
 
-SIMODEL_ID_LEN = 1.2  # [m]
+ID_PERIOD = 50  # [mm]
+NR_PERIODS = 18  # [mm]
+NR_PERIODS_REAL_ID = 18
+SIMODEL_ID_LEN = 1.200  # [m]
+ID_KMAP_LEN = SIMODEL_ID_LEN
+RESCALE_KICKS = NR_PERIODS_REAL_ID/NR_PERIODS
+RESCALE_LENGTH = 1  # RK traj is not calculated in free field regions
+NOMINAL_GAP = 24.0  # [mm] - fixed papu50 gap.
+
 SIMODEL_FITTED = False
 
 FOLDER_DATA = './results/model/data/'
@@ -28,9 +28,8 @@ KYMA22_KMAP_FILENAME = (
     'model/kickmaps/kickmap-ID-kyma22-phase_pos00p000.txt')
 
 INSERT_KYMA = True
-KYMA_RESCALE_KICKS = 10  # Radia simulations have fewer ID periods
-KYMA_RESCALE_LENGTH = 10  # Radia simulations have fewer ID periods
-NR_PAPU = 1
+KYMA_RESCALE_KICKS = 1  # Radia simulations have fewer ID periods
+KYMA_RESCALE_LENGTH = 1  # Radia simulations have fewer ID periods
 
 
 class CALC_TYPES:
@@ -85,29 +84,12 @@ def create_ids(
         rescale_length if rescale_length is not None else 1
     fname = get_kmap_filename(phase)
 
-    if NR_PAPU > 0:
-        papu50_17 = IDModel(
-            subsec=IDModel.SUBSECTIONS.ID17SA,
-            file_name=fname,
-            fam_name='PAPU50', nr_steps=nr_steps,
-            rescale_kicks=rescale_kicks, rescale_length=rescale_length)
-        ids.append(papu50_17)
-
-    if NR_PAPU > 1:
-        papu50_05 = IDModel(
-            subsec=IDModel.SUBSECTIONS.ID05SA,
-            file_name=fname,
-            fam_name='PAPU50', nr_steps=nr_steps,
-            rescale_kicks=rescale_kicks, rescale_length=rescale_length)
-        ids.append(papu50_05)
-
-    if NR_PAPU > 2:
-        papu50_13 = IDModel(
-            subsec=IDModel.SUBSECTIONS.ID13SA,
-            file_name=fname,
-            fam_name='PAPU50', nr_steps=nr_steps,
-            rescale_kicks=rescale_kicks, rescale_length=rescale_length)
-        ids.append(papu50_13)
+    papu50 = IDModel(
+        subsec=IDModel.SUBSECTIONS.ID17SA,
+        file_name=fname,
+        fam_name='PAPU50', nr_steps=nr_steps,
+        rescale_kicks=rescale_kicks, rescale_length=rescale_length)
+    ids.append(papu50)
 
     return ids
 
@@ -128,7 +110,7 @@ def create_model_ids(
     return model, ids
 
 
-def generate_radia_model(phase=0, gap=ID_GAP, solve_flag=False):
+def generate_radia_model(phase=0, gap=NOMINAL_GAP, solve_flag=False):
     """."""
     papu = PAPU(gap=gap)
     papu.dg = phase

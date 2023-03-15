@@ -1,25 +1,30 @@
 """."""
-
-import numpy as np
 import pyaccel
 import pymodels
+import numpy as np
 
-from idanalysis import IDKickMap
-from imaids.models import AppleII
 from imaids.models import AppleIISabia
+from idanalysis import IDKickMap
 
-
-ID_PERIOD = 50.0  # [mm]
-ID_KMAP_LEN = 2.770  # [m]
+BEAM_ENERGY = 3.0  # [GeV]
 DEF_RK_S_STEP = 2  # [mm] seems converged for the measurement fieldmap grids
-MEAS_DATA_PATH = './meas-data/epu-uvx/measurement/magnetic/hallprobe/'
-FOLDER_DATA = './results/model/data/'
-MEAS_FLAG = True
+ROLL_OFF_RX = 6.0  # [mm]
 SOLVE_FLAG = False
 
-ROLL_OFF_RX = 5.0  # [mm]
-RESCALE_KICKS = 1
+ID_PERIOD = 50.0  # [mm]
+NR_PERIODS = 54  #
+NR_PERIODS_REAL_ID = 54  #
+SIMODEL_ID_LEN = 2.770  # [m]
+ID_KMAP_LEN = SIMODEL_ID_LEN  # [m]
+RESCALE_KICKS = NR_PERIODS_REAL_ID/NR_PERIODS
 RESCALE_LENGTH = 1
+
+SIMODEL_FITTED = False
+SHIFT_FLAG = True
+
+FOLDER_DATA = './results/model/data/'
+MEAS_DATA_PATH = './meas-data/epu-uvx/measurement/magnetic/hallprobe/'
+MEAS_FLAG = True
 
 
 class CALC_TYPES:
@@ -284,6 +289,11 @@ PHASES = ['-25.00', '-16.39', '+00.00', '+16.39', '+25.00']
 ORDERED_CONFIGS = [_phase25n, _phase16n, _phase00p, _phase16p, _phase25p]
 
 
+def get_folder_data():
+    data_path = FOLDER_DATA
+    return data_path
+
+
 def get_data_ID(fname):
     """."""
     _, idn = fname.split('ID=')
@@ -322,11 +332,6 @@ def get_kmap_filename(phase, gap):
     fname = fpath
     fname += 'kickmap-ID-epu50-phase_{phase_str}-gap_{gap_str}.txt'.format(
         phase_str, gap_str)
-    return fname
-
-
-def create_kmap_filename_model(phase, gap):
-    fname = f'./results/model/kickmap_model{gap}.txt'
     return fname
 
 
@@ -369,7 +374,7 @@ def create_model_ids(
 def generate_radia_model(phase, gap, nr_periods, solve=SOLVE_FLAG):
     """."""
     gap = gap
-    nr_periods = 54
+    nr_periods = nr_periods
     period_length = 50
     block_shape = [[[0.1, 0], [40, 0], [40, -40], [0.1, -40]]]
     longitudinal_distance = 0.2

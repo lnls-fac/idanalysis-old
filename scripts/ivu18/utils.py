@@ -6,24 +6,24 @@ import numpy as np
 from imaids.models import HybridPlanar as Hybrid
 from idanalysis import IDKickMap
 
-
 BEAM_ENERGY = 3.0  # [GeV]
-
-ID_PERIOD = 18.5  # [mm]
-NOMINAL_GAP = 4.2  # [mm]
-ID_KMAP_LEN = 2.5  # [m]
 DEF_RK_S_STEP = 0.5  # [mm] seems converged for the measurement fieldmap grids
-RESCALE_KICKS = 21.6  # Radia simulations have fewer ID periods
-RESCALE_LENGTH = 1  # Radia simulations have fewer ID periods
 ROLL_OFF_RX = 6.0  # [mm]
 SOLVE_FLAG = True
 
-FOLDER_DATA = './results/model/data/'
+ID_PERIOD = 18.5  # [mm]
+NR_PERIODS = 5
+NR_PERIODS_REAL_ID = 108
+SIMODEL_ID_LEN = 2.0  # [m]  It's necessary to update kickmaps
+ID_KMAP_LEN = SIMODEL_ID_LEN
+RESCALE_KICKS = NR_PERIODS_REAL_ID/NR_PERIODS
+RESCALE_LENGTH = 1  # Radia simulations have fewer ID periods
+NOMINAL_GAP = 4.3  # [mm]
 
+SIMODEL_FITTED = False
 SHIFT_FLAG = True
-FILTER_FLAG = False
 
-FITTED_MODEL = True
+FOLDER_DATA = './results/model/data/'
 
 
 class CALC_TYPES:
@@ -33,21 +33,24 @@ class CALC_TYPES:
     symmetrized = 2
 
 
+def get_folder_data():
+    data_path = FOLDER_DATA
+    return data_path
+
+
 def get_gap_str(gap):
     """."""
     gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
     return gap_str
 
 
-def get_kmap_filename(gap, width, shift_flag=SHIFT_FLAG, filter=FILTER_FLAG):
+def get_kmap_filename(gap, width, shift_flag=SHIFT_FLAG):
     fpath = FOLDER_DATA + 'kickmaps/'
     fpath = fpath.replace('model/data/', 'model/')
     gap_str = get_gap_str(gap)
     fname = fpath + f'kickmap-ID-{width}-gap{gap_str}mm.txt'
     if shift_flag:
         fname = fname.replace('.txt', '-shifted_on_axis.txt')
-    if filter:
-        fname = fname.replace('.txt', '-filtered.txt')
     return fname
 
 
@@ -60,25 +63,20 @@ def create_ids(
     rescale_length = \
         rescale_length if rescale_length is not None else 1
     fname = get_kmap_filename(gap=gap, width=width)
-    idkmap = IDKickMap(kmap_fname=fname)
-    kickx_up = idkmap.kickx_upstream  # [T².m²]
-    kicky_up = idkmap.kicky_upstream  # [T².m²]
-    kickx_down = idkmap.kickx_downstream  # [T².m²]
-    kicky_down = idkmap.kicky_downstream  # [T².m²]
-    termination_kicks = [kickx_up, kicky_up, kickx_down, kicky_down]
     IDModel = pymodels.si.IDModel
     ivu18 = IDModel(
         subsec=IDModel.SUBSECTIONS.ID08SB,
         file_name=fname,
         fam_name='IVU18', nr_steps=nr_steps,
-        rescale_kicks=rescale_kicks, rescale_length=rescale_length,
-        termination_kicks=termination_kicks)
+        rescale_kicks=rescale_kicks, rescale_length=rescale_length)
     ids = [ivu18, ]
     return ids
 
 
-def create_model_ids(gap, width, rescale_kicks=RESCALE_KICKS,
-                     rescale_length=RESCALE_LENGTH):
+def create_model_ids(
+        gap, width,
+        rescale_kicks=RESCALE_KICKS,
+        rescale_length=RESCALE_LENGTH):
     ids = create_ids(
         gap, width, rescale_kicks=rescale_kicks,
         rescale_length=rescale_length)
@@ -90,7 +88,8 @@ def create_model_ids(gap, width, rescale_kicks=RESCALE_KICKS,
     return model, ids
 
 
-def generate_radia_model(gap, width, termination_parameters, solve=True):
+def generate_radia_model(width, termination_parameters,
+                         gap=NOMINAL_GAP, solve=True):
     """."""
     period_length = 18.5
     br = 1.24
@@ -139,7 +138,8 @@ def generate_radia_model(gap, width, termination_parameters, solve=True):
     end_blocks_length = lengths[0:-1][::-1]
     end_blocks_distance = distances[0:-1][::-1]
 
-    ivu = Hybrid(gap=gap, period_length=period_length, mr=br, nr_periods=5,
+    ivu = Hybrid(gap=gap, period_length=period_length,
+                 mr=br, nr_periods=NR_PERIODS,
                  longitudinal_distance=0, block_shape=block_shape,
                  pole_shape=pole_shape, block_subdivision=block_subdivision,
                  pole_subdivision=pole_subdivision, pole_length=pole_length,

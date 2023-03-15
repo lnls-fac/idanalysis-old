@@ -8,11 +8,12 @@ from mathphys.functions import save_pickle, load_pickle
 from idanalysis import IDKickMap
 import utils
 
-SIMODEL_ID_LEN = utils.SIMODEL_ID_LEN
 BEAM_ENERGY = utils.BEAM_ENERGY
-SOLVE_FLAG = utils.SOLVE_FLAG
 RK_S_STEP = utils.DEF_RK_S_STEP
-ROLL_OFF_RX = 6.0  # [mm]
+ROLL_OFF_RX = utils.ROLL_OFF_RX
+NOMINAL_GAP = utils.NOMINAL_GAP
+SIMODEL_ID_LEN = utils.SIMODEL_ID_LEN
+SOLVE_FLAG = utils.SOLVE_FLAG
 
 
 def create_path(phase):
@@ -44,55 +45,64 @@ def generate_kickmap(gridx, gridy, phase, radia_model, rz_max):
     idkickmap.save_kickmap_file(kickmap_filename=fname)
 
 
-def create_model(phase, gap, nr_periods):
+def create_models(phase, gaps, nr_periods):
     """."""
-    epu = utils.generate_radia_model(
-            phase, gap,
-            nr_periods=nr_periods)
-    return epu
+    models = dict()
+    for gap in gaps:
+        epu = utils.generate_radia_model(
+                phase, gap,
+                nr_periods=nr_periods)
+        models[gap] = epu
+    return models
 
 
-def get_field_roll_off(epu, data, rx, peak_idx):
+def get_field_roll_off(models, data, rx, peak_idx):
     """."""
-    period = epu.period_length
-    rz = np.linspace(-period/2, period/2, 100)
-    field = epu.get_field(0, 0, rz)
-    by = field[:, 1]
-    by_max_idx = np.argmax(by)
-    rz_at_max = rz[by_max_idx] + peak_idx*period
-    field = epu.get_field(rx, 0, rz_at_max)
-    by = field[:, 1]
-    by_avg = by
-    rx_avg = rx
-    rxr_idx = np.argmin(np.abs(rx_avg - utils.ROLL_OFF_RX))
-    rx0_idx = np.argmin(np.abs(rx_avg))
-    roff = np.abs(by_avg[rxr_idx]/by_avg[rx0_idx]-1)
-    print(f'roll off = {100*roff:.2f} %')
+    by_x = dict()
+    rx_avg_dict = dict()
+    roll_off = dict()
+    for gap, epu in models.items():
+        print(f'calc field rolloff for gap {gap} mm')
+        by_list = list()
+        period = epu.period_length
+        rz = np.linspace(-period/2, period/2, 100)
+        field = epu.get_field(0, 0, rz)
+        by = field[:, 1]
+        by_max_idx = np.argmax(by)
+        rz_at_max = rz[by_max_idx] + peak_idx*period
+        field = epu.get_field(rx, 0, rz_at_max)
+        by = field[:, 1]
 
-    data['rolloff_by'] = by_avg
-    data['rolloff_rx'] = rx_avg
-    data['rolloff_value'] = roff
+        rx6_idx = np.argmin(np.abs(rx - utils.ROLL_OFF_RX))
+        rx0_idx = np.argmin(np.abs(rx))
+        roff = np.abs(by[rx6_idx]/by[rx0_idx]-1)
+
+        by_x[gap] = by
+        rx_avg_dict[gap] = rx
+        roll_off[gap] = roff
+
+    data['rolloff_rx'] = rx_avg_dict
+    data['rolloff_by'] = by_x
+    data['rolloff_value'] = roll_off
 
     return data
 
 
-def get_field_on_axis(epu, data, rz, plot_flag=False):
-    field = epu.get_field(0, 0, rz)
-    bx = field[:, 0]
-    by = field[:, 1]
+def get_field_on_axis(models, data, rz, plot_flag=False):
 
-    if plot_flag:
-        plt.plot(rz, bx, label='Bx')
-        plt.plot(rz, by, label='By')
-        plt.xlabel('rz [mm]')
-        plt.ylabel('Field [T]')
-        plt.legend()
-        plt.grid()
-        plt.show()
-
-    data['onaxis_by'] = by
-    data['onaxis_bx'] = bx
-    data['onaxis_rz'] = rz
+    bx_dict, by_dict, rz_dict = dict(), dict(), dict()
+    for gap, ivu in models.items():
+        print(f'calc field on-axis for gap {gap} mm')
+        field = ivu.get_field(0, 0, rz)
+        bx = field[:, 0]
+        by = field[:, 1]
+        key = gap
+        bx_dict[key] = bx
+        by_dict[key] = by
+        rz_dict[key] = rz
+    data['onaxis_bx'] = bx_dict
+    data['onaxis_by'] = by_dict
+    data['onaxis_rz'] = rz_dict
 
     return data
 
@@ -212,9 +222,9 @@ def plot_rk_traj(data):
     plt.show()
 
 
-def run_calc_fields(phase, gap, nr_periods=5):
+def run_calc_fields(phase, gaps, nr_periods=5):
 
-    epu = create_model(phase, gap, nr_periods=nr_periods)
+    models = create_models(phase, gaps, nr_periods=nr_periods)
 
     rx = utils.ROLL_OFF_RX * np.linspace(-3, 3, 4*81)  # [mm]
 
@@ -225,7 +235,7 @@ def run_calc_fields(phase, gap, nr_periods=5):
 
     # --- calc field rolloffs for models
     data = get_field_roll_off(
-        epu=epu, data=data, rx=rx, peak_idx=0)
+        models=models, data=data, rx=rx, peak_idx=0)
 
     # --- calc field on axis
     data = get_field_on_axis(epu=epu, data=data, rz=rz)
@@ -268,7 +278,7 @@ def run_plot_data(phase):
 if __name__ == "__main__":
 
     phase = -16.39
-    gap = 22
-    epu, rz_max = run_calc_fields(phase, gap, nr_periods=51)
-    run_plot_data(phase=phase)
-    epu = run_generate_kickmap(epu=epu, rz_max=rz_max)
+    gaps = [22]
+    epu, rz_max = run_calc_fields(phase, gaps, nr_periods=51)
+    run_plot_data(phase=phase, gaps=gaps)
+    epu = run_generate_kickmap(epu=epu, gaps=gaps, rz_max=rz_max)

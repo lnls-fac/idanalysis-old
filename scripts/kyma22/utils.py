@@ -1,24 +1,26 @@
 """."""
-# imports
-from imaids.models import Kyma22
-import numpy as np
-
 import pyaccel
 import pymodels
+import numpy as np
+
+from imaids.models import Kyma22
 from idanalysis import IDKickMap
 
 BEAM_ENERGY = 3.0  # [GeV]
-
-ID_PERIOD = 22  # [mm]
-NR_PERIODS = 5  #
-ID_KMAP_LEN = 0.13  # [m]
 DEF_RK_S_STEP = 1  # [mm] seems converged for the measurement fieldmap grids
-RESCALE_KICKS = 10  # Radia simulations have fewer ID periods
-RESCALE_LENGTH = 10  # Radia simulations have fewer ID periods
-SOLVE_FLAG = True
 ROLL_OFF_RX = 10.0  # [mm]
 SOLVE_FLAG = False
-FITTED_MODEL = False
+
+ID_PERIOD = 22  # [mm]
+NR_PERIODS = 50  #
+NR_PERIODS_REAL_ID = 50  #
+SIMODEL_ID_LEN = 1.300
+ID_KMAP_LEN = SIMODEL_ID_LEN
+RESCALE_KICKS = NR_PERIODS_REAL_ID/NR_PERIODS
+RESCALE_LENGTH = 1
+
+SIMODEL_FITTED = False
+SHIFT_FLAG = True
 
 FOLDER_DATA = './results/model/data/'
 MEAS_FILE = './results/measurements/fieldmap_phase0.dat'
@@ -82,6 +84,7 @@ def create_model_ids(
         rescale_kicks=RESCALE_KICKS,
         rescale_length=RESCALE_LENGTH, meas_flag=True):
     ids = create_ids(
+        phase=phase,
         rescale_kicks=rescale_kicks,
         rescale_length=rescale_length,
         meas_flag=meas_flag)
@@ -93,7 +96,7 @@ def create_model_ids(
     return model, ids
 
 
-def generate_radia_model(phase, nr_periods=5, solve=SOLVE_FLAG):
+def generate_radia_model(width, phase, nr_periods=5, solve=SOLVE_FLAG):
     """."""
     kyma = Kyma22(nr_periods=nr_periods)
     kyma.dg = phase

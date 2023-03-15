@@ -8,29 +8,37 @@ from mathphys.functions import save_pickle, load_pickle
 from idanalysis import IDKickMap
 import utils
 
-
-SOLVE_FLAG = utils.SOLVE_FLAG
+BEAM_ENERGY = utils.BEAM_ENERGY
 RK_S_STEP = utils.DEF_RK_S_STEP
+ROLL_OFF_RX = utils.ROLL_OFF_RX
+NOMINAL_GAP = utils.NOMINAL_GAP
+SIMODEL_ID_LEN = utils.SIMODEL_ID_LEN
+SOLVE_FLAG = utils.SOLVE_FLAG
 
 
 def get_termination_parameters(width):
     """."""
-    fname = utils.FOLDER_DATA + 'respm_termination_{}.pickle'.format(width)
+    fname = utils.FOLDER_DATA
+    fname += 'general/respm_termination_{}.pickle'.format(width)
     term = load_pickle(fname)
     b1t, b2t, b3t, dist1, dist2 = term['results']
     return list([b1t, b2t, b3t, dist1, dist2])
 
 
-def generate_kickmap(gap, width, gridx, gridy, radia_model):
-
+def config_traj(radia_model, rz_max):
     idkickmap = IDKickMap()
     idkickmap.radia_model = radia_model
-    idkickmap.beam_energy = 3.0  # [GeV]
-    idkickmap.rk_s_step = 0.5  # [mm]
-    idkickmap._radia_model_config.traj_init_px = 0
-    idkickmap._radia_model_config.traj_init_py = 0
-    idkickmap.traj_init_rz = -100
-    # print(idkickmap._radia_model_config)
+    idkickmap.beam_energy = BEAM_ENERGY
+    idkickmap.rk_s_step = RK_S_STEP
+    idkickmap.traj_init_rz = -rz_max
+    idkickmap.traj_rk_min_rz = rz_max
+    idkickmap.kmap_idlen = SIMODEL_ID_LEN
+    return idkickmap
+
+
+def generate_kickmap(gap, width, gridx, gridy, radia_model, rz_max):
+
+    idkickmap = config_traj(radia_model=radia_model, rz_max=rz_max)
     idkickmap.fmap_calc_kickmap(posx=gridx, posy=gridy)
     fname = utils.get_kmap_filename(gap, width)
     idkickmap.save_kickmap_file(kickmap_filename=fname)
@@ -44,8 +52,9 @@ def create_models(gaps, widths):
             print(f'creating model for gap {gap} mm and width {width} mm')
             termination_parameters = get_termination_parameters(63)
             ivu = utils.generate_radia_model(
-                gap=gap, width=width,
+                width=width,
                 termination_parameters=termination_parameters,
+                gap=gap,
                 solve=SOLVE_FLAG)
             models[(gap, width)] = ivu
     return models
@@ -148,6 +157,7 @@ def save_data(data):
         width = keys[1]
         gap_str = utils.get_gap_str(keys[0])
         fname = utils.FOLDER_DATA
+        fname += 'widths/width_{}/gap_{}/'.format(width, gap_str)
         fname += 'field_data_gap{}_width{}'.format(gap_str, width)
         save_pickle(fdata, fname, overwrite=True)
 
@@ -164,11 +174,11 @@ def plot_field_on_axis(data):
     plt.ylabel('By [T]')
     plt.legend()
     plt.grid()
-    plt.savefig(utils.FOLDER_DATA + 'field-profile', dpi=300)
+    plt.savefig(utils.FOLDER_DATA + 'general/field-profile', dpi=300)
     plt.show()
 
 
-def plot_field_roll_off(data, gap, filter='off'):
+def plot_field_roll_off(data, gap):
     plt.figure(1)
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
     widths = list(data.keys())
@@ -176,16 +186,8 @@ def plot_field_roll_off(data, gap, filter='off'):
         by = data[width]['rolloff_by']
         rx = data[width]['rolloff_rx']
         by_list = list()
-        if filter == 'on':
-            for j in range(len(rx)):
-                if j >= 6 and j <= len(rx)-7:
-                    by_temp = by[j-6] + by[j-5] + by[j-4] + by[j-3]
-                    by_temp += by[j-2] + by[j-1] + by[j] + by[j+1] + by[j+2]
-                    by_temp += by[j+3] + by[j+4] + by[j+5] + by[j+6]
-                    by_temp = by_temp/13
-                    by_list.append(by_temp)
-            by = np.array(by_list)
-            rx = rx[6:-6]
+        by = np.array(by_list)
+        rx = rx[6:-6]
         rx6_idx = np.argmin(np.abs(rx - utils.ROLL_OFF_RX))
         rx0_idx = np.argmin(np.abs(rx))
         roff = np.abs(by[rx6_idx]/by[rx0_idx]-1)
@@ -195,16 +197,14 @@ def plot_field_roll_off(data, gap, filter='off'):
         roll_off = 100*(by/by0 - 1)
         print(label)
         plt.plot(rx, roll_off, '.-', label=label, color=colors[i])
-        # plt.plot(rx, by, label=label, color=colors[i])
     plt.xlabel('x [mm]')
-    # plt.ylabel('By [T]')
     plt.ylabel('roll off [%]')
     plt.xlim(-6, 6)
     plt.ylim(-1.2, 0.02)
     plt.title('Field roll-off at x = 6 mm for Gap {:.1f} mm'.format(gap))
     plt.legend()
     plt.grid()
-    plt.savefig(utils.FOLDER_DATA + 'field-rolloff', dpi=300)
+    plt.savefig(utils.FOLDER_DATA + 'general/field-rolloff', dpi=300)
     plt.show()
 
 
@@ -244,7 +244,7 @@ def plot_rk_traj(data):
         plt.figure(i)
         plt.legend()
         plt.grid()
-        plt.savefig(utils.FOLDER_DATA + sulfix[i-1], dpi=300)
+        plt.savefig(utils.FOLDER_DATA + 'general/' + sulfix[i-1], dpi=300)
     plt.show()
 
 
@@ -303,6 +303,7 @@ def run_plot_data(gap, widths):
     gap_str = utils.get_gap_str(gap)
     for width in widths:
         fname = utils.FOLDER_DATA
+        fname += 'widths/width_{}/gap_{}/'.format(width, gap_str)
         fname += 'field_data_gap{}_width{}'.format(gap_str, width)
         fdata = load_pickle(fname)
         data_plot[width] = fdata

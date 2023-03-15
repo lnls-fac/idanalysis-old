@@ -9,9 +9,12 @@ from idanalysis import IDKickMap
 import utils
 
 
-SOLVE_FLAG = utils.SOLVE_FLAG
+BEAM_ENERGY = utils.BEAM_ENERGY
 RK_S_STEP = utils.DEF_RK_S_STEP
-ROLL_OFF_RX = 5.0  # [mm]
+ROLL_OFF_RX = utils.ROLL_OFF_RX
+NOMINAL_GAP = utils.NOMINAL_GAP
+SIMODEL_ID_LEN = utils.SIMODEL_ID_LEN
+SOLVE_FLAG = utils.SOLVE_FLAG
 
 
 def create_path(phase):
@@ -157,7 +160,9 @@ def plot_field_roll_off(data):
     plt.legend()
     plt.xlabel('x [mm]')
     plt.ylabel('By [T]')
-    plt.title('Kyma22 field rolloff (@ x = {} mm) for phase {:+.3f} mm'.format(utils.ROLL_OFF_RX, phase))
+    plt.title(
+        'Kyma22 field rolloff (@ x = {} mm) for phase {:+.3f} mm'.format(
+        utils.ROLL_OFF_RX, phase))
     plt.grid()
     plt.savefig(fpath + 'field_roll_off', dpi=300)
     plt.show()
@@ -177,7 +182,8 @@ def plot_rk_traj(data):
     plt.xlabel('rz [mm]')
     plt.ylabel('rx [mm]')
     plt.grid()
-    plt.title('Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
+    plt.title(
+        'Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
     plt.savefig(fpath + 'traj_rx', dpi=300)
 
     plt.figure(2)
@@ -185,7 +191,8 @@ def plot_rk_traj(data):
     plt.xlabel('rz [mm]')
     plt.ylabel('ry [mm]')
     plt.grid()
-    plt.title('Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
+    plt.title(
+        'Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
     plt.savefig(fpath + 'traj_ry', dpi=300)
 
     plt.figure(3)
@@ -193,7 +200,8 @@ def plot_rk_traj(data):
     plt.xlabel('rz [mm]')
     plt.ylabel('px [urad]')
     plt.grid()
-    plt.title('Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
+    plt.title(
+        'Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
     plt.savefig(fpath + 'traj_px', dpi=300)
 
     plt.figure(4)
@@ -201,7 +209,8 @@ def plot_rk_traj(data):
     plt.xlabel('rz [mm]')
     plt.ylabel('py [urad]')
     plt.grid()
-    plt.title('Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
+    plt.title(
+        'Kyma22 On-axis Runge-Kutta Traj. at phase {:+.3f} mm'.format(phase))
     plt.savefig(fpath + 'traj_py', dpi=300)
 
     plt.show()
@@ -264,8 +273,8 @@ def run_plot_data(phase):
 
 if __name__ == "__main__":
 
-    phases = [0 * utils.ID_PERIOD/2, 1 * utils.ID_PERIOD/2]
+    phases = [0 * utils.ID_PERIOD/2]
     for phase in phases:
-        kyma, max_rz = run_calc_fields(phase, nr_periods=51)
+        kyma, max_rz = run_calc_fields(phase, nr_periods=5)
         run_plot_data(phase=phase)
         kyma = run_generate_kickmap(kyma=kyma, max_rz=max_rz)
