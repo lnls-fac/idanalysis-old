@@ -2,7 +2,6 @@ import numpy as _np
 
 from idanalysis import DeltaData, EPUData
 
-
 DEFAULT_RANDOM_IDS = True
 FOLDER_BASE = None  # Need to be defined by user!
 
@@ -31,6 +30,7 @@ def get_config_names(data):
     for config in data:
         names.append(config)
     return names
+
 
 def calc_rz_of_field_center(rz, bx, by, bz):
     """."""

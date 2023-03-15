@@ -88,7 +88,9 @@ class AnalysisFromRadia:
         gap = key[2][1]
         self.idkickmap = id
         self.idkickmap.fmap_calc_kickmap(posx=self.gridx, posy=self.gridy)
-        fname = self._get_kmap_filename(width=width, phase=phase, gap=gap)
+        fname, fpath = self._get_kmap_filename(
+            width=width, phase=phase, gap=gap)
+        self._mkdir_function(fpath)
         self.idkickmap.save_kickmap_file(kickmap_filename=fname)
 
     def _create_models(self):
@@ -253,7 +255,7 @@ class AnalysisFromRadia:
         width = width
         fname = fpath + f'kickmap-ID_width{width}_phase{phase_str}' +\
             f'_gap{gap_str}.txt'
-        return fname
+        return fname, fpath
 
     def run_calc_fields(self):
 
@@ -303,25 +305,10 @@ class AnalysisFromRadia:
                   f'and width {key[0][1]} mm')
             self.generate_kickmap(key, id)
 
-    @staticmethod
-    def _get_field_component_idx(field_component):
-        components = {'bx': 0, 'by': 1, 'bz': 2}
-        return components[field_component]
-
-    @staticmethod
-    def _get_gap_str(gap):
-        gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
-        return gap_str
-
-    @staticmethod
-    def _get_phase_str(phase):
-        phase_str = '{:+07.3f}'.format(phase).replace('.', 'p')
-        phase_str = phase_str.replace('+', 'pos').replace('-', 'neg')
-        return phase_str
-
-    @staticmethod
-    def _plot_field_on_axis(data):
+    def _plot_field_on_axis(self, data):
         _plt.figure(1)
+        output_dir = utils.FOLDER_DATA + 'general'
+        self._mkdir_function(output_dir)
         var_parameters = list(data.keys())
         for parameter in var_parameters:
             label = utils.var_param + ' {}'.format(parameter)
@@ -332,13 +319,13 @@ class AnalysisFromRadia:
         _plt.ylabel('By [T]')
         _plt.legend()
         _plt.grid()
-        _plt.savefig(utils.FOLDER_DATA + 'general/field-profile', dpi=300)
+        _plt.savefig(output_dir + '/field-profile', dpi=300)
         _plt.show()
 
-    @staticmethod
-    def _plot_rk_traj(data):
+    def _plot_rk_traj(self, data):
         colors = ['b', 'g', 'y', 'C1', 'r', 'k']
         var_parameters = list(data.keys())
+        output_dir = utils.FOLDER_DATA + 'general'
         for i, parameter in enumerate(var_parameters):
             s = data[parameter]['ontraj_s']
             rx = data[parameter]['ontraj_rx']
@@ -367,17 +354,17 @@ class AnalysisFromRadia:
             _plt.plot(s, py, color=colors[i], label=label)
             _plt.xlabel('s [mm]')
             _plt.ylabel('py [urad]')
-        sulfix = ['traj-rx', 'traj-ry', 'traj-px', 'traj-py']
+        sulfix = ['/traj-rx', '/traj-ry', '/traj-px', '/traj-py']
         for i in [1, 2, 3, 4]:
             _plt.figure(i)
             _plt.legend()
             _plt.grid()
-            _plt.savefig(utils.FOLDER_DATA + 'general/' + sulfix[i-1], dpi=300)
+            _plt.savefig(output_dir + sulfix[i-1], dpi=300)
         _plt.show()
 
-    @staticmethod
-    def _plot_field_roll_off(data):
+    def _plot_field_roll_off(self, data):
         _plt.figure(1)
+        output_dir = utils.FOLDER_DATA + 'general'
         colors = ['b', 'g', 'y', 'C1', 'r', 'k']
         var_parameters = list(data.keys())
         for i, parameter in enumerate(var_parameters):
@@ -400,5 +387,34 @@ class AnalysisFromRadia:
         _plt.title('Field roll-off at x = {} mm'.format(utils.ROLL_OFF_RT))
         _plt.legend()
         _plt.grid()
-        _plt.savefig(utils.FOLDER_DATA + 'general/field-rolloff', dpi=300)
+        _plt.savefig(output_dir + '/field-rolloff', dpi=300)
         _plt.show()
+
+    @staticmethod
+    def _get_field_component_idx(field_component):
+        components = {'bx': 0, 'by': 1, 'bz': 2}
+        return components[field_component]
+
+    @staticmethod
+    def _get_gap_str(gap):
+        gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
+        return gap_str
+
+    @staticmethod
+    def _get_phase_str(phase):
+        phase_str = '{:+07.3f}'.format(phase).replace('.', 'p')
+        phase_str = phase_str.replace('+', 'pos').replace('-', 'neg')
+        return phase_str
+
+    @staticmethod
+    def _mkdir_function(mypath):
+        from errno import EEXIST
+        from os import makedirs, path
+
+        try:
+            makedirs(mypath)
+        except OSError as exc:
+            if exc.errno == EEXIST and path.isdir(mypath):
+                pass
+            else:
+                raise
