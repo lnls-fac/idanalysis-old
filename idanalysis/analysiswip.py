@@ -10,16 +10,15 @@ from mathphys.functions import load_pickle as _load_pickle
 import utils
 
 
-class AnalysisFromRadia:
+class FieldAnalysisFromRadia:
 
     def __init__(self):
         # Model attributes
-        self.rt_max = None  # [mm]
-        self.rt_nrpts = None
-        self.rz_max = None  # [mm]
-        self.rz_nrpts = None
+        self.rt_field_max = None  # [mm]
+        self.rt_field_nrpts = None
+        self.rz_field_max = None  # [mm]
+        self.rz_field_nrpts = None
         self.roll_off_rt = utils.ROLL_OFF_RT  # [mm]
-        self.model_params = dict()
         self.data = dict()
         self._models = dict()
 
@@ -131,7 +130,12 @@ class AnalysisFromRadia:
             b = field[:, comp_idx]
             b_max_idx = _np.argmax(b)
             rz_at_max = rz[b_max_idx] + peak_idx*period
-            field = id.get_field(rt, 0, rz_at_max)
+            if field_component == 'bx':
+                field = id.get_field(0, rt, rz_at_max)
+            elif field_component == 'by':
+                field = id.get_field(rt, 0, rz_at_max)
+            else:
+                raise ValueError
             b = field[:, comp_idx]
 
             roff_idx = _np.argmin(_np.abs(rt-self.roll_off_rt))
@@ -205,17 +209,17 @@ class AnalysisFromRadia:
             if parameter[0] == 'width':
                 width = parameter[1]
                 fname = fname.replace(
-                    'data/', 'widths/width_{}/'.format(width))
+                    'data/', 'data/widths/width_{}/'.format(width))
                 sulfix += '_width{}'.format(width)
 
             if parameter[0] == 'phase':
                 phase_str = self._get_phase_str(parameter[1])
-                fname += 'phases/phase_{}/'.format(phase_str)
+                fname += 'data/phases/phase_{}/'.format(phase_str)
                 sulfix += '_phase{}'.format(phase_str)
 
             if parameter[0] == 'gap':
                 gap_str = self._get_gap_str(parameter[1])
-                fname += 'gap_{}/'.format(gap_str)
+                fname += 'data/gap_{}/'.format(gap_str)
                 sulfix += '_gap{}'.format(gap_str)
         return fname + sulfix
 
@@ -224,15 +228,15 @@ class AnalysisFromRadia:
         sulfix = 'field_data'
 
         fname = fname.replace(
-            'data/', 'widths/width_{}/'.format(width))
+            'data/', 'data/widths/width_{}/'.format(width))
         sulfix += '_width{}'.format(width)
 
         phase_str = self._get_phase_str(phase)
-        fname += 'phases/phase_{}/'.format(phase_str)
+        fname += 'data/phases/phase_{}/'.format(phase_str)
         sulfix += '_phase{}'.format(phase_str)
 
         gap_str = self._get_gap_str(gap)
-        fname += 'gap_{}/'.format(gap_str)
+        fname += 'data/gap_{}/'.format(gap_str)
         sulfix += '_gap{}'.format(gap_str)
         return fname + sulfix
 
@@ -261,8 +265,10 @@ class AnalysisFromRadia:
 
         self._create_models()
 
-        rt = _np.linspace(-self.rt_max, self.rt_max, self.rt_nrpts)
-        rz = _np.linspace(-self.rz_max, self.rz_max, self.rz_nrpts)
+        rt = _np.linspace(
+            -self.rt_field_max, self.rt_field_max, self.rt_field_nrpts)
+        rz = _np.linspace(
+            -self.rz_field_max, self.rz_field_max, self.rz_field_nrpts)
 
         self._get_field_roll_off(rt=rt)
         self._get_field_on_axis(rz=rz)
@@ -286,7 +292,7 @@ class AnalysisFromRadia:
             for width_ in utils.widths:
                 fname = self._get_field_data_fname(width_, phase, gap)
                 fdata = _load_pickle(fname)
-                data_plot[phase_] = fdata
+                data_plot[width_] = fdata
 
         self._plot_field_on_axis(data=data_plot)
         self._plot_rk_traj(data=data_plot)
@@ -306,17 +312,18 @@ class AnalysisFromRadia:
             self.generate_kickmap(key, id)
 
     def _plot_field_on_axis(self, data):
+        field_component = utils.field_component
         _plt.figure(1)
         output_dir = utils.FOLDER_DATA + 'general'
         self._mkdir_function(output_dir)
         var_parameters = list(data.keys())
         for parameter in var_parameters:
             label = utils.var_param + ' {}'.format(parameter)
-            by = data[parameter]['onaxis_by']
+            b = data[parameter]['onaxis_{}'.format(field_component)]
             rz = data[parameter]['onaxis_rz']
-            _plt.plot(rz, by, label=label)
+            _plt.plot(rz, b, label=label)
         _plt.xlabel('z [mm]')
-        _plt.ylabel('By [T]')
+        _plt.ylabel('{} [T]'.format(field_component))
         _plt.legend()
         _plt.grid()
         _plt.savefig(output_dir + '/field-profile', dpi=300)
@@ -363,28 +370,34 @@ class AnalysisFromRadia:
         _plt.show()
 
     def _plot_field_roll_off(self, data):
+        field_component = utils.field_component
         _plt.figure(1)
         output_dir = utils.FOLDER_DATA + 'general'
         colors = ['b', 'g', 'y', 'C1', 'r', 'k']
         var_parameters = list(data.keys())
         for i, parameter in enumerate(var_parameters):
-            by_ = data[parameter]['rolloff_by']
+            b = data[parameter]['rolloff_{}'.format(field_component)]
             rt = data[parameter]['rolloff_rt']
-            by = _np.array(by_)
             rtp_idx = _np.argmin(_np.abs(rt - utils.ROLL_OFF_RT))
             rt0_idx = _np.argmin(_np.abs(rt))
-            roff = _np.abs(by[rtp_idx]/by[rt0_idx]-1)
+            roff = _np.abs(b[rtp_idx]/b[rt0_idx]-1)
             label = utils.var_param +\
                 " {}, roll-off = {:.2f} %".format(parameter, 100*roff)
             irt0 = _np.argmin(_np.abs(rt))
-            by0 = by[irt0]
-            roll_off = 100*(by/by0 - 1)
+            b0 = b[irt0]
+            roll_off = 100*(b/b0 - 1)
             _plt.plot(rt, roll_off, '.-', label=label, color=colors[i])
-        _plt.xlabel('x [mm]')
+        if field_component == 'by':
+            _plt.xlabel('x [mm]')
+        else:
+            _plt.xlabel('y [mm]')
         _plt.ylabel('roll off [%]')
-        _plt.xlim(-6, 6)
+        _plt.xlim(-utils.ROLL_OFF_RT, utils.ROLL_OFF_RT)
         _plt.ylim(-1.2, 0.02)
-        _plt.title('Field roll-off at x = {} mm'.format(utils.ROLL_OFF_RT))
+        if field_component == 'by':
+            _plt.title('Field roll-off at x = {} mm'.format(utils.ROLL_OFF_RT))
+        elif field_component == 'bx':
+            _plt.title('Field roll-off at y = {} mm'.format(utils.ROLL_OFF_RT))
         _plt.legend()
         _plt.grid()
         _plt.savefig(output_dir + '/field-rolloff', dpi=300)

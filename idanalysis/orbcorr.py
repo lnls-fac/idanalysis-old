@@ -8,7 +8,8 @@ from pymodels import si
 from apsuite.orbcorr import OrbitCorr, CorrParams
 
 
-IDS_FAMNAMES = ['PAPU50', 'APU22', 'IVU18', 'WIG180', 'APU58', 'EPU50']
+IDS_FAMNAMES = [
+    'PAPU50', 'APU22', 'IVU18', 'VPU29', 'WIG180', 'APU58', 'EPU50']
 
 
 def get_ids_indices(model):

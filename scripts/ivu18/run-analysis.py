@@ -228,6 +228,21 @@ def plot_beta_beating(
     plt.clf()
 
 
+def calc_coupling(model, x0, nturns=1000):
+    coord_ini = np.array([x0, 0, 0, 0, 0, 0])
+    coord_fin, *_ = pyaccel.tracking.ring_pass(
+         model, coord_ini, nr_turns=nturns, turn_by_turn=True, parallel=True)
+    rx = coord_fin[0, :]
+    ry = coord_fin[2, :]
+    twiss, *_ = pyaccel.optics.calc_twiss(model)
+    betax, betay = twiss.betax, twiss.betay  # Beta functions
+    jx = 2/(betax[0]*nturns)*(np.sum(rx)**2)
+    jy = 2/(betay[0]*nturns)*(np.sum(ry)**2)
+
+    print('coupling k = {:.3f}'.format(jy/jx))
+    return jy/jx
+
+
 def analysis_dynapt(gap, width, model, calc_type, fitted_model):
 
     model.radiation_on = 0
@@ -346,6 +361,7 @@ def correct_optics(gap, width, beta_flag=True, fitted_model=False):
             if min(locs_beta_) < ind_id[0] and ind_id[1] < max(locs_beta_):
                 break
 
+        k = calc_coupling(model1, x0=1e-6, nturns=1000)
         print()
         print('symmetrizing ID {} in subsec {}'.format(fam_name, subsec))
 
@@ -366,6 +382,7 @@ def correct_optics(gap, width, beta_flag=True, fitted_model=False):
 
             # correct tunes
             twiss3 = correct_tunes(model1, twiss1, goal_tunes)
+            k = calc_coupling(model1, x0=1e-6, nturns=1000)
 
             plot_beta_beating(
                 gap, width, twiss0, twiss1, twiss2, twiss3, stg, fitted_model)

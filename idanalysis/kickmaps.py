@@ -262,54 +262,105 @@ class IDKickMap:
         opt = _curve_fit(self._plateau_function, self.posx, p)[0]
         return opt
 
-    def filter_kmap(self, posx, order=4, plot_flag=False):
+    def filter_kmap(self, posx=None, posy=None, order=4, plot_flag=False):
         self._load_kmap()
-        kickx = _np.zeros((len(self.posy), len(posx)))
-        fposx = _np.zeros((len(self.posy), len(posx)))
-        for i, ryi in enumerate(self.posy):
-            opt = _np.polyfit(self.posx, self.kickx[i, :], order)
-            pxf = _np.polyval(opt, posx)
-            xfit = _np.polyfit(self.posx, self.fposx[i, :], order)
-            xf = _np.polyval(xfit, posx)
-            kickx[i, :] = pxf
-            fposx[i, :] = xf
-            label = 'y = {:.2f} mm'.format(1e3*ryi)
+        if posx is not None:
+            kickx = _np.zeros((len(self.posy), len(posx)))
+            fposx = _np.zeros((len(self.posy), len(posx)))
+            for i, ryi in enumerate(self.posy):
+                opt = _np.polyfit(self.posx, self.kickx[i, :], order)
+                pxf = _np.polyval(opt, posx)
+                xfit = _np.polyfit(self.posx, self.fposx[i, :], order)
+                xf = _np.polyval(xfit, posx)
+                kickx[i, :] = pxf
+                fposx[i, :] = xf
+                label = 'y = {:.2f} mm'.format(1e3*ryi)
+                if plot_flag:
+                    _plt.plot(1e3*self.posx, 1e6*self.kickx[i, :],
+                              '.-', label=label)
+                    _plt.plot(1e3*posx, 1e6*kickx[i, :])
             if plot_flag:
-                _plt.plot(1e3*self.posx, 1e6*self.kickx[i, :],
-                          '.-', label=label)
-                _plt.plot(1e3*posx, 1e6*kickx[i, :])
-        if plot_flag:
-            _plt.xlabel('x pos [mm]')
-            _plt.ylabel('kicks [Tm²]')
-            _plt.legend()
-            _plt.show()
+                _plt.xlabel('x pos [mm]')
+                _plt.ylabel('kicks [Tm²]')
+                _plt.legend()
+                _plt.show()
 
-        kicky = _np.zeros((len(self.posy), len(posx)))
-        fposy = _np.zeros((len(self.posy), len(posx)))
-        for i, ryi in enumerate(self.posy):
-            opt = _np.polyfit(self.posx, self.kicky[i, :], order)
-            pyf = _np.polyval(opt, posx)
-            yfit = _np.polyfit(self.posx, self.fposy[i, :], order)
-            yf = _np.polyval(yfit, posx)
-            kicky[i, :] = pyf
-            fposy[i, :] = yf
+            kicky = _np.zeros((len(self.posy), len(posx)))
+            fposy = _np.zeros((len(self.posy), len(posx)))
+            for i, ryi in enumerate(self.posy):
+                opt = _np.polyfit(self.posx, self.kicky[i, :], order)
+                pyf = _np.polyval(opt, posx)
+                yfit = _np.polyfit(self.posx, self.fposy[i, :], order)
+                yf = _np.polyval(yfit, posx)
+                kicky[i, :] = pyf
+                fposy[i, :] = yf
+                label = 'y = {:.2f} mm'.format(1e3*ryi)
+                if plot_flag:
+                    _plt.plot(1e3*self.posx, 1e6*self.kicky[i, :],
+                              '.-', label=label)
+                    _plt.plot(1e3*posx, 1e6*kicky[i, :])
             if plot_flag:
-                _plt.plot(1e3*self.posx, 1e6*self.kicky[i, :],
-                          '.-', label=label)
-                _plt.plot(1e3*posx, 1e6*kicky[i, :])
-        if plot_flag:
-            _plt.xlabel('x pos [mm]')
-            _plt.ylabel('kicks [Tm²]')
-            _plt.legend()
-            _plt.show()
+                _plt.xlabel('x pos [mm]')
+                _plt.ylabel('kicks [Tm²]')
+                _plt.legend()
+                _plt.show()
 
-        self.posx = posx
+            self.posx = posx
 
-        self.kickx = kickx
-        self.fposx = fposx
+            self.kickx = kickx
+            self.fposx = fposx
 
-        self.kicky = kicky
-        self.fposy = fposy
+            self.kicky = kicky
+            self.fposy = fposy
+
+        if posy is not None:
+            kickx = _np.zeros((len(posy), len(self.posx)))
+            fposx = _np.zeros((len(posy), len(self.posx)))
+            for i, rxi in enumerate(self.posx):
+                opt = _np.polyfit(self.posy, self.kickx[:, i], order)
+                pxf = _np.polyval(opt, posy)
+                xfit = _np.polyfit(self.posy, self.fposx[:, i], order)
+                xf = _np.polyval(xfit, posy)
+                kickx[:, i] = pxf
+                fposx[:, i] = xf
+                label = 'x = {:.2f} mm'.format(1e3*rxi)
+                if plot_flag:
+                    _plt.plot(1e3*self.posy, 1e6*self.kickx[:, i],
+                              '.-', label=label)
+                    _plt.plot(1e3*posy, 1e6*kickx[:, i])
+            if plot_flag:
+                _plt.xlabel('y pos [mm]')
+                _plt.ylabel('kicks [Tm²]')
+                _plt.legend()
+                _plt.show()
+
+            kicky = _np.zeros((len(posy), len(self.posx)))
+            fposy = _np.zeros((len(posy), len(self.posx)))
+            for i, rxi in enumerate(self.posx):
+                opt = _np.polyfit(self.posy, self.kicky[:, i], order)
+                pyf = _np.polyval(opt, posy)
+                yfit = _np.polyfit(self.posy, self.fposy[:, i], order)
+                yf = _np.polyval(yfit, posy)
+                kicky[:, i] = pyf
+                fposy[:, i] = yf
+                label = 'x = {:.2f} mm'.format(1e3*rxi)
+                if plot_flag:
+                    _plt.plot(1e3*self.posy, 1e6*self.kicky[:, i],
+                              '.-', label=label)
+                    _plt.plot(1e3*posy, 1e6*kicky[:, i])
+            if plot_flag:
+                _plt.xlabel('y pos [mm]')
+                _plt.ylabel('kicks [Tm²]')
+                _plt.legend()
+                _plt.show()
+
+            self.posy = posy
+
+            self.kickx = kickx
+            self.fposx = fposx
+
+            self.kicky = kicky
+            self.fposy = fposy
 
     def save_kickmap_file(self, kickmap_filename):
         """."""

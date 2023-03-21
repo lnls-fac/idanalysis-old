@@ -6,9 +6,11 @@ import numpy as np
 from imaids.models import HybridPlanar as Hybrid
 from idanalysis import IDKickMap
 
+from mathphys.functions import load_pickle
+
 BEAM_ENERGY = 3.0  # [GeV]
 DEF_RK_S_STEP = 0.5  # [mm] seems converged for the measurement fieldmap grids
-ROLL_OFF_RY = 6.0  # [mm]
+ROLL_OFF_RT = 2.0  # [mm]
 SOLVE_FLAG = True
 
 ID_PERIOD = 29.0  # [mm]
@@ -20,10 +22,17 @@ RESCALE_KICKS = NR_PERIODS_REAL_ID/NR_PERIODS
 RESCALE_LENGTH = 1
 NOMINAL_GAP = 9.7  # [mm]
 
-SIMODEL_FITTED = False
-SHIFT_FLAG = False
+SIMODEL_FITTED = True
+SHIFT_FLAG = True
+FILTER_FLAG = False
 
 FOLDER_DATA = './results/model/data/'
+
+gaps = [NOMINAL_GAP]
+phases = [0]
+widths = [26, 22]
+field_component = 'bx'
+var_param = 'width'
 
 
 class CALC_TYPES:
@@ -31,6 +40,14 @@ class CALC_TYPES:
     nominal = 0
     nonsymmetrized = 1
     symmetrized = 2
+
+
+def get_termination_parameters(width=50):
+    """."""
+    fname = FOLDER_DATA + 'respm_termination_{}.pickle'.format(width)
+    term = load_pickle(fname)
+    b1t, b2t, b3t, dist1, dist2 = term['results']
+    return list([b1t, b2t, b3t, dist1, dist2])
 
 
 def get_folder_data():
@@ -44,13 +61,17 @@ def get_gap_str(gap):
     return gap_str
 
 
-def get_kmap_filename(gap, width, shift_flag=SHIFT_FLAG):
+def get_kmap_filename(
+        gap, width, shift_flag=SHIFT_FLAG, filter_flag=FILTER_FLAG):
     fpath = FOLDER_DATA + 'kickmaps/'
     fpath = fpath.replace('model/data/', 'model/')
     gap_str = get_gap_str(gap)
-    fname = fpath + f'kickmap-ID-{width}-gap{gap_str}mm.txt'
+    fname = fpath + f'kickmap-ID_width{width}_phasepos00p000' +\
+        f'_gap{gap_str}.txt'
     if shift_flag:
         fname = fname.replace('.txt', '-shifted_on_axis.txt')
+    if filter_flag:
+        fname = fname.replace('.txt', '-filtered.txt')
     return fname
 
 
@@ -64,12 +85,12 @@ def create_ids(
         rescale_length if rescale_length is not None else 1
     fname = get_kmap_filename(gap=gap, width=width)
     IDModel = pymodels.si.IDModel
-    ivu18 = IDModel(
+    vpu29 = IDModel(
         subsec=IDModel.SUBSECTIONS.ID06SB,
         file_name=fname,
         fam_name='VPU29', nr_steps=nr_steps,
         rescale_kicks=rescale_kicks, rescale_length=rescale_length)
-    ids = [ivu18, ]
+    ids = [vpu29, ]
     return ids
 
 
@@ -88,7 +109,9 @@ def create_model_ids(
     return model, ids
 
 
-def generate_radia_model(gap, width, termination_parameters, solve=True):
+def generate_radia_model(width, gap, phase=0,
+                         termination_parameters=get_termination_parameters(),
+                         solve=SOLVE_FLAG):
     """."""
     period_length = 29
     br = 1.24
@@ -129,25 +152,23 @@ def generate_radia_model(gap, width, termination_parameters, solve=True):
     block_subdivision = [8, 4, 4]
     pole_subdivision = [34, 5, 5]
 
-    b1t, b2t, b3t, dist1, dist2 = termination_parameters
+    # block_subdivision = [1, 1, 1]
+    # pole_subdivision = [1, 1, 1]
 
-    lengths = [b1t, b2t, b3t]
-    distances = [dist1, dist2, 0]
-    start_blocks_length = lengths
-    start_blocks_distance = distances
-    end_blocks_length = lengths[0:-1][::-1]
-    end_blocks_distance = distances[0:-1][::-1]
+    # b1t, b2t, b3t, dist1, dist2 = termination_parameters
+
+    # lengths = [b1t, b2t, b3t]
+    # distances = [dist1, dist2, 0]
+    # start_blocks_length = lengths
+    # start_blocks_distance = distances
+    # end_blocks_length = lengths[0:-1][::-1]
+    # end_blocks_distance = distances[0:-1][::-1]
 
     vpu = Hybrid(gap=gap, period_length=period_length,
                  mr=br, nr_periods=NR_PERIODS,
                  longitudinal_distance=0, block_shape=block_shape,
                  pole_shape=pole_shape, block_subdivision=block_subdivision,
-                 pole_subdivision=pole_subdivision, pole_length=pole_length,
-                 start_blocks_length=start_blocks_length,
-                 start_blocks_distance=start_blocks_distance,
-                 end_blocks_length=end_blocks_length,
-                 end_blocks_distance=end_blocks_distance,
-                 trf_on_blocks=True)
+                 pole_subdivision=pole_subdivision, pole_length=pole_length)
 
     vpu.cassettes['ci'].rotate([0, 0, 0], [0, 0, 1], -np.pi/2)
     vpu.cassettes['cs'].rotate([0, 0, 0], [0, 0, 1], -np.pi/2)

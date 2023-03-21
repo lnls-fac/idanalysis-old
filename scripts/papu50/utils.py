@@ -8,7 +8,7 @@ from idanalysis import IDKickMap
 
 BEAM_ENERGY = 3.0  # [GeV]
 DEF_RK_S_STEP = 1  # [mm] seems converged for the measurement fieldmap grids
-ROLL_OFF_RX = 10.0  # [mm]
+ROLL_OFF_RT = 10.0  # [mm]
 SOLVE_FLAG = True
 
 ID_PERIOD = 50  # [mm]
@@ -30,6 +30,12 @@ KYMA22_KMAP_FILENAME = (
 INSERT_KYMA = True
 KYMA_RESCALE_KICKS = 1  # Radia simulations have fewer ID periods
 KYMA_RESCALE_LENGTH = 1  # Radia simulations have fewer ID periods
+
+gaps = [NOMINAL_GAP]
+phases = [0, 25]
+widths = [40]
+field_component = 'by'
+var_param = 'phase'
 
 
 class CALC_TYPES:

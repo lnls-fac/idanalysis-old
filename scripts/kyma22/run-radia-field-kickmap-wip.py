@@ -24,9 +24,9 @@ if __name__ == "__main__":
     radia_fanalysis.traj_max_rz = radia_fanalysis.rz_field_max
     radia_fanalysis.kmap_idlen = utils.ID_KMAP_LEN
 
-    # Grid for low beta
-    radia_fanalysis.gridx = list(np.linspace(-3.2, +3.2, 21) / 1000)  # [m]
-    radia_fanalysis.gridy = list(np.linspace(-1.9, +1.9, 11) / 1000)  # [m]
+    # Grid for high beta
+    radia_fanalysis.gridx = list(np.arange(-12, +12, 1) / 1000)  # [m]
+    radia_fanalysis.gridy = list(np.linspace(-2.8, +2.8, 11) / 1000)  # [m]
 
     radia_fanalysis.run_calc_fields()
     radia_fanalysis.run_plot_data(phase=utils.phases[0], gap=utils.gaps[0])

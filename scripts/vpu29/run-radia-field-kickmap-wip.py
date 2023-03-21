@@ -5,25 +5,29 @@ import matplotlib.pyplot as plt
 
 from mathphys.functions import save_pickle, load_pickle
 
-from idanalysis import AnalysisFromRadia
+from idanalysis import FieldAnalysisFromRadia
 import utils
 
 if __name__ == "__main__":
 
-    obj = AnalysisFromRadia()
+    nr_pts = 301
 
-    obj.rz_max = 100
-    obj.rz_nrpts = 301
+    radia_fanalysis = FieldAnalysisFromRadia()
 
-    obj.rt_max = 10
-    obj.rt_nrpts = 301
+    radia_fanalysis.rz_field_max = utils.ID_PERIOD*utils.NR_PERIODS + 40
+    radia_fanalysis.rz_field_nrpts = nr_pts
 
-    obj.traj_init_rz = -100
-    obj.traj_max_rz = 100
-    obj.kmap_idlen = 1.5
-    obj.gridx = list(np.linspace(-3.7, +3.7, 9) / 1000)  # [m]
-    obj.gridy = list(np.linspace(-2.15, +2.15, 11) / 1000)  # [m]
+    radia_fanalysis.rt_field_max = utils.ROLL_OFF_RT
+    radia_fanalysis.rt_field_nrpts = nr_pts
 
-    obj.run_calc_fields()
-    obj.run_plot_data(phase=utils.phases[0], gap=utils.gaps[0])
-    obj.run_generate_kickmap()
+    radia_fanalysis.traj_init_rz = -radia_fanalysis.rz_field_max
+    radia_fanalysis.traj_max_rz = radia_fanalysis.rz_field_max
+    radia_fanalysis.kmap_idlen = utils.ID_KMAP_LEN
+
+    # Grid for low beta
+    radia_fanalysis.gridx = list(np.linspace(-3.2, +3.2, 21) / 1000)  # [m]
+    radia_fanalysis.gridy = list(np.linspace(-1.9, +1.9, 11) / 1000)  # [m]
+
+    radia_fanalysis.run_calc_fields()
+    radia_fanalysis.run_plot_data(phase=utils.phases[0], gap=utils.gaps[0])
+    radia_fanalysis.run_generate_kickmap()

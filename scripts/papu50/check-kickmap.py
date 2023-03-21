@@ -155,8 +155,8 @@ def plot_kick_all_planes(
 
 
 if __name__ == '__main__':
-    save_flag = True
-    plt_flag = False
+    save_flag = False
+    plt_flag = True
     planes = ['x', 'y']
     kick_planes = ['x', 'y']
     phase = 4.93

@@ -8,7 +8,7 @@ from idanalysis import IDKickMap
 
 BEAM_ENERGY = 3.0  # [GeV]
 DEF_RK_S_STEP = 2  # [mm] seems converged for the measurement fieldmap grids
-ROLL_OFF_RX = 6.0  # [mm]
+ROLL_OFF_RT = 6.0  # [mm]
 SOLVE_FLAG = False
 
 ID_PERIOD = 50.0  # [mm]
@@ -18,6 +18,7 @@ SIMODEL_ID_LEN = 2.770  # [m]
 ID_KMAP_LEN = SIMODEL_ID_LEN  # [m]
 RESCALE_KICKS = NR_PERIODS_REAL_ID/NR_PERIODS
 RESCALE_LENGTH = 1
+NOMINAL_GAP = 20
 
 SIMODEL_FITTED = False
 SHIFT_FLAG = True
@@ -25,6 +26,12 @@ SHIFT_FLAG = True
 FOLDER_DATA = './results/model/data/'
 MEAS_DATA_PATH = './meas-data/epu-uvx/measurement/magnetic/hallprobe/'
 MEAS_FLAG = True
+
+gaps = [NOMINAL_GAP]
+phases = [0, 25]
+widths = [40]
+field_component = 'by'
+var_param = 'gap'
 
 
 class CALC_TYPES:

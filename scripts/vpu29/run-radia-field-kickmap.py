@@ -178,6 +178,9 @@ def plot_field_roll_off(data, gap):
     for i, width in enumerate(widths):
         bx = data[width]['rolloff_bx']
         ry = data[width]['rolloff_ry']
+        if i == 0:
+            print(bx)
+            print(ry)
         ry6_idx = np.argmin(np.abs(ry - utils.ROLL_OFF_RY))
         ry0_idx = np.argmin(np.abs(ry))
         roff = np.abs(bx[ry6_idx]/bx[ry0_idx]-1)

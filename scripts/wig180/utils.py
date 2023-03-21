@@ -101,24 +101,24 @@ ID_CONFIGS = {
 
 EXCDATA = {
 
-    '45.00' : {
+    '45.00': {
         'FILE':
             ('# https://github.com/lnls-ima/wiggler-2T-STI/blob/main/'
              'measurement/magnetic/hallprobe/gap%20045.00mm/current_test/'
              'gap45.00mm_curent_test.xlsx'),
-        'I_UP' : np.array([
-            0.0, -0.5, -1.0, -2.0, 0.0, 0.0, 0.0, 0.0, ]),
+        'I_UP': np.array([
+            0.0, -0.5, -1.0, -2.0, 0.0, 0.0, 0.0, 0.0]),
         'I_DOWN': np.array([
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 2.0, ]),
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 2.0]),
         'IBY': np.array([
-            103.63, -29.59, -187.09, -583.29, 107.54, 236.31, 389.82, 744.03,])
+            103.63, -29.59, -187.09, -583.29, 107.54, 236.31, 389.82, 744.03])
             },
-    '59.60' : {
+    '59.60': {
         'FILE':
             ('# https://github.com/lnls-ima/wiggler-2T-STI/blob/main/'
              'measurement/magnetic/hallprobe/gap%20059.60mm/current_test/'
              'gap59.60mm_curent_test.xlsx'),
-        'I_UP' : np.array([
+        'I_UP': np.array([
             0, 1, 1, 1, 1, 1,
             1, 1, 1, 1, 1, 1]),
         'I_DOWN': np.array([
@@ -143,20 +143,12 @@ def create_ids(
         'idanalysis/scripts/wiggler/results/{}/'.format(idconfig)
     fname += 'kickmap-' + idconfig + '.txt'
     print(fname)
-    idkmap = IDKickMap(kmap_fname=fname)
-    # idkmap.load()
-    kickx_up = rescale_kicks * idkmap.kickx_upstream  # [T².m²]
-    kicky_up = rescale_kicks * idkmap.kicky_upstream  # [T².m²]
-    kickx_down = rescale_kicks * idkmap.kickx_downstream  # [T².m²]
-    kicky_down = rescale_kicks * idkmap.kicky_downstream  # [T².m²]
-    termination_kicks = [kickx_up, kicky_up, kickx_down, kicky_down]
     IDModel = pymodels.si.IDModel
     wig180 = IDModel(
-        subsec = IDModel.SUBSECTIONS.ID14SB,
+        subsec=IDModel.SUBSECTIONS.ID14SB,
         file_name=fname,
         fam_name='WIG180', nr_steps=nr_steps,
-        rescale_kicks=rescale_kicks, rescale_length=rescale_length,
-        termination_kicks=termination_kicks)
+        rescale_kicks=rescale_kicks, rescale_length=rescale_length)
     ids = [wig180, ]
     return ids
 
@@ -181,6 +173,6 @@ def get_orb4d(model):
 
 def get_data_ID(fname):
     """."""
-    _, idn =  fname.split('ID=')
+    _, idn = fname.split('ID=')
     idn = idn.replace('.dat', '')
     return idn

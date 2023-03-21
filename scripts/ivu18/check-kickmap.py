@@ -162,7 +162,7 @@ if __name__ == '__main__':
     plt_flag = True
     planes = ['x', 'y']
     kick_planes = ['x', 'y']
-    widths = [49]
+    widths = [54, 49, 40, 30]
     gap = 4.3
     plot_kick_at_plane(
         gap=gap, widths=widths,

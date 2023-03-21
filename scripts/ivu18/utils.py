@@ -6,9 +6,11 @@ import numpy as np
 from imaids.models import HybridPlanar as Hybrid
 from idanalysis import IDKickMap
 
+from mathphys.functions import load_pickle
+
 BEAM_ENERGY = 3.0  # [GeV]
 DEF_RK_S_STEP = 0.5  # [mm] seems converged for the measurement fieldmap grids
-ROLL_OFF_RX = 6.0  # [mm]
+ROLL_OFF_RT = 6.0  # [mm]
 SOLVE_FLAG = True
 
 ID_PERIOD = 18.5  # [mm]
@@ -25,12 +27,26 @@ SHIFT_FLAG = True
 
 FOLDER_DATA = './results/model/data/'
 
+gaps = [NOMINAL_GAP]
+phases = [0]
+widths = [49]
+field_component = 'by'
+var_param = 'width'
+
 
 class CALC_TYPES:
     """."""
     nominal = 0
     nonsymmetrized = 1
     symmetrized = 2
+
+
+def get_termination_parameters(width=50):
+    """."""
+    fname = FOLDER_DATA + 'respm_termination_{}.pickle'.format(width)
+    term = load_pickle(fname)
+    b1t, b2t, b3t, dist1, dist2 = term['results']
+    return list([b1t, b2t, b3t, dist1, dist2])
 
 
 def get_folder_data():
@@ -88,8 +104,9 @@ def create_model_ids(
     return model, ids
 
 
-def generate_radia_model(width, termination_parameters,
-                         gap=NOMINAL_GAP, solve=True):
+def generate_radia_model(width, gap=NOMINAL_GAP, phase=0,
+                         termination_parameters=get_termination_parameters(),
+                         solve=SOLVE_FLAG):
     """."""
     period_length = 18.5
     br = 1.24
