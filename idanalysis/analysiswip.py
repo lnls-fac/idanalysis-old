@@ -14,7 +14,54 @@ from mathphys.functions import load_pickle as _load_pickle
 import utils
 
 
-class FieldAnalysisFromRadia:
+class Tools:
+
+    @staticmethod
+    def _create_model_ids(
+            fname,
+            rescale_kicks=utils.RESCALE_KICKS,
+            rescale_length=utils.RESCALE_LENGTH):
+        ids = utils.create_ids(
+            fname, rescale_kicks=rescale_kicks,
+            rescale_length=rescale_length)
+        model = pymodels.si.create_accelerator(ids=ids)
+        twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
+        print('length : {:.4f} m'.format(model.length))
+        print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/_np.pi))
+        print('tuney  : {:.6f}'.format(twiss.muy[-1]/2/_np.pi))
+        return model, ids
+
+    @staticmethod
+    def _get_field_component_idx(field_component):
+        components = {'bx': 0, 'by': 1, 'bz': 2}
+        return components[field_component]
+
+    @staticmethod
+    def _get_gap_str(gap):
+        gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
+        return gap_str
+
+    @staticmethod
+    def _get_phase_str(phase):
+        phase_str = '{:+07.3f}'.format(phase).replace('.', 'p')
+        phase_str = phase_str.replace('+', 'pos').replace('-', 'neg')
+        return phase_str
+
+    @staticmethod
+    def _mkdir_function(mypath):
+        from errno import EEXIST
+        from os import makedirs, path
+
+        try:
+            makedirs(mypath)
+        except OSError as exc:
+            if exc.errno == EEXIST and path.isdir(mypath):
+                pass
+            else:
+                raise
+
+
+class FieldAnalysisFromRadia(Tools):
 
     def __init__(self):
         # Model attributes
@@ -85,7 +132,7 @@ class FieldAnalysisFromRadia:
         self.traj_max_rz = self.traj_max_rz
         self.kmap_idlen = self.kmap_idlen
 
-    def generate_kickmap(self, key, id):
+    def _generate_kickmap(self, key, id):
         width = key[0][1]
         phase = key[1][1]
         gap = key[2][1]
@@ -313,7 +360,7 @@ class FieldAnalysisFromRadia:
             print(f'calc kickmap for gap {key[2][1]} mm, ' +
                   f'phase {key[1][1]} mm ' +
                   f'and width {key[0][1]} mm')
-            self.generate_kickmap(key, id)
+            self._generate_kickmap(key, id)
 
     def _plot_field_on_axis(self, data):
         field_component = utils.field_component
@@ -407,37 +454,8 @@ class FieldAnalysisFromRadia:
         _plt.savefig(output_dir + '/field-rolloff', dpi=300)
         _plt.show()
 
-    @staticmethod
-    def _get_field_component_idx(field_component):
-        components = {'bx': 0, 'by': 1, 'bz': 2}
-        return components[field_component]
 
-    @staticmethod
-    def _get_gap_str(gap):
-        gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
-        return gap_str
-
-    @staticmethod
-    def _get_phase_str(phase):
-        phase_str = '{:+07.3f}'.format(phase).replace('.', 'p')
-        phase_str = phase_str.replace('+', 'pos').replace('-', 'neg')
-        return phase_str
-
-    @staticmethod
-    def _mkdir_function(mypath):
-        from errno import EEXIST
-        from os import makedirs, path
-
-        try:
-            makedirs(mypath)
-        except OSError as exc:
-            if exc.errno == EEXIST and path.isdir(mypath):
-                pass
-            else:
-                raise
-
-
-class AnalysisKickmap:
+class AnalysisKickmap(Tools):
 
     def __init__(self):
         self._idkickmap = None
@@ -753,42 +771,3 @@ class AnalysisKickmap:
         _plt.legend()
         _plt.grid()
         _plt.show()
-
-    @staticmethod
-    def _create_model_ids(
-            fname,
-            rescale_kicks=utils.RESCALE_KICKS,
-            rescale_length=utils.RESCALE_LENGTH):
-        ids = utils.create_ids(
-            fname, rescale_kicks=rescale_kicks,
-            rescale_length=rescale_length)
-        model = pymodels.si.create_accelerator(ids=ids)
-        twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
-        print('length : {:.4f} m'.format(model.length))
-        print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/_np.pi))
-        print('tuney  : {:.6f}'.format(twiss.muy[-1]/2/_np.pi))
-        return model, ids
-
-    @staticmethod
-    def _mkdir_function(mypath):
-        from errno import EEXIST
-        from os import makedirs, path
-
-        try:
-            makedirs(mypath)
-        except OSError as exc:
-            if exc.errno == EEXIST and path.isdir(mypath):
-                pass
-            else:
-                raise
-
-    @staticmethod
-    def _get_gap_str(gap):
-        gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
-        return gap_str
-
-    @staticmethod
-    def _get_phase_str(phase):
-        phase_str = '{:+07.3f}'.format(phase).replace('.', 'p')
-        phase_str = phase_str.replace('+', 'pos').replace('-', 'neg')
-        return phase_str
