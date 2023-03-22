@@ -14,6 +14,13 @@ from mathphys.functions import load_pickle as _load_pickle
 import utils
 
 
+class CALC_TYPES:
+    """."""
+    nominal = 0
+    nonsymmetrized = 1
+    symmetrized = 2
+
+
 class Tools:
 
     @staticmethod
@@ -771,3 +778,157 @@ class AnalysisKickmap(Tools):
         _plt.legend()
         _plt.grid()
         _plt.show()
+
+
+class AnalysisEffects(Tools):
+
+    def __init__(self):
+        self._idkickmap = None
+        self.fitted_model = False
+        self.calc_type = 0
+
+    def _create_model_nominal(self):
+        model0 = pymodels.si.create_accelerator()
+        if self.fitted_model:
+            model0 = \
+                pymodels.si.fitted_models.vertical_dispersion_and_coupling(
+                    model0)
+        model0.cavity_on = False
+        model0.radiation_on = 0
+        return model0
+
+    def get_knobs_locs(self):
+
+        straight_nr = dict()
+        knobs = dict()
+        locs_beta = dict()
+        idq = list()
+        for id_ in ids:
+            straight_nr_ = int(id_.subsec[2:4])
+
+            # get knobs and beta locations
+            if straight_nr_ is not None:
+                _, knobs_, _ = optics.symm_get_knobs(model, straight_nr_)
+                locs_beta_ = optics.symm_get_locs_beta(knobs_)
+            else:
+                knobs_, locs_beta_ = None, None
+
+            straight_nr[id_.subsec] = straight_nr_
+            knobs[id_.subsec] = knobs_
+            locs_beta[id_.subsec] = locs_beta_
+
+        # idx_interval = optics.get_id_straigh_index_interval(
+        #     model, straight_nr_)
+        # famdata = pymodels.si.get_family_data(model)
+        # idx_qs = famdata['QS']['index']
+        # for idx in idx_interval:
+        #     idq_ = np.argmin(np.abs(np.ravel(idx_qs)-idx))
+        #     idq.append(np.ravel(idx_qs)[idq_])
+        return model, knobs, locs_beta, straight_nr, idq
+
+    def _correct_optics(self, width, phase, gap):
+
+        # create unperturbed model for reference
+        model0 = self._create_model_nominal()
+
+        twiss0, *_ = pyaccel.optics.calc_twiss(model0, indices='closed')
+
+        # create model with ID
+        model1, ids = self._create_model_ids()
+
+        print('element indices for straight section begin and end:')
+        for idsubsec, locs_beta_ in locs_beta.items():
+            print(idsubsec, locs_beta_)
+
+        print('local quadrupole fams: ')
+        for idsubsec, knobs_ in knobs.items():
+            print(idsubsec, knobs_)
+
+        # correct orbit
+        kicks, spos_bpms, codx_c, cody_c, codx_u, cody_u, bpms = \
+            orbcorr.correct_orbit_fb(
+                model0, model1, corr_system='SOFB', nr_steps=1)
+        plt.plot(spos_bpms, 1e6*codx_u, label='uncorrected')
+        plt.plot(spos_bpms, 1e6*codx_c, label='corrected')
+        plt.legend()
+        plt.xlabel('pos [m]')
+        plt.ylabel('codx [um')
+        plt.show()
+
+        # calculate beta beating and delta tunes
+        twiss1 = analysis_uncorrected_perturbation(
+            model1, twiss0=twiss0, plot_flag=False)
+
+        # get list of ID model indices and set rescale_kicks to zero
+        ids_ind_all = orbcorr.get_ids_indices(model1)
+        rescale_kicks_orig = list()
+        for idx in range(len(ids_ind_all)//2):
+            ind_id = ids_ind_all[2*idx:2*(idx+1)]
+            rescale_kicks_orig.append(model1[ind_id[0]].rescale_kicks)
+            model1[ind_id[0]].rescale_kicks = 0
+            model1[ind_id[1]].rescale_kicks = 0
+
+        # loop over IDs turning rescale_kicks on, one by one.
+        for idx in range(len(ids_ind_all)//2):
+
+            # turn rescale_kicks on for ID index idx
+            ind_id = ids_ind_all[2*idx:2*(idx+1)]
+            model1[ind_id[0]].rescale_kicks = rescale_kicks_orig[idx]
+            model1[ind_id[1]].rescale_kicks = rescale_kicks_orig[idx]
+            fam_name = model1[ind_id[0]].fam_name
+            # print(idx, ind_id)
+            # continue
+
+            # search knob and straight_nr for ID index idx
+            for subsec in knobs:
+                straight_nr_ = straight_nr[subsec]
+                knobs_ = knobs[subsec]
+                locs_beta_ = locs_beta[subsec]
+                if min(locs_beta_) < ind_id[0] and ind_id[1] < max(locs_beta_):
+                    break
+
+            k = calc_coupling(model1, x0=1e-6, nturns=1000)
+            print()
+            print('symmetrizing ID {} in subsec {}'.format(fam_name, subsec))
+
+            # calculate nominal twiss
+            goal_tunes = np.array(
+                [twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
+            goal_beta = np.array(
+                [twiss0.betax[locs_beta_], twiss0.betay[locs_beta_]])
+            goal_alpha = np.array(
+                [twiss0.alphax[locs_beta_], twiss0.alphay[locs_beta_]])
+            print('goal_beta:')
+            print(goal_beta)
+
+            # symmetrize optics (local quad fam knobs)
+            if beta_flag:
+                twiss2, stg = correct_beta(
+                    model1, straight_nr_, knobs_, goal_beta, goal_alpha)
+
+                # correct tunes
+                twiss3 = correct_tunes(model1, twiss1, goal_tunes)
+                k = calc_coupling(model1, x0=1e-6, nturns=1000)
+
+                if CORR_COUPLING:
+                    # corr = CouplingCorr(model=model1, acc='SI', skew_list=idq)
+                    # status = corr.coupling_corr_orbrespm_dispy(model=model1)
+                    k = calc_coupling(model1, x0=1e-6, nturns=1000)
+
+                plot_beta_beating(
+                    gap, width, twiss0, twiss1, twiss2, twiss3, stg, fitted_model)
+
+        return model1
+
+    def run_analysis_dynapt(self, width, phase, gap):
+        if self.calc_type == CALC_TYPES.nominal:
+            model = self._create_model_nominal()
+        elif self.calc_type in (
+                CALC_TYPES.symmetrized, CALC_TYPES.nonsymmetrized):
+            self.beta_flag = self.calc_type == CALC_TYPES.symmetrized
+            model = self.correct_optics(
+                width=width, phase=phase, gap=gap)
+        else:
+            raise ValueError('Invalid calc_type')
+
+        analysis_dynapt(gap, width, model, calc_type, fitted_model)
