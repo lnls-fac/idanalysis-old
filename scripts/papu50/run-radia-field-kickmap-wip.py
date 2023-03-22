@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     # Grid for high beta
     radia_fanalysis.gridx = list(np.arange(-12, +12, 1) / 1000)  # [m]
-    radia_fanalysis.gridy = list(np.linspace(-2.8, +2.8, 11) / 1000)  # [m]
+    radia_fanalysis.gridy = list(np.linspace(-3, +3, 11) / 1000)  # [m]
 
     radia_fanalysis.run_calc_fields()
     radia_fanalysis.run_plot_data(phase=utils.phases[0], gap=utils.gaps[0])

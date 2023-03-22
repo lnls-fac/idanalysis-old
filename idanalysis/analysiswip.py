@@ -2,8 +2,12 @@
 
 import numpy as _np
 import matplotlib.pyplot as _plt
-from idanalysis import IDKickMap as _IDKickMap
 
+import pyaccel
+import pymodels
+
+from idanalysis import IDKickMap as _IDKickMap
+from fieldmaptrack import Beam
 from mathphys.functions import save_pickle as _save_pickle
 from mathphys.functions import load_pickle as _load_pickle
 
@@ -431,3 +435,360 @@ class FieldAnalysisFromRadia:
                 pass
             else:
                 raise
+
+
+class AnalysisKickmap:
+
+    def __init__(self):
+        self._idkickmap = None
+        self.save_flag = False
+        self.plot_flag = False
+        self.filter_flag = False
+        self.shift_flag = False
+        self.FOLDER_DATA = utils.FOLDER_DATA
+
+    def _get_kmap_filename(
+            self, width, gap, phase,
+            shift_flag=False, filter_flag=False):
+        fpath = self.FOLDER_DATA + 'kickmaps/'
+        fpath = fpath.replace('model/data/', 'model/')
+        gap_str = self._get_gap_str(gap)
+        phase_str = self._get_phase_str(phase)
+        width = width
+        fname = fpath + f'kickmap-ID_width{width}_phase{phase_str}' +\
+            f'_gap{gap_str}.txt'
+        if shift_flag:
+            fname = fname.replace('.txt', '-shifted_on_axis.txt')
+        if filter_flag:
+            fname = fname.replace('.txt', '-filtered.txt')
+        return fname
+
+    def _get_figname_plane(self, kick_plane, var='X',
+                           width=None, phase=None, gap=None):
+        fpath = utils.FOLDER_DATA
+        fpath = fpath.replace('data/', 'data/general/')
+
+        if utils.var_param == 'gap':
+            phase_str = self._get_phase_str(phase)
+            fname = fpath + 'kick{}-vs-{}-width{}mm-phase{}.png'.format(
+                kick_plane, var.lower(), width, phase_str)
+
+        if utils.var_param == 'phase':
+            gap_str = self._get_gap_str(gap)
+            fname = fpath + 'kick{}-vs-{}-width{}mm-gap{}.png'.format(
+                kick_plane, var.lower(), width, gap_str)
+
+        if utils.var_param == 'width':
+            phase_str = self._get_phase_str(phase)
+            gap_str = self._get_gap_str(gap)
+            fname = fpath + 'kick{}-vs-{}-phase{}-gap{}.png'.format(
+                kick_plane, var.lower(), phase_str, gap_str)
+
+        return fname
+
+    def _get_figname_allplanes(self, kick_plane, var='X',
+                               width=None, phase=None, gap=None):
+        fname = utils.FOLDER_DATA
+
+        sulfix = 'kick{}-vs-{}-all-planes'.format(
+            kick_plane.lower(), var.lower())
+
+        fname = fname.replace(
+            'data/', 'data/widths/width_{}/'.format(width))
+
+        phase_str = self._get_phase_str(phase)
+        fname += 'data/phases/phase_{}/'.format(phase_str)
+
+        gap_str = self._get_gap_str(gap)
+        fname += 'data/gap_{}/'.format(gap_str)
+
+        fname += sulfix
+        return fname
+
+    def run_shift_kickmap(self, widths, phases, gaps):
+        for width in widths:
+            for phase in phases:
+                for gap in gaps:
+                    fname = self._get_kmap_filename(
+                        width=width, phase=phase, gap=gap)
+                    self._idkickmap = _IDKickMap(
+                        kmap_fname=fname, shift_on_axis=True)
+                    fname = fname.replace('.txt', '-shifted_on_axis.txt')
+                    self._idkickmap.save_kickmap_file(fname)
+
+    def run_filter_kickmap(self, widths, phases, gaps,
+                           rx, filter_order=4, is_shifted=True):
+        for width in widths:
+            for phase in phases:
+                for gap in gaps:
+                    fname = self._get_kmap_filename(
+                        width=width, phase=phase, gap=gap,
+                        shift_flag=is_shifted)
+                    self._idkickmap = _IDKickMap(fname)
+                    self._idkickmap.filter_kmap(
+                        posx=rx, order=filter_order, plot_flag=False)
+                    self._idkickmap.kmap_idlen = utils.ID_KMAP_LEN
+                    fname = fname.replace('.txt', '-filtered.txt')
+                    self._idkickmap.save_kickmap_file(fname)
+
+    def _calc_idkmap_kicks(self, plane_idx=0, var='X'):
+        beam = Beam(energy=3)
+        brho = beam.brho
+        rx0 = self._idkickmap.posx
+        ry0 = self._idkickmap.posy
+        fposx = self._idkickmap.fposx
+        fposy = self._idkickmap.fposy
+        kickx = self._idkickmap.kickx
+        kicky = self._idkickmap.kicky
+        if var.lower() == 'x':
+            rxf = fposx[plane_idx, :]
+            ryf = fposy[plane_idx, :]
+            pxf = kickx[plane_idx, :]/brho**2
+            pyf = kicky[plane_idx, :]/brho**2
+        elif var.lower() == 'y':
+            rxf = fposx[:, plane_idx]
+            ryf = fposy[:, plane_idx]
+            pxf = kickx[:, plane_idx]/brho**2
+            pyf = kicky[:, plane_idx]/brho**2
+
+        return rx0, ry0, pxf, pyf, rxf, ryf
+
+    def check_kick_at_plane(
+            self, width=None, phase=None, gap=None,
+            planes=['X', 'Y'], kick_planes=['X', 'Y']):
+
+        if utils.var_param == 'width':
+            var_params = utils.widths
+        if utils.var_param == 'phase':
+            var_params = utils.phases
+        if utils.var_param == 'gap':
+            var_params = utils.gaps
+
+        for var in planes:
+            for kick_plane in kick_planes:
+                colors = ['b', 'g', 'y', 'C1', 'r', 'k']
+                for var_param, color in zip(var_params, colors):
+
+                    if utils.var_param == 'width':
+                        fname = self._get_kmap_filename(
+                            width=var_param, gap=gap, phase=phase,
+                            shift_flag=self.shift_flag,
+                            filter_flag=self.filter_flag)
+                        fname_fig = self._get_figname_plane(
+                            kick_plane=kick_plane, var=var,
+                            width=var_param, gap=gap, phase=phase)
+                    if utils.var_param == 'phase':
+                        fname = self._get_kmap_filename(
+                            width=width, gap=gap, phase=var_param,
+                            shift_flag=self.shift_flag,
+                            filter_flag=self.filter_flag)
+                        fname_fig = self._get_figname_plane(
+                            kick_plane=kick_plane, var=var,
+                            width=width, gap=gap, phase=var_param)
+                    if utils.var_param == 'gap':
+                        fname = self._get_kmap_filename(
+                            width=width, gap=var_param, phase=phase,
+                            shift_flag=self.shift_flag,
+                            filter_flag=self.filter_flag)
+                        fname_fig = self._get_figname_plane(
+                            kick_plane=kick_plane, var=var,
+                            width=width, gap=var_param, phase=phase)
+
+                    self._idkickmap = _IDKickMap(fname)
+                    if var.lower() == 'x':
+                        pos_zero_idx = list(self._idkickmap.posy).index(0)
+                    elif var.lower() == 'y':
+                        pos_zero_idx = list(self._idkickmap.posx).index(0)
+                    rx0, ry0, pxf, pyf, *_ = self._calc_idkmap_kicks(
+                                                    plane_idx=pos_zero_idx,
+                                                    var=var)
+                    pxf *= utils.RESCALE_KICKS
+                    pyf *= utils.RESCALE_KICKS
+
+                    pf, klabel =\
+                        (pxf, 'px') if kick_plane.lower() == 'x' else (
+                         pyf, 'py')
+
+                    if var.lower() == 'x':
+                        r0, xlabel, rvar = (rx0, 'x0 [mm]', 'y')
+                        pfit = _np.polyfit(r0, pf, 21)
+                    else:
+                        r0, xlabel, rvar = (ry0, 'y0 [mm]', 'x')
+                        pfit = _np.polyfit(r0, pf, 11)
+                    pf_fit = _np.polyval(pfit, r0)
+
+                    label = utils.var_param + ' = {} mm'.format(var_param)
+                    _plt.figure(1)
+                    _plt.plot(
+                        1e3*r0, 1e6*pf, '.-', color=color, label=label)
+                    _plt.plot(
+                        1e3*r0, 1e6*pf_fit, '-', color=color, alpha=0.6)
+                    print('Fitting:')
+                    print(pfit[::-1])
+
+                _plt.figure(1)
+                _plt.xlabel(xlabel)
+                _plt.ylabel('final {} [urad]'.format(klabel))
+                _plt.title('Kick{} for gap {} mm, at pos{} {:+.3f} mm'.format(
+                    kick_plane.upper(), gap, rvar, 0))
+                _plt.legend()
+                _plt.grid()
+                _plt.tight_layout()
+                if self.save_flag:
+                    _plt.savefig(fname_fig, dpi=300)
+                if self.plot_flag:
+                    _plt.show()
+                _plt.close()
+
+    def check_kick_all_planes(
+            self, width=None, phase=None, gap=None,
+            planes=['X', 'Y'], kick_planes=['X', 'Y']):
+        for var in planes:
+            for kick_plane in kick_planes:
+                fname = self._get_kmap_filename(width=width,
+                                                phase=phase,
+                                                gap=gap)
+                self._idkickmap = _IDKickMap(fname)
+                fname_fig = self._get_figname_allplanes(
+                    width=width, phase=phase, gap=gap,
+                    var=var, kick_plane=kick_plane)
+
+                if var.lower() == 'x':
+                    kmappos = self._idkickmap.posy
+                else:
+                    kmappos = self._idkickmap.posx
+
+                for plane_idx, pos in enumerate(kmappos):
+                    if pos < 0:
+                        continue
+                    rx0, ry0, pxf, pyf, *_ = self._calc_idkmap_kicks(
+                        var=var, plane_idx=plane_idx)
+                    pxf *= utils.RESCALE_KICKS
+                    pyf *= utils.RESCALE_KICKS
+                    pf, klabel =\
+                        (pxf, 'px') if kick_plane.lower() == 'x' else (
+                         pyf, 'py')
+                    if var.lower() == 'x':
+                        r0, xlabel, rvar = (rx0, 'x0 [mm]', 'y')
+                    else:
+                        r0, xlabel, rvar = (ry0, 'y0 [mm]', 'x')
+                    rvar = 'y' if var.lower() == 'x' else 'x'
+                    label = 'pos{} = {:+.3f} mm'.format(rvar, 1e3*pos)
+                    _plt.plot(
+                        1e3*r0, 1e6*pf, '.-', label=label)
+                    _plt.xlabel(xlabel)
+                    _plt.ylabel('final {} [urad]'.format(klabel))
+                    _plt.title(
+                        'Kicks for gap {} mm, width {} mm'.format(gap, width))
+                _plt.legend()
+                _plt.grid()
+                _plt.tight_layout()
+                if self.save_flag:
+                    _plt.savefig(fname_fig, dpi=300)
+                if self.plot_flag:
+                    _plt.show()
+                _plt.close()
+
+    def check_kick_at_plane_trk(self, width, gap, phase):
+        fname = self._get_kmap_filename(width=width, gap=gap,
+                                        phase=phase)
+        self._idkickmap = _IDKickMap(fname)
+        plane_idx = list(self._idkickmap.posy).index(0)
+        out = self._calc_idkmap_kicks(plane_idx=plane_idx)
+        rx0, ry0 = out[0], out[1]
+        pxf, pyf = out[2], out[3]
+        rxf, ryf = out[4], out[5]
+        pxf *= utils.RESCALE_KICKS
+        pyf *= utils.RESCALE_KICKS
+
+        # lattice with IDs
+        model, _ = self._create_model_ids(fname)
+
+        famdata = pymodels.si.get_family_data(model)
+
+        # shift model
+        idx = famdata[utils.ID_FAMNAME]['index']
+        idx_begin = idx[0][0]
+        idx_end = idx[0][-1]
+        idx_dif = idx_end - idx_begin
+
+        model = pyaccel.lattice.shift(model, start=idx_begin)
+
+        rxf_trk, ryf_trk = _np.ones(len(rx0)), _np.ones(len(rx0))
+        pxf_trk, pyf_trk = _np.ones(len(rx0)), _np.ones(len(rx0))
+        for i, x0 in enumerate(rx0):
+            coord_ini = _np.array([x0, 0, 0, 0, 0, 0])
+            coord_fin, *_ = pyaccel.tracking.line_pass(
+                model, coord_ini, indices='open')
+
+            rxf_trk[i] = coord_fin[0, idx_dif+1]
+            ryf_trk[i] = coord_fin[2, idx_dif+1]
+            pxf_trk[i] = coord_fin[1, idx_dif+1]
+            pyf_trk[i] = coord_fin[3, idx_dif+1]
+
+        _plt.plot(
+            1e3*rx0, 1e6*(rxf - rx0), '.-', color='C1', label='Pos X  kickmap')
+        _plt.plot(1e3*rx0, 1e6*ryf, '.-', color='b', label='Pos Y  kickmap')
+        _plt.plot(
+            1e3*rx0, 1e6*(rxf_trk - rx0), 'o', color='C1',
+            label='Pos X  tracking')
+        _plt.plot(
+            1e3*rx0, 1e6*ryf_trk, 'o', color='b', label='Pos Y  tracking')
+        _plt.xlabel('x0 [mm]')
+        _plt.ylabel('final dpos [um]')
+        _plt.title('dPos')
+        _plt.legend()
+        _plt.grid()
+        _plt.show()
+
+        _plt.plot(1e3*rx0, 1e6*pxf, '.-', color='C1', label='Kick X  kickmap')
+        _plt.plot(1e3*rx0, 1e6*pyf, '.-', color='b', label='Kick Y  kickmap')
+        _plt.plot(
+            1e3*rx0, 1e6*pxf_trk, 'o', color='C1', label='Kick X  tracking')
+        _plt.plot(
+            1e3*rx0, 1e6*pyf_trk, 'o', color='b', label='Kick Y  tracking')
+        _plt.xlabel('x0 [mm]')
+        _plt.ylabel('final px [urad]')
+        _plt.title('Kicks')
+        _plt.legend()
+        _plt.grid()
+        _plt.show()
+
+    @staticmethod
+    def _create_model_ids(
+            fname,
+            rescale_kicks=utils.RESCALE_KICKS,
+            rescale_length=utils.RESCALE_LENGTH):
+        ids = utils.create_ids(
+            fname, rescale_kicks=rescale_kicks,
+            rescale_length=rescale_length)
+        model = pymodels.si.create_accelerator(ids=ids)
+        twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
+        print('length : {:.4f} m'.format(model.length))
+        print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/_np.pi))
+        print('tuney  : {:.6f}'.format(twiss.muy[-1]/2/_np.pi))
+        return model, ids
+
+    @staticmethod
+    def _mkdir_function(mypath):
+        from errno import EEXIST
+        from os import makedirs, path
+
+        try:
+            makedirs(mypath)
+        except OSError as exc:
+            if exc.errno == EEXIST and path.isdir(mypath):
+                pass
+            else:
+                raise
+
+    @staticmethod
+    def _get_gap_str(gap):
+        gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
+        return gap_str
+
+    @staticmethod
+    def _get_phase_str(phase):
+        phase_str = '{:+07.3f}'.format(phase).replace('.', 'p')
+        phase_str = phase_str.replace('+', 'pos').replace('-', 'neg')
+        return phase_str

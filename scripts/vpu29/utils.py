@@ -21,8 +21,9 @@ ID_KMAP_LEN = SIMODEL_ID_LEN
 RESCALE_KICKS = NR_PERIODS_REAL_ID/NR_PERIODS
 RESCALE_LENGTH = 1
 NOMINAL_GAP = 9.7  # [mm]
+ID_FAMNAME = 'VPU29'
 
-SIMODEL_FITTED = True
+SIMODEL_FITTED = False
 SHIFT_FLAG = True
 FILTER_FLAG = False
 
@@ -30,7 +31,8 @@ FOLDER_DATA = './results/model/data/'
 
 gaps = [NOMINAL_GAP]
 phases = [0]
-widths = [26, 22]
+# widths = [26, 22, 20]
+widths = [60, 50, 40, 30]
 field_component = 'bx'
 var_param = 'width'
 
@@ -76,14 +78,13 @@ def get_kmap_filename(
 
 
 def create_ids(
-        gap, width, nr_steps=None, rescale_kicks=RESCALE_KICKS,
+        fname, nr_steps=None, rescale_kicks=RESCALE_KICKS,
         rescale_length=RESCALE_LENGTH):
     # create IDs
     nr_steps = nr_steps or 40
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
     rescale_length = \
         rescale_length if rescale_length is not None else 1
-    fname = get_kmap_filename(gap=gap, width=width)
     IDModel = pymodels.si.IDModel
     vpu29 = IDModel(
         subsec=IDModel.SUBSECTIONS.ID06SB,
@@ -95,11 +96,11 @@ def create_ids(
 
 
 def create_model_ids(
-        gap, width,
+        gap, phase, width,
         rescale_kicks=RESCALE_KICKS,
         rescale_length=RESCALE_LENGTH):
     ids = create_ids(
-        gap, width, rescale_kicks=rescale_kicks,
+        gap=gap, width=width, rescale_kicks=rescale_kicks,
         rescale_length=rescale_length)
     model = pymodels.si.create_accelerator(ids=ids)
     twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
