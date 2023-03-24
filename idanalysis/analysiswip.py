@@ -783,6 +783,7 @@ class AnalysisEffects(Tools):
         self.fitted_model = False
         self.shift_flag = True
         self.filter_flag = False
+        self.beta_flag = None
         self.calc_type = 0
         self.corr_system = 'SOFB'
         self.orbcorr_plot_flag = False
@@ -819,6 +820,21 @@ class AnalysisEffects(Tools):
             locs_beta[id_.subsec] = locs_beta_
 
         return knobs, locs_beta, straight_nr
+
+    def _calc_coupling(self, x0, nturns=1000):
+        coord_ini = _np.array([x0, 0, 0, 0, 0, 0])
+        coord_fin, *_ = pyaccel.tracking.ring_pass(
+            self._model_id, coord_ini, nr_turns=nturns,
+            turn_by_turn=True, parallel=True)
+        rx = coord_fin[0, :]
+        ry = coord_fin[2, :]
+        twiss, *_ = pyaccel.optics.calc_twiss(self._model_id)
+        betax, betay = twiss.betax, twiss.betay  # Beta functions
+        jx = 2/(betax[0]*nturns)*(_np.sum(rx)**2)
+        jy = 2/(betay[0]*nturns)*(_np.sum(ry)**2)
+
+        print('coupling k = {:.3f}'.format(jy/jx))
+        return jy/jx
 
     def _calc_dtune_betabeat(self, twiss1):
         dtunex = (twiss1.mux[-1] - self._twiss0.mux[-1]) / 2 / _np.pi
@@ -866,6 +882,130 @@ class AnalysisEffects(Tools):
             _plt.show()
 
         return twiss
+
+    def plot_beta_beating(
+        gap, width, twiss0, twiss1, twiss2, twiss3, stg, fitted_model):
+        fpath = create_path(gap, width)
+        # Compare optics between nominal value and uncorrect optics due ID
+        results = calc_dtune_betabeat(twiss0, twiss1)
+        dtunex, dtuney = results[0], results[1]
+        bbeatx, bbeaty = results[2], results[3]
+        bbeatx_rms, bbeaty_rms = results[4], results[5]
+        bbeatx_absmax, bbeaty_absmax = results[6], results[7]
+        print('Not symmetrized optics :')
+        print(f'dtunex: {dtunex:+.2e}')
+        print(f'dtuney: {dtuney:+.2e}')
+        print(
+            f'bbetax: {bbeatx_rms:04.3f} % rms, {bbeatx_absmax:04.3f} % absmax')
+        print(
+            f'bbetay: {bbeaty_rms:04.3f} % rms, {bbeaty_absmax:04.3f} % absmax')
+        print()
+
+        plt.clf()
+
+        label1 = {False: '-nominal', True: '-fittedmodel'}[fitted_model]
+
+        plt.figure(1)
+        stg_tune = f'dtunex: {dtunex:+0.04f}\n' + f'dtuney: {dtuney:+0.04f}'
+        labelx = f'X ({bbeatx_rms:.3f} % rms)'
+        labely = f'Y ({bbeaty_rms:.3f} % rms)'
+        plt.plot(twiss0.spos, bbeatx, color='b', alpha=1.0, label=labelx)
+        plt.plot(twiss0.spos, bbeaty, color='r', alpha=0.8, label=labely)
+        plt.xlabel('spos [m]')
+        plt.ylabel('Beta Beating [%]')
+        plt.title('Tune shift' + '\n' + stg_tune)
+        plt.suptitle('VPU29 - Non-symmetrized optics')
+        plt.tight_layout()
+        plt.legend()
+        plt.grid()
+        plt.savefig(fpath + 'opt{}-ids-nonsymm'.format(label1), dpi=300)
+
+        # Compare optics between nominal value and symmetrized optics
+        results = calc_dtune_betabeat(twiss0, twiss2)
+        dtunex, dtuney = results[0], results[1]
+        bbeatx, bbeaty = results[2], results[3]
+        bbeatx_rms, bbeaty_rms = results[4], results[5]
+        bbeatx_absmax, bbeaty_absmax = results[6], results[7]
+        print('symmetrized optics but uncorrect tunes:')
+        print(f'dtunex: {dtunex:+.0e}')
+        print(f'dtuney: {dtuney:+.0e}')
+        print(f'bbetax: {bbeatx_rms:04.3f} % rms, {bbeatx_absmax:04.3f} % absmax')
+        print(f'bbetay: {bbeaty_rms:04.3f} % rms, {bbeaty_absmax:04.3f} % absmax')
+        print()
+
+        plt.figure(2)
+        labelx = f'X ({bbeatx_rms:.3f} % rms)'
+        labely = f'Y ({bbeaty_rms:.3f} % rms)'
+        plt.plot(twiss0.spos, bbeatx, color='b', alpha=1.0, label=labelx)
+        plt.plot(twiss0.spos, bbeaty, color='r', alpha=0.8, label=labely)
+        plt.xlabel('spos [m]')
+        plt.ylabel('Beta Beating [%]')
+        plt.title('Beta Beating')
+        plt.suptitle('VPU29 - Symmetrized optics and uncorrected tunes')
+        plt.legend()
+        plt.grid()
+        plt.tight_layout()
+        plt.savefig(fpath + 'opt{}-ids-symm'.format(label1), dpi=300)
+
+        # Compare optics between nominal value and all corrected
+        results = calc_dtune_betabeat(twiss0, twiss3)
+        dtunex, dtuney = results[0], results[1]
+        bbeatx, bbeaty = results[2], results[3]
+        bbeatx_rms, bbeaty_rms = results[4], results[5]
+        bbeatx_absmax, bbeaty_absmax = results[6], results[7]
+        print('symmetrized optics and corrected tunes:')
+        print(f'dtunex: {dtunex:+.0e}')
+        print(f'dtuney: {dtuney:+.0e}')
+        print(f'bbetax: {bbeatx_rms:04.3f} % rms, {bbeatx_absmax:04.3f} % absmax')
+        print(f'bbetay: {bbeaty_rms:04.3f} % rms, {bbeaty_absmax:04.3f} % absmax')
+
+        plt.figure(3)
+        labelx = f'X ({bbeatx_rms:.3f} % rms)'
+        labely = f'Y ({bbeaty_rms:.3f} % rms)'
+        plt.plot(twiss0.spos, bbeatx, color='b', alpha=1.0, label=labelx)
+        plt.plot(twiss0.spos, bbeaty, color='r', alpha=0.8, label=labely)
+        plt.xlabel('spos [m]')
+        plt.ylabel('Beta Beating [%]')
+        plt.title('Beta Beating' + '\n' + stg)
+        plt.suptitle('VPU29 - Symmetrized optics and corrected tunes')
+        plt.legend()
+        plt.grid()
+        plt.tight_layout()
+        plt.savefig(fpath + 'opt{}-ids-symm-tunes'.format(label1), dpi=300)
+        plt.show()
+
+        plt.clf()
+
+    def _correct_beta(self, straight_nr, knobs, goal_beta, goal_alpha):
+        dk_tot = _np.zeros(len(knobs))
+        for i in range(7):
+            dk = optics.correct_symmetry_withbeta(
+                self._model_id, straight_nr, goal_beta, goal_alpha)
+            print('iteration #{}, dK: {}'.format(i+1, dk))
+            dk_tot += dk
+        stg = str()
+        for i, fam in enumerate(knobs):
+            stg += '{:<9s} dK: {:+9.4f} 1/m² \n'.format(fam, dk_tot[i])
+        print(stg)
+        twiss2, *_ = pyaccel.opt.calc_twiss(self._model_id, indices='closed')
+        print()
+        return twiss2, stg
+
+    def _correct_tunes(self, twiss1, goal_tunes):
+        tunes = twiss1.mux[-1]/_np.pi/2, twiss1.muy[-1]/_np.pi/2
+        print('init    tunes: {:.9f} {:.9f}'.format(tunes[0], tunes[1]))
+        for i in range(2):
+            optics.correct_tunes_twoknobs(self._model_id, goal_tunes)
+            twiss, *_ = pyaccel.optics.calc_twiss(self._model_id)
+            tunes = twiss.mux[-1]/_np.pi/2, twiss.muy[-1]/_np.pi/2
+            print('iter #{} tunes: {:.9f} {:.9f}'.format(
+                i+1, tunes[0], tunes[1]))
+        print('goal    tunes: {:.9f} {:.9f}'.format(
+            goal_tunes[0], goal_tunes[1]))
+        twiss3, *_ = pyaccel.optics.calc_twiss(
+            self._model_id, indices='closed')
+        print()
+        return twiss3
 
     def _correct_optics(self, width, phase, gap):
 
@@ -925,7 +1065,7 @@ class AnalysisEffects(Tools):
                 if min(locs_beta_) < ind_id[0] and ind_id[1] < max(locs_beta_):
                     break
 
-            k = calc_coupling(model1, x0=1e-6, nturns=1000)
+            k = self._calc_coupling(x0=1e-6, nturns=1000)
             print()
             print('symmetrizing ID {} in subsec {}'.format(fam_name, subsec))
 
@@ -942,23 +1082,16 @@ class AnalysisEffects(Tools):
             print(goal_beta)
 
             # symmetrize optics (local quad fam knobs)
-            if beta_flag:
-                twiss2, stg = correct_beta(
-                    model1, straight_nr_, knobs_, goal_beta, goal_alpha)
+            if self.beta_flag:
+                twiss2, stg = self._correct_beta(
+                    straight_nr_, knobs_, goal_beta, goal_alpha)
 
                 # correct tunes
-                twiss3 = correct_tunes(model1, twiss1, goal_tunes)
-                k = calc_coupling(model1, x0=1e-6, nturns=1000)
-
-                if CORR_COUPLING:
-                    # corr = CouplingCorr(model=model1, acc='SI', skew_list=idq)
-                    # status = corr.coupling_corr_orbrespm_dispy(model=model1)
-                    k = calc_coupling(model1, x0=1e-6, nturns=1000)
+                twiss3 = self._correct_tunes(twiss1, goal_tunes)
 
                 plot_beta_beating(
                     gap, width, twiss0, twiss1, twiss2, twiss3, stg, fitted_model)
 
-        return model1
 
     def run_analysis_dynapt(self, width, phase, gap):
         if self.calc_type == CALC_TYPES.nominal:
