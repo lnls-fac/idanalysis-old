@@ -6,10 +6,13 @@ import matplotlib.pyplot as _plt
 import pyaccel
 import pymodels
 
-from idanalysis import IDKickMap as _IDKickMap
 from fieldmaptrack import Beam
 from mathphys.functions import save_pickle as _save_pickle
 from mathphys.functions import load_pickle as _load_pickle
+
+from idanalysis import IDKickMap as _IDKickMap
+from idanalysis import optics as optics
+from idanalysis import orbcorr as orbcorr
 
 import utils
 
@@ -22,6 +25,23 @@ class CALC_TYPES:
 
 
 class Tools:
+
+    @staticmethod
+    def _get_kmap_filename(
+            width, gap, phase,
+            shift_flag=False, filter_flag=False):
+        fpath = utils.FOLDER_DATA + 'kickmaps/'
+        fpath = fpath.replace('model/data/', 'model/')
+        gap_str = Tools._get_gap_str(gap)
+        phase_str = Tools._get_phase_str(phase)
+        width = width
+        fname = fpath + f'kickmap-ID_width{width}_phase{phase_str}' +\
+            f'_gap{gap_str}.txt'
+        if shift_flag:
+            fname = fname.replace('.txt', '-shifted_on_axis.txt')
+        if filter_flag:
+            fname = fname.replace('.txt', '-filtered.txt')
+        return fname
 
     @staticmethod
     def _create_model_ids(
@@ -203,7 +223,6 @@ class FieldAnalysisFromRadia(Tools):
             b_[var_params] = b
             rt_dict[var_params] = rt
             roll_off[var_params] = roff
-
         self.data['rolloff_rt'] = rt_dict
         self.data['rolloff_{}'.format(field_component)] = b_
         self.data['rolloff_value'] = roll_off
@@ -309,16 +328,6 @@ class FieldAnalysisFromRadia(Tools):
             print(fname)
             _save_pickle(fdata, fname, overwrite=True, makedirs=True)
 
-    def _get_kmap_filename(self, width, gap, phase):
-        fpath = self.FOLDER_DATA + 'kickmaps/'
-        fpath = fpath.replace('model/data/', 'model/')
-        gap_str = self._get_gap_str(gap)
-        phase_str = self._get_phase_str(phase)
-        width = width
-        fname = fpath + f'kickmap-ID_width{width}_phase{phase_str}' +\
-            f'_gap{gap_str}.txt'
-        return fname, fpath
-
     def run_calc_fields(self):
 
         self._create_models()
@@ -370,16 +379,17 @@ class FieldAnalysisFromRadia(Tools):
             self._generate_kickmap(key, id)
 
     def _plot_field_on_axis(self, data):
+        colors = ['b', 'g', 'y', 'C1', 'r', 'k']
         field_component = utils.field_component
         _plt.figure(1)
         output_dir = utils.FOLDER_DATA + 'general'
         self._mkdir_function(output_dir)
         var_parameters = list(data.keys())
-        for parameter in var_parameters:
+        for i, parameter in enumerate(var_parameters):
             label = utils.var_param + ' {}'.format(parameter)
             b = data[parameter]['onaxis_{}'.format(field_component)]
             rz = data[parameter]['onaxis_rz']
-            _plt.plot(rz, b, label=label)
+            _plt.plot(rz, b, label=label, color=colors[i])
         _plt.xlabel('z [mm]')
         _plt.ylabel('{} [T]'.format(field_component))
         _plt.legend()
@@ -441,8 +451,7 @@ class FieldAnalysisFromRadia(Tools):
             roff = _np.abs(b[rtp_idx]/b[rt0_idx]-1)
             label = utils.var_param +\
                 " {}, roll-off = {:.2f} %".format(parameter, 100*roff)
-            irt0 = _np.argmin(_np.abs(rt))
-            b0 = b[irt0]
+            b0 = b[rt0_idx]
             roll_off = 100*(b/b0 - 1)
             _plt.plot(rt, roll_off, '.-', label=label, color=colors[i])
         if field_component == 'by':
@@ -451,7 +460,7 @@ class FieldAnalysisFromRadia(Tools):
             _plt.xlabel('y [mm]')
         _plt.ylabel('roll off [%]')
         _plt.xlim(-utils.ROLL_OFF_RT, utils.ROLL_OFF_RT)
-        _plt.ylim(-1.2, 0.02)
+        _plt.ylim(-3, 0.02)
         if field_component == 'by':
             _plt.title('Field roll-off at x = {} mm'.format(utils.ROLL_OFF_RT))
         elif field_component == 'bx':
@@ -471,22 +480,6 @@ class AnalysisKickmap(Tools):
         self.filter_flag = False
         self.shift_flag = False
         self.FOLDER_DATA = utils.FOLDER_DATA
-
-    def _get_kmap_filename(
-            self, width, gap, phase,
-            shift_flag=False, filter_flag=False):
-        fpath = self.FOLDER_DATA + 'kickmaps/'
-        fpath = fpath.replace('model/data/', 'model/')
-        gap_str = self._get_gap_str(gap)
-        phase_str = self._get_phase_str(phase)
-        width = width
-        fname = fpath + f'kickmap-ID_width{width}_phase{phase_str}' +\
-            f'_gap{gap_str}.txt'
-        if shift_flag:
-            fname = fname.replace('.txt', '-shifted_on_axis.txt')
-        if filter_flag:
-            fname = fname.replace('.txt', '-filtered.txt')
-        return fname
 
     def _get_figname_plane(self, kick_plane, var='X',
                            width=None, phase=None, gap=None):
@@ -784,8 +777,16 @@ class AnalysisEffects(Tools):
 
     def __init__(self):
         self._idkickmap = None
+        self.id_famname = utils.ID_FAMNAME
+        self._ids = None
+        self._model_id = None
         self.fitted_model = False
+        self.shift_flag = True
+        self.filter_flag = False
         self.calc_type = 0
+        self.corr_system = 'SOFB'
+        self.orbcorr_plot_flag = False
+        self._twiss0 = None
 
     def _create_model_nominal(self):
         model0 = pymodels.si.create_accelerator()
@@ -797,18 +798,18 @@ class AnalysisEffects(Tools):
         model0.radiation_on = 0
         return model0
 
-    def get_knobs_locs(self):
+    def _get_knobs_locs(self):
 
         straight_nr = dict()
         knobs = dict()
         locs_beta = dict()
-        idq = list()
-        for id_ in ids:
+        for id_ in self._ids:
             straight_nr_ = int(id_.subsec[2:4])
 
             # get knobs and beta locations
             if straight_nr_ is not None:
-                _, knobs_, _ = optics.symm_get_knobs(model, straight_nr_)
+                _, knobs_, _ = optics.symm_get_knobs(
+                        self._model_id, straight_nr_)
                 locs_beta_ = optics.symm_get_locs_beta(knobs_)
             else:
                 knobs_, locs_beta_ = None, None
@@ -817,24 +818,54 @@ class AnalysisEffects(Tools):
             knobs[id_.subsec] = knobs_
             locs_beta[id_.subsec] = locs_beta_
 
-        # idx_interval = optics.get_id_straigh_index_interval(
-        #     model, straight_nr_)
-        # famdata = pymodels.si.get_family_data(model)
-        # idx_qs = famdata['QS']['index']
-        # for idx in idx_interval:
-        #     idq_ = np.argmin(np.abs(np.ravel(idx_qs)-idx))
-        #     idq.append(np.ravel(idx_qs)[idq_])
-        return model, knobs, locs_beta, straight_nr, idq
+        return knobs, locs_beta, straight_nr
+
+    def _analysis_uncorrected_perturbation(
+            self, plot_flag=True):
+        twiss, *_ = pyacc_opt.calc_twiss(model, indices='closed')
+
+        results = calc_dtune_betabeat(twiss0, twiss)
+        dtunex, dtuney = results[0], results[1]
+        bbeatx, bbeaty = results[2], results[3]
+        bbeatx_rms, bbeaty_rms = results[4], results[5]
+        bbeatx_absmax, bbeaty_absmax = results[6], results[7]
+
+        if plot_flag:
+
+            print(f'dtunex: {dtunex:+.6f}')
+            print(f'dtunex: {dtuney:+.6f}')
+            txt = f'bbetax: {bbeatx_rms:04.1f} % rms, '
+            txt += f'{bbeatx_absmax:04.1f} % absmax'
+            print(txt)
+            txt = f'bbetay: {bbeaty_rms:04.1f} % rms, '
+            txt += f'{bbeaty_absmax:04.1f} % absmax'
+            print(txt)
+
+            labelx = f'X ({bbeatx_rms:.1f} % rms)'
+            labely = f'Y ({bbeaty_rms:.1f} % rms)'
+            _plt.plot(twiss.spos, bbeatx, color='b', alpha=1, label=labelx)
+            _plt.plot(twiss.spos, bbeaty, color='r', alpha=0.8, label=labely)
+            _plt.xlabel('spos [m]')
+            _plt.ylabel('Beta Beat [%]')
+            _plt.title('Beta Beating from ' + self.id_famname)
+            _plt.legend()
+            _plt.grid()
+            _plt.show()
+
+        return twiss
 
     def _correct_optics(self, width, phase, gap):
 
         # create unperturbed model for reference
         model0 = self._create_model_nominal()
-
-        twiss0, *_ = pyaccel.optics.calc_twiss(model0, indices='closed')
+        self._twiss0, *_ = pyaccel.optics.calc_twiss(model0, indices='closed')
 
         # create model with ID
-        model1, ids = self._create_model_ids()
+        fname = self._get_kmap_filename(width=width, phase=phase, gap=gap,
+                                        shift_flag=self.shift_flag,
+                                        filter_flag=self.filter_flag)
+        self._model_id, self._ids = self._create_model_ids(fname=fname)
+        knobs, locs_beta, straight_nr = self._get_knobs_locs()
 
         print('element indices for straight section begin and end:')
         for idsubsec, locs_beta_ in locs_beta.items():
@@ -847,17 +878,11 @@ class AnalysisEffects(Tools):
         # correct orbit
         kicks, spos_bpms, codx_c, cody_c, codx_u, cody_u, bpms = \
             orbcorr.correct_orbit_fb(
-                model0, model1, corr_system='SOFB', nr_steps=1)
-        plt.plot(spos_bpms, 1e6*codx_u, label='uncorrected')
-        plt.plot(spos_bpms, 1e6*codx_c, label='corrected')
-        plt.legend()
-        plt.xlabel('pos [m]')
-        plt.ylabel('codx [um')
-        plt.show()
+                model0, self._model_id, corr_system=self.corr_system,
+                nr_steps=1, plot_flag=self.orbcorr_plot_flag)
 
         # calculate beta beating and delta tunes
-        twiss1 = analysis_uncorrected_perturbation(
-            model1, twiss0=twiss0, plot_flag=False)
+        twiss1 = self._analysis_uncorrected_perturbation(plot_flag=False)
 
         # get list of ID model indices and set rescale_kicks to zero
         ids_ind_all = orbcorr.get_ids_indices(model1)
@@ -926,7 +951,7 @@ class AnalysisEffects(Tools):
         elif self.calc_type in (
                 CALC_TYPES.symmetrized, CALC_TYPES.nonsymmetrized):
             self.beta_flag = self.calc_type == CALC_TYPES.symmetrized
-            model = self.correct_optics(
+            model = self._correct_optics(
                 width=width, phase=phase, gap=gap)
         else:
             raise ValueError('Invalid calc_type')

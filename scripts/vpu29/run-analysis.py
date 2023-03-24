@@ -59,13 +59,12 @@ def create_model_nominal(fitted_model=False):
     return model0
 
 
-def create_model_ids(gap, width, fitted_model=False):
+def create_model_ids(fname, fitted_model=False):
     """."""
     print('--- model with kickmap ---')
     ids = utils.create_ids(
-        gap,
-        width,
-        rescale_kicks=RESCALE_KICKS*1,
+        fname,
+        rescale_kicks=RESCALE_KICKS,
         rescale_length=RESCALE_LENGTH)
     model = pymodels.si.create_accelerator(ids=ids)
     if fitted_model:
@@ -96,13 +95,13 @@ def create_model_ids(gap, width, fitted_model=False):
         knobs[id_.subsec] = knobs_
         locs_beta[id_.subsec] = locs_beta_
 
-        idx_interval = optics.get_id_straigh_index_interval(
-            model, straight_nr_)
-        famdata = pymodels.si.get_family_data(model)
-        idx_qs = famdata['QS']['index']
-        for idx in idx_interval:
-            idq_ = np.argmin(np.abs(np.ravel(idx_qs)-idx))
-            idq.append(np.ravel(idx_qs)[idq_])
+        # idx_interval = optics.get_id_straigh_index_interval(
+        #     model, straight_nr_)
+        # famdata = pymodels.si.get_family_data(model)
+        # idx_qs = famdata['QS']['index']
+        # for idx in idx_interval:
+        #     idq_ = np.argmin(np.abs(np.ravel(idx_qs)-idx))
+        #     idq.append(np.ravel(idx_qs)[idq_])
     return model, knobs, locs_beta, straight_nr, idq
 
 
@@ -285,7 +284,9 @@ def analysis_dynapt(gap, width, model, calc_type, fitted_model):
     print(dynapxy)
     dynapxy.do_tracking()
     dynapxy.process_data()
-    fig, *ax = dynapxy.make_figure_diffusion(orders=(1, 2, 3, 4))
+    fig, *ax = dynapxy.make_figure_diffusion(orders=(1, 2, 3, 4),
+                                             nuy_bounds=(14.12, 14.45),
+                                             nux_bounds=(49.05, 49.50))
     fig.show()
 
     fpath = create_path(gap, width)
@@ -338,9 +339,10 @@ def correct_optics(gap, width, beta_flag=True, fitted_model=False):
 
     twiss0, *_ = pyacc_opt.calc_twiss(model0, indices='closed')
 
+    fname = utils.get_kmap_filename(gap=gap, width=width)
     # create model with ID
     model1, knobs, locs_beta, straight_nr, idq = create_model_ids(
-        gap, width, fitted_model=fitted_model)
+        fname=fname, fitted_model=fitted_model)
 
     print('element indices for straight section begin and end:')
     for idsubsec, locs_beta_ in locs_beta.items():
@@ -445,17 +447,16 @@ def run_analysis_dynapt(gap, width, fitted_model, calc_type):
 if __name__ == '__main__':
 
     gaps = [9.7]
-    widths = [26, 22]
-
+    widths = [50]
     for gap in gaps:
         for width in widths:
-            # calc_type = CALC_TYPES.nominal
-            # run_analysis_dynapt(
-                # gap, width, fitted_model=SIMODEL_FITTED, calc_type=calc_type)
-
-            calc_type = CALC_TYPES.symmetrized
+            calc_type = CALC_TYPES.nominal
             run_analysis_dynapt(
                 gap, width, fitted_model=SIMODEL_FITTED, calc_type=calc_type)
+
+            # calc_type = CALC_TYPES.symmetrized
+            # run_analysis_dynapt(
+                # gap, width, fitted_model=SIMODEL_FITTED, calc_type=calc_type)
 
             # calc_type = CALC_TYPES.nonsymmetrized
             # run_analysis_dynapt(

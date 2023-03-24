@@ -28,4 +28,4 @@ if __name__ == '__main__':
         # planes=planes, kick_planes=kick_planes)
 
     # kickanalysis.check_kick_at_plane_trk(
-    #     width=widths[0], phase=phase, gap=gap)
+        # width=widths[0], phase=phase, gap=gap)

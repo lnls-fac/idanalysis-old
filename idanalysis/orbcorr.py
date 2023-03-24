@@ -323,7 +323,7 @@ def get_fofb_bpms_idx(bpms):
 
 def correct_orbit_fb(
         model0, model1, minsingval=0.2,
-        nr_steps=1, corr_system='SOFB'):
+        nr_steps=1, corr_system='SOFB', plot_flag=False):
     """."""
     # calculate structures
     famdata = si.get_family_data(model1)
@@ -383,5 +383,21 @@ def correct_orbit_fb(
         pass
     else:
         raise ValueError('Corretion system must be "SOFB" or "FOFB"')
+
+    if plot_flag:
+        plt.figure(1)
+        plt.plot(spos_bpms, 1e6*codx_u, label='uncorrected')
+        plt.plot(spos_bpms, 1e6*codx_c, label='corrected')
+        plt.legend()
+        plt.xlabel('pos [m]')
+        plt.ylabel('codx [um]')
+
+        plt.figure(2)
+        plt.plot(spos_bpms, 1e6*cody_u, label='uncorrected')
+        plt.plot(spos_bpms, 1e6*cody_c, label='corrected')
+        plt.legend()
+        plt.xlabel('pos [m]')
+        plt.ylabel('cody [um]')
+        plt.show()
 
     return kicks, spos_bpms, codx_c, cody_c, codx_u, cody_u, bpms
