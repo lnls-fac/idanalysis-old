@@ -820,11 +820,24 @@ class AnalysisEffects(Tools):
 
         return knobs, locs_beta, straight_nr
 
+    def _calc_dtune_betabeat(self, twiss1):
+        dtunex = (twiss1.mux[-1] - self._twiss0.mux[-1]) / 2 / _np.pi
+        dtuney = (twiss1.muy[-1] - self._twiss0.muy[-1]) / 2 / _np.pi
+        bbeatx = 100 * (twiss1.betax - self._twiss0.betax) / self._twiss0.betax
+        bbeaty = 100 * (twiss1.betay - self._twiss0.betay) / self._twiss0.betay
+        bbeatx_rms = _np.std(bbeatx)
+        bbeaty_rms = _np.std(bbeaty)
+        bbeatx_absmax = _np.max(_np.abs(bbeatx))
+        bbeaty_absmax = _np.max(_np.abs(bbeaty))
+        return (
+            dtunex, dtuney, bbeatx, bbeaty,
+            bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax)
+
     def _analysis_uncorrected_perturbation(
             self, plot_flag=True):
-        twiss, *_ = pyacc_opt.calc_twiss(model, indices='closed')
+        twiss, *_ = pyaccel.optics.calc_twiss(self._model_id, indices='closed')
 
-        results = calc_dtune_betabeat(twiss0, twiss)
+        results = self._calc_dtune_betabeat(twiss)
         dtunex, dtuney = results[0], results[1]
         bbeatx, bbeaty = results[2], results[3]
         bbeatx_rms, bbeaty_rms = results[4], results[5]
@@ -885,22 +898,22 @@ class AnalysisEffects(Tools):
         twiss1 = self._analysis_uncorrected_perturbation(plot_flag=False)
 
         # get list of ID model indices and set rescale_kicks to zero
-        ids_ind_all = orbcorr.get_ids_indices(model1)
+        ids_ind_all = orbcorr.get_ids_indices(self._model_id)
         rescale_kicks_orig = list()
         for idx in range(len(ids_ind_all)//2):
             ind_id = ids_ind_all[2*idx:2*(idx+1)]
-            rescale_kicks_orig.append(model1[ind_id[0]].rescale_kicks)
-            model1[ind_id[0]].rescale_kicks = 0
-            model1[ind_id[1]].rescale_kicks = 0
+            rescale_kicks_orig.append(self._model_id[ind_id[0]].rescale_kicks)
+            self._model_id[ind_id[0]].rescale_kicks = 0
+            self._model_id[ind_id[1]].rescale_kicks = 0
 
         # loop over IDs turning rescale_kicks on, one by one.
         for idx in range(len(ids_ind_all)//2):
 
             # turn rescale_kicks on for ID index idx
             ind_id = ids_ind_all[2*idx:2*(idx+1)]
-            model1[ind_id[0]].rescale_kicks = rescale_kicks_orig[idx]
-            model1[ind_id[1]].rescale_kicks = rescale_kicks_orig[idx]
-            fam_name = model1[ind_id[0]].fam_name
+            self._model_id[ind_id[0]].rescale_kicks = rescale_kicks_orig[idx]
+            self._model_id[ind_id[1]].rescale_kicks = rescale_kicks_orig[idx]
+            fam_name = self._model_id[ind_id[0]].fam_name
             # print(idx, ind_id)
             # continue
 
@@ -917,12 +930,14 @@ class AnalysisEffects(Tools):
             print('symmetrizing ID {} in subsec {}'.format(fam_name, subsec))
 
             # calculate nominal twiss
-            goal_tunes = np.array(
-                [twiss0.mux[-1] / 2 / np.pi, twiss0.muy[-1] / 2 / np.pi])
-            goal_beta = np.array(
-                [twiss0.betax[locs_beta_], twiss0.betay[locs_beta_]])
-            goal_alpha = np.array(
-                [twiss0.alphax[locs_beta_], twiss0.alphay[locs_beta_]])
+            goal_tunes = _np.array(
+                [self._twiss0.mux[-1]/2/_np.pi, self._twiss0.muy[-1]/2/_np.pi])
+            goal_beta = _np.array(
+                [self._twiss0.betax[locs_beta_],
+                 self._twiss0.betay[locs_beta_]])
+            goal_alpha = _np.array(
+                [self._twiss0.alphax[locs_beta_],
+                 self._twiss0.alphay[locs_beta_]])
             print('goal_beta:')
             print(goal_beta)
 

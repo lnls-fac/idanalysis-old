@@ -1,8 +1,9 @@
 #!/usr/bin/env python-sirius
 
 import matplotlib.pyplot as plt
+import numpy as np
 
-from fieldmaptrack import FieldMap, Beam, Trajectory
+from fieldmaptrack import FieldMap, Beam, Trajectory, Multipoles
 
 
 # ID_PERIOD = 180.0  # [mm]
@@ -20,38 +21,159 @@ ID_CONFIGS = {
     }
 
 
+def calc_multipoles(traj, harmonics, idconfig):
+
+    # calc multipoles
+    n_list = harmonics
+    s_list = harmonics
+    mp = Multipoles()
+    mp.trajectory = traj
+    mp.perpendicular_grid = np.linspace(-3, 3, 21)
+    mp.normal_field_fitting_monomials = n_list
+    mp.skew_field_fitting_monomials = s_list
+
+    mp.calc_multipoles(is_ref_trajectory_flag=False)
+    mp.calc_multipoles_integrals()
+
+    if idconfig == 'CH':
+        mp.calc_multipoles_integrals_relative(
+                mp.normal_multipoles_integral,
+                main_monomial=0,
+                r0=12,
+                is_skew=False)
+    else:
+        mp.calc_multipoles_integrals_relative(
+                mp.skew_multipoles_integral,
+                main_monomial=0,
+                r0=12,
+                is_skew=True)
+
+    normal_dip = mp.normal_multipoles[0, :]
+    skew_dip = mp.skew_multipoles[0, :]
+    normal_sext = mp.normal_multipoles[1, :]
+    skew_sext = mp.skew_multipoles[1, :]
+    normal_dode = mp.normal_multipoles[2, :]
+    skew_dode = mp.skew_multipoles[2, :]
+    i_ndip = mp.normal_multipoles_integral[0]
+    i_sdip = mp.skew_multipoles_integral[0]
+    i_nsext = mp.normal_multipoles_integral[1]
+    i_ssext = mp.skew_multipoles_integral[1]
+    i_ndode = mp.normal_multipoles_integral[2]
+    i_sdode = mp.skew_multipoles_integral[2]
+
+    plt.figure(1)
+    colors = ['b', 'g', 'y', 'C1', 'r', 'k']
+    ndip = normal_dip
+    plt.plot(
+        traj.rz, ndip, color=colors[1],
+        label='Integrated = {:.4f} Tm'.format(i_ndip))
+    plt.xlabel('rz [mm]')
+    plt.ylabel('Normal dipolar component [T]')
+    plt.grid()
+    plt.legend()
+    plt.title(
+            'Normal dipole')
+
+    plt.figure(2)
+    sdip = skew_dip
+    plt.plot(
+        traj.rz, sdip, color=colors[1],
+        label='Integrated = {:.4f} T/m'.format(i_sdip))
+    plt.xlabel('rz [mm]')
+    plt.ylabel('Skew dipolar component [T]')
+    plt.grid()
+    plt.legend()
+    plt.title(
+            'Skew dipole')
+
+    plt.figure(3)
+    colors = ['b', 'g', 'y', 'C1', 'r', 'k']
+    nsext = normal_sext
+    plt.plot(
+        traj.rz, nsext, color=colors[3],
+        label='Integrated = {:.4f} T/m'.format(i_nsext))
+    plt.xlabel('rz [mm]')
+    plt.ylabel('Normal sextupolar component [T/m²]')
+    plt.grid()
+    plt.legend()
+    plt.title(
+            'Normal sextupole')
+
+    plt.figure(4)
+    ssext = skew_sext
+    plt.plot(
+        traj.rz, ssext, color=colors[3],
+        label='Integrated = {:.4f} T/m'.format(i_ssext))
+    plt.xlabel('rz [mm]')
+    plt.ylabel('Skew sextupolar component [T/m²]')
+    plt.grid()
+    plt.legend()
+    plt.title(
+            'Skew sextupole')
+
+    plt.figure(5)
+    ndode = normal_dode
+    plt.plot(
+        traj.rz, ndode, color=colors[2],
+        label='Integrated = {:.4f} T/m³'.format(i_ndode))
+    plt.xlabel('rz [mm]')
+    plt.ylabel('Normal dodecapolar component [T/m⁴]')
+    plt.grid()
+    plt.legend()
+    plt.title(
+            'Normal dodecapole')
+
+    plt.figure(6)
+    sdode = skew_dode
+    plt.plot(
+        traj.rz, sdode, color=colors[2],
+        label='Integrated = {:.4f} T/m³'.format(i_sdode))
+    plt.xlabel('rz [mm]')
+    plt.ylabel('Skew dodecapolar component [T/m⁴]')
+    plt.grid()
+    plt.legend()
+    plt.title(
+            'Skew dodecapole')
+    plt.show()
+
+    print(mp)
+    return
+
+
 def run(idconfig, plot=True):
-    
+
     MEAS_FILE = ID_CONFIGS[idconfig]
 
     print(MEAS_FILE)
 
     # _, meas_id =  MEAS_FILE.split('ID=')
     # meas_id = meas_id.replace('.dat', '')
-    
+
     fmap_fname = FOLDER_BASE + DATA_PATH + MEAS_FILE
     print(fmap_fname)
     fmap = FieldMap(fmap_fname)
     beam = Beam(energy=3.0)
-    raise
-
     traj = Trajectory(
         beam=beam, fieldmap=fmap, not_raise_range_exceptions=True)
-    traj.calc_trajectory(init_rz=-1600, s_step=0.2, min_rz=1600)
-    
+    traj.calc_trajectory(init_rz=-199, s_step=0.2, min_rz=199)
+
     # NOTE: unify pos and ang plots in a single figure
 
     deltarx = traj.rx[-1] - traj.rx[0]
     deltary = traj.ry[-1] - traj.ry[0]
     by = fmap.by[fmap.ry_zero][fmap.rx_zero][:]
+    bx = fmap.bx[fmap.ry_zero][fmap.rx_zero][:]
 
+    b = bx if idconfig == 'CV' else by
     if plot:
-        plt.plot(fmap.rz, by, color='g')
+        plt.plot(fmap.rz, b, color='g')
         plt.xlabel('z [mm]')
         plt.ylabel('B [T]')
         plt.grid()
-        plt.title('Vertical field given by {}'.format(idconfig))
-        plt.savefig('results/' + idconfig + '/field-by-' + idconfig + '.png',dpi=300)
+        plt.title('Field given by {}'.format(idconfig))
+        plt.savefig(
+            'results/correctors/' + idconfig + '/field-by-' + idconfig +
+            '.png', dpi=300)
         plt.show()
 
         labelx = 'rx, delta: {:+.2f} mm'.format(deltarx)
@@ -63,7 +185,9 @@ def run(idconfig, plot=True):
         plt.legend()
         plt.grid()
         plt.title('Runge-Kutta Trajectory Pos for fmap {}'.format(idconfig))
-        plt.savefig('results/' + idconfig + '/rk-trajectory-pos-' + idconfig + '.png',dpi=300)
+        plt.savefig(
+            'results/correctors/' + idconfig + '/rk-trajectory-pos-' +
+            idconfig + '.png', dpi=300)
         plt.show()
 
     deltapx = traj.px[-1] - traj.px[0]
@@ -78,14 +202,16 @@ def run(idconfig, plot=True):
         plt.legend()
         plt.grid()
         plt.title('Runge-Kutta Trajectory Ang for fmap {}'.format(idconfig))
-        plt.savefig('results/' + idconfig + '/rk-trajectory-ang-' + idconfig + '.png',dpi=300)
+        plt.savefig('results/correctors/' + idconfig + '/rk-trajectory-ang-' +
+                    idconfig + '.png', dpi=300)
         plt.show()
 
-    return deltarx, deltary, deltapx, deltapy
+    return traj, deltarx, deltary, deltapx, deltapy
 
 
 if __name__ == "__main__":
     """."""
-    idconfig = 'CH'  # gap 49.73 mm, correctors with zero current
-    deltarx, deltary, deltapx, deltapy = run(idconfig, plot=True)
-
+    idconfig = 'CH'
+    traj, deltarx, deltary, deltapx, deltapy = run(idconfig, plot=True)
+    harmonics = [0, 2, 4]
+    calc_multipoles(traj, harmonics, idconfig)
