@@ -2,11 +2,13 @@
 
 import numpy as _np
 import matplotlib.pyplot as _plt
+from scipy.optimize import curve_fit as _curve_fit
 
 import pyaccel
 import pymodels
 
 from fieldmaptrack import Beam
+
 from mathphys.functions import save_pickle as _save_pickle
 from mathphys.functions import load_pickle as _load_pickle
 
@@ -14,22 +16,34 @@ from idanalysis import IDKickMap as _IDKickMap
 from idanalysis import optics as optics
 from idanalysis import orbcorr as orbcorr
 
+from apsuite.dynap import DynapXY
+
 import utils
 
 
-class CALC_TYPES:
-    """."""
-    nominal = 0
-    nonsymmetrized = 1
-    symmetrized = 2
-
-
 class Tools:
+    class CALC_TYPES:
+        nominal = 0
+        nonsymmetrized = 1
+        symmetrized = 2
+
+    @staticmethod
+    def _get_data_path(width, phase, gap):
+        fpath = utils.FOLDER_DATA
+        fpath = fpath.replace(
+            'data/', 'data/widths/width_{}/'.format(width))
+
+        phase_str = Tools._get_phase_str(phase)
+        fpath += 'phases/phase_{}/'.format(phase_str)
+
+        gap_str = Tools._get_gap_str(gap)
+        fpath += 'gap_{}/'.format(gap_str)
+        return fpath
 
     @staticmethod
     def _get_kmap_filename(
             width, gap, phase,
-            shift_flag=False, filter_flag=False):
+            shift_flag=False, filter_flag=False, linear=False):
         fpath = utils.FOLDER_DATA + 'kickmaps/'
         fpath = fpath.replace('model/data/', 'model/')
         gap_str = Tools._get_gap_str(gap)
@@ -37,6 +51,9 @@ class Tools:
         width = width
         fname = fpath + f'kickmap-ID_width{width}_phase{phase_str}' +\
             f'_gap{gap_str}.txt'
+        if linear:
+            fname = fname.replace('.txt', '-linear.txt')
+            return fname
         if shift_flag:
             fname = fname.replace('.txt', '-shifted_on_axis.txt')
         if filter_flag:
@@ -165,9 +182,8 @@ class FieldAnalysisFromRadia(Tools):
         gap = key[2][1]
         self.idkickmap = id
         self.idkickmap.fmap_calc_kickmap(posx=self.gridx, posy=self.gridy)
-        fname, fpath = self._get_kmap_filename(
+        fname = self._get_kmap_filename(
             width=width, phase=phase, gap=gap)
-        self._mkdir_function(fpath)
         self.idkickmap.save_kickmap_file(kickmap_filename=fname)
 
     def _create_models(self):
@@ -291,31 +307,27 @@ class FieldAnalysisFromRadia(Tools):
 
             if parameter[0] == 'phase':
                 phase_str = self._get_phase_str(parameter[1])
-                fname += 'data/phases/phase_{}/'.format(phase_str)
+                fname += 'phases/phase_{}/'.format(phase_str)
                 sulfix += '_phase{}'.format(phase_str)
 
             if parameter[0] == 'gap':
                 gap_str = self._get_gap_str(parameter[1])
-                fname += 'data/gap_{}/'.format(gap_str)
+                fname += 'gap_{}/'.format(gap_str)
                 sulfix += '_gap{}'.format(gap_str)
         return fname + sulfix
 
     def _get_field_data_fname(self, width, phase, gap):
-        fname = self.FOLDER_DATA
-        sulfix = 'field_data'
+        fpath = self._get_data_path(width=width, phase=phase, gap=gap)
 
-        fname = fname.replace(
-            'data/', 'data/widths/width_{}/'.format(width))
+        sulfix = 'field_data'
         sulfix += '_width{}'.format(width)
 
         phase_str = self._get_phase_str(phase)
-        fname += 'data/phases/phase_{}/'.format(phase_str)
         sulfix += '_phase{}'.format(phase_str)
 
         gap_str = self._get_gap_str(gap)
-        fname += 'data/gap_{}/'.format(gap_str)
         sulfix += '_gap{}'.format(gap_str)
-        return fname + sulfix
+        return fpath + sulfix
 
     def _save_field_data(self):
         #  re-organize data
@@ -343,7 +355,7 @@ class FieldAnalysisFromRadia(Tools):
 
         self._save_field_data()
 
-    def run_plot_data(self, width=0, phase=0, gap=0):
+    def _get_data_plot(self, width=0, phase=0, gap=0):
         data_plot = dict()
         if utils.var_param == 'gap':
             for gap_ in utils.gaps:
@@ -360,7 +372,10 @@ class FieldAnalysisFromRadia(Tools):
                 fname = self._get_field_data_fname(width_, phase, gap)
                 fdata = _load_pickle(fname)
                 data_plot[width_] = fdata
+        return data_plot
 
+    def run_plot_data(self, width=0, phase=0, gap=0):
+        data_plot = self._get_data_plot(width=width, phase=phase, gap=gap)
         self._plot_field_on_axis(data=data_plot)
         self._plot_rk_traj(data=data_plot)
         self._plot_field_roll_off(data=data_plot)
@@ -437,6 +452,17 @@ class FieldAnalysisFromRadia(Tools):
             _plt.savefig(output_dir + sulfix[i-1], dpi=300)
         _plt.show()
 
+    def _read_data_roll_off(self, data, parameter):
+        field_component = utils.field_component
+        b = data[parameter]['rolloff_{}'.format(field_component)]
+        rt = data[parameter]['rolloff_rt']
+        rtp_idx = _np.argmin(_np.abs(rt - utils.ROLL_OFF_RT))
+        rt0_idx = _np.argmin(_np.abs(rt))
+        roff = _np.abs(b[rtp_idx]/b[rt0_idx]-1)
+        b0 = b[rt0_idx]
+        roll_off = 100*(b/b0 - 1)
+        return rt, b, roll_off, roff
+
     def _plot_field_roll_off(self, data):
         field_component = utils.field_component
         _plt.figure(1)
@@ -444,15 +470,9 @@ class FieldAnalysisFromRadia(Tools):
         colors = ['b', 'g', 'y', 'C1', 'r', 'k']
         var_parameters = list(data.keys())
         for i, parameter in enumerate(var_parameters):
-            b = data[parameter]['rolloff_{}'.format(field_component)]
-            rt = data[parameter]['rolloff_rt']
-            rtp_idx = _np.argmin(_np.abs(rt - utils.ROLL_OFF_RT))
-            rt0_idx = _np.argmin(_np.abs(rt))
-            roff = _np.abs(b[rtp_idx]/b[rt0_idx]-1)
+            rt, b, roll_off, roff = self._read_data_roll_off(data, parameter)
             label = utils.var_param +\
                 " {}, roll-off = {:.2f} %".format(parameter, 100*roff)
-            b0 = b[rt0_idx]
-            roll_off = 100*(b/b0 - 1)
             _plt.plot(rt, roll_off, '.-', label=label, color=colors[i])
         if field_component == 'by':
             _plt.xlabel('x [mm]')
@@ -470,6 +490,98 @@ class FieldAnalysisFromRadia(Tools):
         _plt.savefig(output_dir + '/field-rolloff', dpi=300)
         _plt.show()
 
+    def _get_planar_id_features(self,
+                                width=0, phase=0, gap=0,
+                                plot_flag=False):
+
+        def cos(x, b0, kx):
+            b = b0*_np.cos(kx*x)
+            return b
+
+        data = self._get_data_plot(width=width, phase=phase, gap=gap)
+        rt, b, *_ = self._read_data_roll_off(data, width)
+        idxi = _np.argmin(_np.abs(rt+1))
+        idxf = _np.argmin(_np.abs(rt-1))
+        rt = rt[idxi:idxf]
+        b = b[idxi:idxf]
+        opt = _curve_fit(cos, rt, b)[0]
+        k = opt[1]
+        b0 = opt[0]
+        print('field amplitude = {:.3f} T'.format(b0))
+        if plot_flag:
+            _plt.plot(rt, b, label='model')
+            b_fitted = cos(rt, opt[0], opt[1])
+            _plt.plot(rt, b_fitted, label='fitting')
+            _plt.xlabel('y [mm]')
+            _plt.ylabel('B [T]')
+            _plt.title('Field Roll-off fitting')
+            _plt.grid()
+            _plt.legend()
+            _plt.show()
+
+        kz = 2*_np.pi/(utils.ID_PERIOD*1e-3)
+        kx = k*1e3
+        ky = _np.sqrt(kx**2+kz**2)
+        print('kx = {:.2f}'.format(kx))
+        print('ky = {:.2f}'.format(ky))
+        print('kz = {:.2f}'.format(kz))
+
+        return b0, kx, ky, kz
+
+    def _get_id_quad_coef(self,
+                          width=0, phase=0, gap=0,
+                          plot_flag=False):
+        id_len = utils.SIMODEL_ID_LEN
+        b0, kx, ky, kz = self._get_planar_id_features(width, phase, gap,
+                                                      plot_flag=plot_flag)
+        beam = Beam(energy=3)
+        brho = beam.brho
+        phase = phase*1e-3
+        factor = 1 + _np.cos(kz*phase)
+        factor -= (kx**2)/(kz**2+kx**2)*(1-_np.cos(kz*phase))
+        a = (1/(kz**2))*id_len*(b0**2)/(4*brho**2)
+        if utils.field_component == 'by':
+            coefx = a*factor*kx**2
+            coefy = -a*2*ky**2
+        elif utils.field_component == 'bx':
+            coefx = -a*factor*ky**2
+            coefy = a*2*kx**2
+
+        return coefx, coefy
+
+    def get_id_estimated_focusing(self, betax, betay,
+                                  width=0, phase=0, gap=0, plot_flag=False):
+
+        id_len = utils.SIMODEL_ID_LEN
+        coefx, coefy = self._get_id_quad_coef(width=width, phase=phase,
+                                              gap=gap, plot_flag=plot_flag)
+        dtunex = -id_len*coefx*betax/(4*_np.pi)
+        dtuney = -id_len*coefy*betay/(4*_np.pi)
+
+        print('horizontal quadrupolar term: {:.5f}'.format(coefx))
+        print('vertical quadrupolar term: {:.5f}'.format(coefy))
+        print('horizontal delta tune: {:.5f}'.format(dtunex))
+        print('vertical delta tune: {:.5f}'.format(dtuney))
+
+        return coefx, coefy, dtunex, dtuney
+
+    def generate_linear_kickmap(self, width=0, phase=0, gap=0,
+                                cxy=0, cyx=0):
+        beam = Beam(energy=3)
+        brho = beam.brho
+        idkickmap = _IDKickMap()
+        cxx, cyy = self._get_id_quad_coef(width=width,
+                                          phase=phase, gap=gap)
+
+        idkickmap.generate_linear_kickmap(brho=brho, posx=self.gridx,
+                                          posy=self.gridy, cxx=cxx, cyy=cyy,
+                                          cxy=cxy, cyx=cyx)
+        fname = self._get_kmap_filename(
+            width=width, phase=phase, gap=gap)
+        fname = fname.replace('.txt', '-linear.txt')
+        idkickmap.kmap_idlen = utils.ID_KMAP_LEN
+        idkickmap.save_kickmap_file(kickmap_filename=fname)
+
 
 class AnalysisKickmap(Tools):
 
@@ -482,7 +594,7 @@ class AnalysisKickmap(Tools):
         self.FOLDER_DATA = utils.FOLDER_DATA
 
     def _get_figname_plane(self, kick_plane, var='X',
-                           width=None, phase=None, gap=None):
+                           width=None, phase=None, gap=None, linear=False):
         fpath = utils.FOLDER_DATA
         fpath = fpath.replace('data/', 'data/general/')
 
@@ -505,7 +617,7 @@ class AnalysisKickmap(Tools):
         return fname
 
     def _get_figname_allplanes(self, kick_plane, var='X',
-                               width=None, phase=None, gap=None):
+                               width=None, phase=None, gap=None, linear=False):
         fname = utils.FOLDER_DATA
 
         sulfix = 'kick{}-vs-{}-all-planes'.format(
@@ -515,10 +627,10 @@ class AnalysisKickmap(Tools):
             'data/', 'data/widths/width_{}/'.format(width))
 
         phase_str = self._get_phase_str(phase)
-        fname += 'data/phases/phase_{}/'.format(phase_str)
+        fname += 'phases/phase_{}/'.format(phase_str)
 
         gap_str = self._get_gap_str(gap)
-        fname += 'data/gap_{}/'.format(gap_str)
+        fname += 'gap_{}/'.format(gap_str)
 
         fname += sulfix
         return fname
@@ -573,7 +685,7 @@ class AnalysisKickmap(Tools):
 
     def check_kick_at_plane(
             self, width=None, phase=None, gap=None,
-            planes=['X', 'Y'], kick_planes=['X', 'Y']):
+            planes=['X', 'Y'], kick_planes=['X', 'Y'], linear=False):
 
         if utils.var_param == 'width':
             var_params = utils.widths
@@ -591,26 +703,32 @@ class AnalysisKickmap(Tools):
                         fname = self._get_kmap_filename(
                             width=var_param, gap=gap, phase=phase,
                             shift_flag=self.shift_flag,
-                            filter_flag=self.filter_flag)
+                            filter_flag=self.filter_flag,
+                            linear=linear)
                         fname_fig = self._get_figname_plane(
                             kick_plane=kick_plane, var=var,
-                            width=var_param, gap=gap, phase=phase)
+                            width=var_param, gap=gap, phase=phase,
+                            linear=linear)
                     if utils.var_param == 'phase':
                         fname = self._get_kmap_filename(
                             width=width, gap=gap, phase=var_param,
                             shift_flag=self.shift_flag,
-                            filter_flag=self.filter_flag)
+                            filter_flag=self.filter_flag,
+                            linear=linear)
                         fname_fig = self._get_figname_plane(
                             kick_plane=kick_plane, var=var,
-                            width=width, gap=gap, phase=var_param)
+                            width=width, gap=gap, phase=var_param,
+                            linear=linear)
                     if utils.var_param == 'gap':
                         fname = self._get_kmap_filename(
                             width=width, gap=var_param, phase=phase,
                             shift_flag=self.shift_flag,
-                            filter_flag=self.filter_flag)
+                            filter_flag=self.filter_flag,
+                            linear=linear)
                         fname_fig = self._get_figname_plane(
                             kick_plane=kick_plane, var=var,
-                            width=width, gap=var_param, phase=phase)
+                            width=width, gap=var_param, phase=phase,
+                            linear=linear)
 
                     self._idkickmap = _IDKickMap(fname)
                     if var.lower() == 'x':
@@ -641,6 +759,8 @@ class AnalysisKickmap(Tools):
                         1e3*r0, 1e6*pf, '.-', color=color, label=label)
                     _plt.plot(
                         1e3*r0, 1e6*pf_fit, '-', color=color, alpha=0.6)
+                    print('kick plane: ', kick_plane)
+                    print('plane: ', var)
                     print('Fitting:')
                     print(pfit[::-1])
 
@@ -660,16 +780,18 @@ class AnalysisKickmap(Tools):
 
     def check_kick_all_planes(
             self, width=None, phase=None, gap=None,
-            planes=['X', 'Y'], kick_planes=['X', 'Y']):
+            planes=['X', 'Y'], kick_planes=['X', 'Y'], linear=False):
         for var in planes:
             for kick_plane in kick_planes:
                 fname = self._get_kmap_filename(width=width,
                                                 phase=phase,
-                                                gap=gap)
+                                                gap=gap,
+                                                linear=linear)
                 self._idkickmap = _IDKickMap(fname)
                 fname_fig = self._get_figname_allplanes(
                     width=width, phase=phase, gap=gap,
-                    var=var, kick_plane=kick_plane)
+                    var=var, kick_plane=kick_plane,
+                    linear=linear)
 
                 if var.lower() == 'x':
                     kmappos = self._idkickmap.posy
@@ -707,9 +829,9 @@ class AnalysisKickmap(Tools):
                     _plt.show()
                 _plt.close()
 
-    def check_kick_at_plane_trk(self, width, gap, phase):
+    def check_kick_at_plane_trk(self, width, gap, phase, linear=False):
         fname = self._get_kmap_filename(width=width, gap=gap,
-                                        phase=phase)
+                                        phase=phase, linear=linear)
         self._idkickmap = _IDKickMap(fname)
         plane_idx = list(self._idkickmap.posy).index(0)
         out = self._calc_idkmap_kicks(plane_idx=plane_idx)
@@ -777,17 +899,22 @@ class AnalysisEffects(Tools):
 
     def __init__(self):
         self._idkickmap = None
-        self.id_famname = utils.ID_FAMNAME
-        self._ids = None
         self._model_id = None
+        self._ids = None
+        self._twiss0 = None
+        self._twiss1 = None
+        self._twiss2 = None
+        self._twiss3 = None
+        self._beta_flag = None
+        self._stg = None
+        self.id_famname = utils.ID_FAMNAME
         self.fitted_model = False
         self.shift_flag = True
         self.filter_flag = False
-        self.beta_flag = None
         self.calc_type = 0
         self.corr_system = 'SOFB'
         self.orbcorr_plot_flag = False
-        self._twiss0 = None
+        self.bb_plot_flag = False
 
     def _create_model_nominal(self):
         model0 = pymodels.si.create_accelerator()
@@ -839,8 +966,10 @@ class AnalysisEffects(Tools):
     def _calc_dtune_betabeat(self, twiss1):
         dtunex = (twiss1.mux[-1] - self._twiss0.mux[-1]) / 2 / _np.pi
         dtuney = (twiss1.muy[-1] - self._twiss0.muy[-1]) / 2 / _np.pi
-        bbeatx = 100 * (twiss1.betax - self._twiss0.betax) / self._twiss0.betax
-        bbeaty = 100 * (twiss1.betay - self._twiss0.betay) / self._twiss0.betay
+        bbeatx = (twiss1.betax - self._twiss0.betax)/self._twiss0.betax
+        bbeaty = (twiss1.betay - self._twiss0.betay)/self._twiss0.betay
+        bbeatx *= 100
+        bbeaty *= 100
         bbeatx_rms = _np.std(bbeatx)
         bbeaty_rms = _np.std(bbeaty)
         bbeatx_absmax = _np.max(_np.abs(bbeatx))
@@ -849,11 +978,11 @@ class AnalysisEffects(Tools):
             dtunex, dtuney, bbeatx, bbeaty,
             bbeatx_rms, bbeaty_rms, bbeatx_absmax, bbeaty_absmax)
 
-    def _analysis_uncorrected_perturbation(
-            self, plot_flag=True):
-        twiss, *_ = pyaccel.optics.calc_twiss(self._model_id, indices='closed')
+    def _analysis_uncorrected_perturbation(self, plot_flag=True):
+        self._twiss1, *_ = pyaccel.optics.calc_twiss(
+            self._model_id, indices='closed')
 
-        results = self._calc_dtune_betabeat(twiss)
+        results = self._calc_dtune_betabeat(twiss1=self._twiss1)
         dtunex, dtuney = results[0], results[1]
         bbeatx, bbeaty = results[2], results[3]
         bbeatx_rms, bbeaty_rms = results[4], results[5]
@@ -872,8 +1001,10 @@ class AnalysisEffects(Tools):
 
             labelx = f'X ({bbeatx_rms:.1f} % rms)'
             labely = f'Y ({bbeaty_rms:.1f} % rms)'
-            _plt.plot(twiss.spos, bbeatx, color='b', alpha=1, label=labelx)
-            _plt.plot(twiss.spos, bbeaty, color='r', alpha=0.8, label=labely)
+            _plt.plot(self._twiss1.spos, bbeatx,
+                      color='b', alpha=1, label=labelx)
+            _plt.plot(self._twiss1.spos, bbeaty,
+                      color='r', alpha=0.8, label=labely)
             _plt.xlabel('spos [m]')
             _plt.ylabel('Beta Beat [%]')
             _plt.title('Beta Beating from ' + self.id_famname)
@@ -881,13 +1012,10 @@ class AnalysisEffects(Tools):
             _plt.grid()
             _plt.show()
 
-        return twiss
-
-    def plot_beta_beating(
-        gap, width, twiss0, twiss1, twiss2, twiss3, stg, fitted_model):
-        fpath = create_path(gap, width)
+    def _plot_beta_beating(self, width, phase, gap):
+        fpath = self._get_data_path(width=width, phase=phase, gap=gap)
         # Compare optics between nominal value and uncorrect optics due ID
-        results = calc_dtune_betabeat(twiss0, twiss1)
+        results = self._calc_dtune_betabeat(twiss1=self._twiss1)
         dtunex, dtuney = results[0], results[1]
         bbeatx, bbeaty = results[2], results[3]
         bbeatx_rms, bbeaty_rms = results[4], results[5]
@@ -896,32 +1024,36 @@ class AnalysisEffects(Tools):
         print(f'dtunex: {dtunex:+.2e}')
         print(f'dtuney: {dtuney:+.2e}')
         print(
-            f'bbetax: {bbeatx_rms:04.3f} % rms, {bbeatx_absmax:04.3f} % absmax')
+            f'bbetax: {bbeatx_rms:04.3f} % rms,' +
+            f' {bbeatx_absmax:04.3f} % absmax')
         print(
-            f'bbetay: {bbeaty_rms:04.3f} % rms, {bbeaty_absmax:04.3f} % absmax')
+            f'bbetay: {bbeaty_rms:04.3f} % rms,' +
+            f' {bbeaty_absmax:04.3f} % absmax')
         print()
 
-        plt.clf()
+        _plt.clf()
 
-        label1 = {False: '-nominal', True: '-fittedmodel'}[fitted_model]
+        label1 = {False: '-nominal', True: '-fittedmodel'}[self.fitted_model]
 
-        plt.figure(1)
+        _plt.figure(1)
         stg_tune = f'dtunex: {dtunex:+0.04f}\n' + f'dtuney: {dtuney:+0.04f}'
         labelx = f'X ({bbeatx_rms:.3f} % rms)'
         labely = f'Y ({bbeaty_rms:.3f} % rms)'
-        plt.plot(twiss0.spos, bbeatx, color='b', alpha=1.0, label=labelx)
-        plt.plot(twiss0.spos, bbeaty, color='r', alpha=0.8, label=labely)
-        plt.xlabel('spos [m]')
-        plt.ylabel('Beta Beating [%]')
-        plt.title('Tune shift' + '\n' + stg_tune)
-        plt.suptitle('VPU29 - Non-symmetrized optics')
-        plt.tight_layout()
-        plt.legend()
-        plt.grid()
-        plt.savefig(fpath + 'opt{}-ids-nonsymm'.format(label1), dpi=300)
+        _plt.plot(self._twiss0.spos, bbeatx,
+                  color='b', alpha=1.0, label=labelx)
+        _plt.plot(self._twiss0.spos, bbeaty,
+                  color='r', alpha=0.8, label=labely)
+        _plt.xlabel('spos [m]')
+        _plt.ylabel('Beta Beating [%]')
+        _plt.title('Tune shift' + '\n' + stg_tune)
+        _plt.suptitle(self.id_famname + ' - Non-symmetrized optics')
+        _plt.tight_layout()
+        _plt.legend()
+        _plt.grid()
+        _plt.savefig(fpath + 'opt{}-ids-nonsymm'.format(label1), dpi=300)
 
         # Compare optics between nominal value and symmetrized optics
-        results = calc_dtune_betabeat(twiss0, twiss2)
+        results = self._calc_dtune_betabeat(twiss1=self._twiss2)
         dtunex, dtuney = results[0], results[1]
         bbeatx, bbeaty = results[2], results[3]
         bbeatx_rms, bbeaty_rms = results[4], results[5]
@@ -929,26 +1061,33 @@ class AnalysisEffects(Tools):
         print('symmetrized optics but uncorrect tunes:')
         print(f'dtunex: {dtunex:+.0e}')
         print(f'dtuney: {dtuney:+.0e}')
-        print(f'bbetax: {bbeatx_rms:04.3f} % rms, {bbeatx_absmax:04.3f} % absmax')
-        print(f'bbetay: {bbeaty_rms:04.3f} % rms, {bbeaty_absmax:04.3f} % absmax')
+        print(
+            f'bbetax: {bbeatx_rms:04.3f} % rms,' +
+            f' {bbeatx_absmax:04.3f} % absmax')
+        print(
+            f'bbetay: {bbeaty_rms:04.3f} % rms,' +
+            f' {bbeaty_absmax:04.3f} % absmax')
         print()
 
-        plt.figure(2)
+        _plt.figure(2)
         labelx = f'X ({bbeatx_rms:.3f} % rms)'
         labely = f'Y ({bbeaty_rms:.3f} % rms)'
-        plt.plot(twiss0.spos, bbeatx, color='b', alpha=1.0, label=labelx)
-        plt.plot(twiss0.spos, bbeaty, color='r', alpha=0.8, label=labely)
-        plt.xlabel('spos [m]')
-        plt.ylabel('Beta Beating [%]')
-        plt.title('Beta Beating')
-        plt.suptitle('VPU29 - Symmetrized optics and uncorrected tunes')
-        plt.legend()
-        plt.grid()
-        plt.tight_layout()
-        plt.savefig(fpath + 'opt{}-ids-symm'.format(label1), dpi=300)
+        _plt.plot(self._twiss0.spos, bbeatx,
+                  color='b', alpha=1.0, label=labelx)
+        _plt.plot(self._twiss0.spos, bbeaty,
+                  color='r', alpha=0.8, label=labely)
+        _plt.xlabel('spos [m]')
+        _plt.ylabel('Beta Beating [%]')
+        _plt.title('Beta Beating')
+        _plt.suptitle(self.id_famname +
+                      '- Symmetrized optics and uncorrected tunes')
+        _plt.legend()
+        _plt.grid()
+        _plt.tight_layout()
+        _plt.savefig(fpath + 'opt{}-ids-symm'.format(label1), dpi=300)
 
         # Compare optics between nominal value and all corrected
-        results = calc_dtune_betabeat(twiss0, twiss3)
+        results = self._calc_dtune_betabeat(twiss1=self._twiss3)
         dtunex, dtuney = results[0], results[1]
         bbeatx, bbeaty = results[2], results[3]
         bbeatx_rms, bbeaty_rms = results[4], results[5]
@@ -956,25 +1095,31 @@ class AnalysisEffects(Tools):
         print('symmetrized optics and corrected tunes:')
         print(f'dtunex: {dtunex:+.0e}')
         print(f'dtuney: {dtuney:+.0e}')
-        print(f'bbetax: {bbeatx_rms:04.3f} % rms, {bbeatx_absmax:04.3f} % absmax')
-        print(f'bbetay: {bbeaty_rms:04.3f} % rms, {bbeaty_absmax:04.3f} % absmax')
+        print(
+            f'bbetax: {bbeatx_rms:04.3f} % rms,' +
+            f' {bbeatx_absmax:04.3f} % absmax')
+        print(
+            f'bbetay: {bbeaty_rms:04.3f} % rms,' +
+            f' {bbeaty_absmax:04.3f} % absmax')
 
-        plt.figure(3)
+        _plt.figure(3)
         labelx = f'X ({bbeatx_rms:.3f} % rms)'
         labely = f'Y ({bbeaty_rms:.3f} % rms)'
-        plt.plot(twiss0.spos, bbeatx, color='b', alpha=1.0, label=labelx)
-        plt.plot(twiss0.spos, bbeaty, color='r', alpha=0.8, label=labely)
-        plt.xlabel('spos [m]')
-        plt.ylabel('Beta Beating [%]')
-        plt.title('Beta Beating' + '\n' + stg)
-        plt.suptitle('VPU29 - Symmetrized optics and corrected tunes')
-        plt.legend()
-        plt.grid()
-        plt.tight_layout()
-        plt.savefig(fpath + 'opt{}-ids-symm-tunes'.format(label1), dpi=300)
-        plt.show()
-
-        plt.clf()
+        _plt.plot(self._twiss0.spos, bbeatx,
+                  color='b', alpha=1.0, label=labelx)
+        _plt.plot(self._twiss0.spos, bbeaty,
+                  color='r', alpha=0.8, label=labely)
+        _plt.xlabel('spos [m]')
+        _plt.ylabel('Beta Beating [%]')
+        _plt.title('Beta Beating' + '\n' + self._stg)
+        _plt.suptitle(self.id_famname +
+                      '- Symmetrized optics and corrected tunes')
+        _plt.legend()
+        _plt.grid()
+        _plt.tight_layout()
+        _plt.savefig(fpath + 'opt{}-ids-symm-tunes'.format(label1), dpi=300)
+        _plt.show()
+        _plt.clf()
 
     def _correct_beta(self, straight_nr, knobs, goal_beta, goal_alpha):
         dk_tot = _np.zeros(len(knobs))
@@ -983,16 +1128,16 @@ class AnalysisEffects(Tools):
                 self._model_id, straight_nr, goal_beta, goal_alpha)
             print('iteration #{}, dK: {}'.format(i+1, dk))
             dk_tot += dk
-        stg = str()
+        self._stg = str()
         for i, fam in enumerate(knobs):
-            stg += '{:<9s} dK: {:+9.4f} 1/m² \n'.format(fam, dk_tot[i])
-        print(stg)
-        twiss2, *_ = pyaccel.opt.calc_twiss(self._model_id, indices='closed')
+            self._stg += '{:<9s} dK: {:+9.4f} 1/m² \n'.format(fam, dk_tot[i])
+        print(self._stg)
+        self._twiss2, *_ = pyaccel.optics.calc_twiss(
+            self._model_id, indices='closed')
         print()
-        return twiss2, stg
 
-    def _correct_tunes(self, twiss1, goal_tunes):
-        tunes = twiss1.mux[-1]/_np.pi/2, twiss1.muy[-1]/_np.pi/2
+    def _correct_tunes(self, goal_tunes):
+        tunes = self._twiss1.mux[-1]/_np.pi/2, self._twiss1.muy[-1]/_np.pi/2
         print('init    tunes: {:.9f} {:.9f}'.format(tunes[0], tunes[1]))
         for i in range(2):
             optics.correct_tunes_twoknobs(self._model_id, goal_tunes)
@@ -1002,10 +1147,9 @@ class AnalysisEffects(Tools):
                 i+1, tunes[0], tunes[1]))
         print('goal    tunes: {:.9f} {:.9f}'.format(
             goal_tunes[0], goal_tunes[1]))
-        twiss3, *_ = pyaccel.optics.calc_twiss(
+        self._twiss3, *_ = pyaccel.optics.calc_twiss(
             self._model_id, indices='closed')
         print()
-        return twiss3
 
     def _correct_optics(self, width, phase, gap):
 
@@ -1035,7 +1179,7 @@ class AnalysisEffects(Tools):
                 nr_steps=1, plot_flag=self.orbcorr_plot_flag)
 
         # calculate beta beating and delta tunes
-        twiss1 = self._analysis_uncorrected_perturbation(plot_flag=False)
+        self._analysis_uncorrected_perturbation(plot_flag=False)
 
         # get list of ID model indices and set rescale_kicks to zero
         ids_ind_all = orbcorr.get_ids_indices(self._model_id)
@@ -1082,26 +1226,56 @@ class AnalysisEffects(Tools):
             print(goal_beta)
 
             # symmetrize optics (local quad fam knobs)
-            if self.beta_flag:
-                twiss2, stg = self._correct_beta(
+            if self._beta_flag:
+                self._correct_beta(
                     straight_nr_, knobs_, goal_beta, goal_alpha)
-
                 # correct tunes
-                twiss3 = self._correct_tunes(twiss1, goal_tunes)
+                self._correct_tunes(goal_tunes)
 
-                plot_beta_beating(
-                    gap, width, twiss0, twiss1, twiss2, twiss3, stg, fitted_model)
+                if self.bb_plot_flag:
+                    # plot results
+                    self._plot_beta_beating(width=width, phase=phase, gap=gap)
 
+        return self._model_id
+
+    def _analysis_dynapt(self, model, width, phase, gap):
+
+        model.radiation_on = 0
+        model.cavity_on = False
+        model.vchamber_on = True
+
+        dynapxy = DynapXY(model)
+        dynapxy.params.x_nrpts = 40
+        dynapxy.params.y_nrpts = 20
+        dynapxy.params.nrturns = 1*1024
+        print(dynapxy)
+        dynapxy.do_tracking()
+        dynapxy.process_data()
+        fig, *ax = dynapxy.make_figure_diffusion(orders=(1, 2, 3, 4),
+                                                 nuy_bounds=(14.12, 14.45),
+                                                 nux_bounds=(49.05, 49.50))
+        fig.show()
+
+        fpath = self._get_data_path(width=width, phase=phase, gap=gap)
+        print(fpath)
+        label1 = ['', '-ids-nonsymm', '-ids-symm'][self.calc_type]
+        label2 = {False: '-nominal', True: '-fittedmodel'}[self.fitted_model]
+        fig_name = fpath + 'dynapt{}{}.png'.format(label2, label1)
+        fig.savefig(fig_name, dpi=300, format='png')
+        _plt.figure(1)
+        _plt.clf()
+        _plt.figure(2)
+        _plt.clf()
 
     def run_analysis_dynapt(self, width, phase, gap):
-        if self.calc_type == CALC_TYPES.nominal:
+        if self.calc_type == self.CALC_TYPES.nominal:
             model = self._create_model_nominal()
         elif self.calc_type in (
-                CALC_TYPES.symmetrized, CALC_TYPES.nonsymmetrized):
-            self.beta_flag = self.calc_type == CALC_TYPES.symmetrized
+                self.CALC_TYPES.symmetrized, self.CALC_TYPES.nonsymmetrized):
+            self._beta_flag = self.calc_type == self.CALC_TYPES.symmetrized
             model = self._correct_optics(
                 width=width, phase=phase, gap=gap)
         else:
             raise ValueError('Invalid calc_type')
 
-        analysis_dynapt(gap, width, model, calc_type, fitted_model)
+        self._analysis_dynapt(model=model, width=width, phase=phase, gap=gap)

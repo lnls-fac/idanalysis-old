@@ -4,10 +4,10 @@ from .trajectory import IDTrajectory
 from .kickmaps import IDKickMap
 from .analysiswip import FieldAnalysisFromRadia
 from .analysiswip import AnalysisKickmap
+from .analysiswip import AnalysisEffects
 
 # This has to be defined before using the library.
 FOLDER_BASE = None
-
 
 import os as _os
 with open(_os.path.join(__path__[0], 'VERSION'), 'r') as _f:

@@ -221,6 +221,27 @@ class IDKickMap:
         config = IDKickMap._fmap_calc_traj(config)
         return config
 
+    def generate_linear_kickmap(
+            self, brho, posx, posy, cxx, cyy, cxy=0, cyx=0):
+        """Generate a linear kickmap based on Ellaume formalism"""
+        self.posx = _np.array(posx)  # [m]
+        self.posy = _np.array(posy)  # [m]
+        self.kickx = _np.full((len(self.posy), len(self.posx)), _np.inf)
+        self.kicky = _np.full((len(self.posy), len(self.posx)), _np.inf)
+        self.fposx = _np.full((len(self.posy), len(self.posx)), _np.inf)
+        self.fposy = _np.full((len(self.posy), len(self.posx)), _np.inf)
+        for i, ryi in enumerate(self.posy):
+            for j, rxi in enumerate(self.posx):
+                pxf = cxx*rxi + cxy*ryi
+                pyf = cyx*rxi + cyy*ryi
+                stg = 'rx = {:.01f} mm, ry = {:.01f}: '.format(
+                    rxi*1e3, ryi*1e3)
+                stg += 'px = {:.01f} urad, py = {:.01f} urad'.format(
+                    pxf*1e6, pyf*1e6)
+                print(stg)
+                self.kickx[i, j] = pxf * brho**2
+                self.kicky[i, j] = pyf * brho**2
+
     def fmap_calc_kickmap(
             self, posx, posy, beam_energy=None, rk_s_step=None):
         """."""

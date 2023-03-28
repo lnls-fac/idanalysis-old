@@ -11,7 +11,7 @@ from mathphys.functions import load_pickle
 BEAM_ENERGY = 3.0  # [GeV]
 DEF_RK_S_STEP = 0.5  # [mm] seems converged for the measurement fieldmap grids
 ROLL_OFF_RT = 3.0  # [mm]
-SOLVE_FLAG = False
+SOLVE_FLAG = True
 
 ID_PERIOD = 29.0  # [mm]
 NR_PERIODS = 5
@@ -31,9 +31,7 @@ FOLDER_DATA = './results/model/data/'
 
 gaps = [NOMINAL_GAP]
 phases = [0]
-# widths = [26, 22, 20]
-# widths = [28, 26, 22, 50, 40, 30]
-widths = [28]
+widths = [30]
 field_component = 'bx'
 var_param = 'width'
 
