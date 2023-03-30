@@ -18,16 +18,16 @@ from apsuite.dynap import DynapXY
 
 RESCALE_KICKS = utils.RESCALE_KICKS
 RESCALE_LENGTH = utils.RESCALE_LENGTH
-MEAS_FLAG = False
 
-SIMODEL_FITTED = utils.SIMODEL_FITTED
 CALC_TYPES = utils.CALC_TYPES
+SIMODEL_FITTED = utils.SIMODEL_FITTED
 
 
-def create_path(phase):
+def create_path(gap, width):
     fpath = utils.FOLDER_DATA
-    phase_str = utils.get_phase_str(phase)
-    fpath = fpath.replace('data/', 'data/phase_{}/'.format(phase_str))
+    gap_str = utils.get_gap_str(gap)
+    fpath = fpath.replace(
+        'data/', 'data/width_{}/gap_{}/'.format(width, gap_str))
     return fpath
 
 
@@ -43,11 +43,12 @@ def create_model_nominal(fitted_model=False):
     return model0
 
 
-def create_model_ids(phase, fitted_model=False):
+def create_model_ids(gap, width, fitted_model=False):
     """."""
     print('--- model with kickmap ---')
     ids = utils.create_ids(
-        phase,
+        gap,
+        width,
         rescale_kicks=RESCALE_KICKS*1,
         rescale_length=RESCALE_LENGTH)
     model = pymodels.si.create_accelerator(ids=ids)
@@ -125,7 +126,7 @@ def analysis_uncorrected_perturbation(
         plt.plot(twiss.spos, bbeaty, color='r', alpha=0.8, label=labely)
         plt.xlabel('spos [m]')
         plt.ylabel('Beta Beat [%]')
-        plt.title('Beta Beating from Kyma 22 ')
+        plt.title('Beta Beating from IVU18')
         plt.legend()
         plt.grid()
         plt.show()
@@ -134,10 +135,10 @@ def analysis_uncorrected_perturbation(
 
 
 def plot_beta_beating(
-        phase, twiss0, twiss1, twiss2, twiss3, stg, fitted_model):
+        gap, width, twiss0, twiss1, twiss2, twiss3, stg, fitted_model):
     """."""
 
-    fpath = create_path(phase)
+    fpath = create_path(gap, width)
     # Compare optics between nominal value and uncorrect optics due ID
     results = calc_dtune_betabeat(twiss0, twiss1)
     dtunex, dtuney = results[0], results[1]
@@ -156,7 +157,7 @@ def plot_beta_beating(
     label1 = {False: '-nominal', True: '-fittedmodel'}[fitted_model]
 
     plt.figure(1)
-    stg_tune = f'dtunex: {dtunex:+0.05f}\n' + f'dtuney: {dtuney:+0.05f}'
+    stg_tune = f'dtunex: {dtunex:+0.04f}\n' + f'dtuney: {dtuney:+0.04f}'
     labelx = f'X ({bbeatx_rms:.3f} % rms)'
     labely = f'Y ({bbeaty_rms:.3f} % rms)'
     plt.plot(twiss0.spos, bbeatx, color='b', alpha=1.0, label=labelx)
@@ -164,7 +165,7 @@ def plot_beta_beating(
     plt.xlabel('spos [m]')
     plt.ylabel('Beta Beating [%]')
     plt.title('Tune shift' + '\n' + stg_tune)
-    plt.suptitle('kyma22 - Non-symmetrized optics')
+    plt.suptitle('IVU18 - Non-symmetrized optics')
     plt.tight_layout()
     plt.legend()
     plt.grid()
@@ -191,7 +192,7 @@ def plot_beta_beating(
     plt.xlabel('spos [m]')
     plt.ylabel('Beta Beating [%]')
     plt.title('Beta Beating')
-    plt.suptitle('kyma22 - Symmetrized optics and uncorrected tunes')
+    plt.suptitle('IVU18 - Symmetrized optics and uncorrected tunes')
     plt.legend()
     plt.grid()
     plt.tight_layout()
@@ -210,8 +211,6 @@ def plot_beta_beating(
     print(f'bbetay: {bbeaty_rms:04.3f} % rms, {bbeaty_absmax:04.3f} % absmax')
 
     plt.figure(3)
-    stg_tune = f'dtunex: {dtunex:+0.05f}\n' + f'dtuney: {dtuney:+0.05f}'
-    stg += '\n' + stg_tune
     labelx = f'X ({bbeatx_rms:.3f} % rms)'
     labely = f'Y ({bbeaty_rms:.3f} % rms)'
     plt.plot(twiss0.spos, bbeatx, color='b', alpha=1.0, label=labelx)
@@ -219,7 +218,7 @@ def plot_beta_beating(
     plt.xlabel('spos [m]')
     plt.ylabel('Beta Beating [%]')
     plt.title('Beta Beating' + '\n' + stg)
-    plt.suptitle('kyma22 - Symmetrized optics and corrected tunes')
+    plt.suptitle('IVU18 - Symmetrized optics and corrected tunes')
     plt.legend()
     plt.grid()
     plt.tight_layout()
@@ -229,7 +228,22 @@ def plot_beta_beating(
     plt.clf()
 
 
-def analysis_dynapt(phase, model, calc_type, fitted_model):
+def calc_coupling(model, x0, nturns=1000):
+    coord_ini = np.array([x0, 0, 0, 0, 0, 0])
+    coord_fin, *_ = pyaccel.tracking.ring_pass(
+         model, coord_ini, nr_turns=nturns, turn_by_turn=True, parallel=True)
+    rx = coord_fin[0, :]
+    ry = coord_fin[2, :]
+    twiss, *_ = pyaccel.optics.calc_twiss(model)
+    betax, betay = twiss.betax, twiss.betay  # Beta functions
+    jx = 2/(betax[0]*nturns)*(np.sum(rx)**2)
+    jy = 2/(betay[0]*nturns)*(np.sum(ry)**2)
+
+    print('coupling k = {:.3f}'.format(jy/jx))
+    return jy/jx
+
+
+def analysis_dynapt(gap, width, model, calc_type, fitted_model):
 
     model.radiation_on = 0
     model.cavity_on = False
@@ -245,7 +259,8 @@ def analysis_dynapt(phase, model, calc_type, fitted_model):
     fig, *ax = dynapxy.make_figure_diffusion(orders=(1, 2, 3, 4))
     fig.show()
 
-    fpath = create_path(phase)
+    fpath = create_path(gap, width)
+    print(fpath)
     label1 = ['', '-ids-nonsymm', '-ids-symm'][calc_type]
     label2 = {False: '-nominal', True: '-fittedmodel'}[fitted_model]
     fig_name = fpath + 'dynapt{}{}.png'.format(label2, label1)
@@ -284,7 +299,7 @@ def correct_tunes(model1, twiss1, goal_tunes):
     return twiss3
 
 
-def correct_optics(phase, beta_flag=True, fitted_model=False):
+def correct_optics(gap, width, beta_flag=True, fitted_model=False):
     """."""
     # create unperturbed model for reference
     model0 = create_model_nominal(fitted_model=fitted_model)
@@ -293,7 +308,7 @@ def correct_optics(phase, beta_flag=True, fitted_model=False):
 
     # create model with ID
     model1, knobs, locs_beta, straight_nr = create_model_ids(
-        phase, fitted_model=fitted_model)
+        gap, width, fitted_model=fitted_model)
 
     print('element indices for straight section begin and end:')
     for idsubsec, locs_beta_ in locs_beta.items():
@@ -307,12 +322,12 @@ def correct_optics(phase, beta_flag=True, fitted_model=False):
     kicks, spos_bpms, codx_c, cody_c, codx_u, cody_u, bpms = \
         orbcorr.correct_orbit_fb(
             model0, model1, corr_system='SOFB', nr_steps=1)
-    # plt.plot(spos_bpms, 1e6*codx_u, label='uncorrected')
-    # plt.plot(spos_bpms, 1e6*codx_c, label='corrected')
-    # plt.legend()
-    # plt.xlabel('pos [m]')
-    # plt.ylabel('codx [um]')
-    # plt.show()
+    plt.plot(spos_bpms, 1e6*codx_u, label='uncorrected')
+    plt.plot(spos_bpms, 1e6*codx_c, label='corrected')
+    plt.legend()
+    plt.xlabel('pos [m]')
+    plt.ylabel('codx [um')
+    plt.show()
 
     # calculate beta beating and delta tunes
     twiss1 = analysis_uncorrected_perturbation(
@@ -346,6 +361,7 @@ def correct_optics(phase, beta_flag=True, fitted_model=False):
             if min(locs_beta_) < ind_id[0] and ind_id[1] < max(locs_beta_):
                 break
 
+        k = calc_coupling(model1, x0=1e-6, nturns=1000)
         print()
         print('symmetrizing ID {} in subsec {}'.format(fam_name, subsec))
 
@@ -366,14 +382,15 @@ def correct_optics(phase, beta_flag=True, fitted_model=False):
 
             # correct tunes
             twiss3 = correct_tunes(model1, twiss1, goal_tunes)
+            k = calc_coupling(model1, x0=1e-6, nturns=1000)
 
             plot_beta_beating(
-                phase, twiss0, twiss1, twiss2, twiss3, stg, fitted_model)
+                gap, width, twiss0, twiss1, twiss2, twiss3, stg, fitted_model)
 
     return model1
 
 
-def run_analysis_dynapt(phase, fitted_model, calc_type):
+def run_analysis_dynapt(gap, width, fitted_model, calc_type):
     """."""
     if calc_type == CALC_TYPES.nominal:
         model = create_model_nominal(fitted_model)
@@ -381,25 +398,28 @@ def run_analysis_dynapt(phase, fitted_model, calc_type):
             CALC_TYPES.symmetrized, CALC_TYPES.nonsymmetrized):
         beta_flag = calc_type == CALC_TYPES.symmetrized
         model = correct_optics(
-            phase, beta_flag=beta_flag, fitted_model=fitted_model)
+            gap, width, beta_flag=beta_flag, fitted_model=fitted_model)
     else:
         raise ValueError('Invalid calc_type')
 
-    analysis_dynapt(phase, model, calc_type, fitted_model)
+    analysis_dynapt(gap, width, model, calc_type, fitted_model)
 
 
 if __name__ == '__main__':
 
-    phase = 1 * utils.ID_PERIOD/2  # vertical field
+    gaps = [4.3]
+    widths = [49]
 
-    # calc_type = CALC_TYPES.nominal
-    # run_analysis_dynapt(
-    #     phase, fitted_model=SIMODEL_FITTED, calc_type=calc_type)
+    for gap in gaps:
+        for width in widths:
+            # calc_type = CALC_TYPES.nominal
+            # run_analysis_dynapt(
+                # gap, width, fitted_model=SIMODEL_FITTED, calc_type=calc_type)
 
-    calc_type = CALC_TYPES.symmetrized
-    run_analysis_dynapt(
-        phase, fitted_model=SIMODEL_FITTED, calc_type=calc_type)
+            calc_type = CALC_TYPES.symmetrized
+            run_analysis_dynapt(
+                gap, width, fitted_model=SIMODEL_FITTED, calc_type=calc_type)
 
-    # calc_type = CALC_TYPES.nonsymmetrized
-    # run_analysis_dynapt(
-    #     phase, fitted_model=SIMODEL_FITTED, calc_type=calc_type)
+            # calc_type = CALC_TYPES.nonsymmetrized
+            # run_analysis_dynapt(
+                # gap, width, fitted_model=SIMODEL_FITTED, calc_type=calc_type)

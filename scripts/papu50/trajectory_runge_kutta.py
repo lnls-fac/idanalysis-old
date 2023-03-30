@@ -68,11 +68,10 @@ def calc_multipoles(traj, harmonics, idconfig):
         traj.rz, ndip, color=colors[1],
         label='Integrated = {:.4f} Tm'.format(i_ndip))
     plt.xlabel('rz [mm]')
-    plt.ylabel('Normal dipolar component [T]')
+    plt.ylabel('Dipolar component [T]')
     plt.grid()
     plt.legend()
-    plt.title(
-            'Normal dipole')
+    plt.title(idconfig + ' By dipole')
 
     plt.figure(2)
     sdip = skew_dip
@@ -80,11 +79,10 @@ def calc_multipoles(traj, harmonics, idconfig):
         traj.rz, sdip, color=colors[1],
         label='Integrated = {:.4f} T/m'.format(i_sdip))
     plt.xlabel('rz [mm]')
-    plt.ylabel('Skew dipolar component [T]')
+    plt.ylabel('Dipolar component [T]')
     plt.grid()
     plt.legend()
-    plt.title(
-            'Skew dipole')
+    plt.title(idconfig + ' Bx dipole')
 
     plt.figure(3)
     colors = ['b', 'g', 'y', 'C1', 'r', 'k']
@@ -93,11 +91,10 @@ def calc_multipoles(traj, harmonics, idconfig):
         traj.rz, nsext, color=colors[3],
         label='Integrated = {:.4f} T/m'.format(i_nsext))
     plt.xlabel('rz [mm]')
-    plt.ylabel('Normal sextupolar component [T/m²]')
+    plt.ylabel('Sextupolar component [T/m²]')
     plt.grid()
     plt.legend()
-    plt.title(
-            'Normal sextupole')
+    plt.title(idconfig + ' By sextupole')
 
     plt.figure(4)
     ssext = skew_sext
@@ -105,11 +102,10 @@ def calc_multipoles(traj, harmonics, idconfig):
         traj.rz, ssext, color=colors[3],
         label='Integrated = {:.4f} T/m'.format(i_ssext))
     plt.xlabel('rz [mm]')
-    plt.ylabel('Skew sextupolar component [T/m²]')
+    plt.ylabel('Sextupolar component [T/m²]')
     plt.grid()
     plt.legend()
-    plt.title(
-            'Skew sextupole')
+    plt.title(idconfig + ' Bx sextupole')
 
     plt.figure(5)
     ndode = normal_dode
@@ -117,11 +113,10 @@ def calc_multipoles(traj, harmonics, idconfig):
         traj.rz, ndode, color=colors[2],
         label='Integrated = {:.4f} T/m³'.format(i_ndode))
     plt.xlabel('rz [mm]')
-    plt.ylabel('Normal dodecapolar component [T/m⁴]')
+    plt.ylabel('Dodecapolar component [T/m⁴]')
     plt.grid()
     plt.legend()
-    plt.title(
-            'Normal dodecapole')
+    plt.title(idconfig + ' By dodecapole')
 
     plt.figure(6)
     sdode = skew_dode
@@ -129,11 +124,10 @@ def calc_multipoles(traj, harmonics, idconfig):
         traj.rz, sdode, color=colors[2],
         label='Integrated = {:.4f} T/m³'.format(i_sdode))
     plt.xlabel('rz [mm]')
-    plt.ylabel('Skew dodecapolar component [T/m⁴]')
+    plt.ylabel('Dodecapolar component [T/m⁴]')
     plt.grid()
     plt.legend()
-    plt.title(
-            'Skew dodecapole')
+    plt.title(idconfig + ' Bx dodecapole')
     plt.show()
 
     print(mp)
@@ -165,12 +159,16 @@ def run(idconfig, plot=True):
     bx = fmap.bx[fmap.ry_zero][fmap.rx_zero][:]
 
     b = bx if idconfig == 'CV' else by
+    integrated = np.trapz(b, fmap.rz/1000)
     if plot:
-        plt.plot(fmap.rz, b, color='g')
+        plt.plot(
+            fmap.rz, b, color='g',
+            label='B integrated = {:.4f} Tm'.format(integrated))
         plt.xlabel('z [mm]')
         plt.ylabel('B [T]')
         plt.grid()
         plt.title('Field given by {}'.format(idconfig))
+        plt.legend()
         plt.savefig(
             'results/correctors/' + idconfig + '/field-by-' + idconfig +
             '.png', dpi=300)

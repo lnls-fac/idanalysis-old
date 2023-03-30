@@ -12,8 +12,9 @@ if __name__ == "__main__":
     analysis.shift_flag = utils.SHIFT_FLAG
     analysis.filter_flag = utils.FILTER_FLAG
     analysis.calc_type = analysis.CALC_TYPES.symmetrized
-    analysis.orbcorr_plot_flag = False
-    analysis.bb_plot_flag = False
+    analysis.orbcorr_plot_flag = True
+    analysis.bb_plot_flag = True
+    analysis.linear = False
 
     gap = utils.gaps[0]
     phase = utils.phases[0]

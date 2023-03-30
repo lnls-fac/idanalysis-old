@@ -16,20 +16,22 @@ SOLVE_FLAG = True
 ID_PERIOD = 18.5  # [mm]
 NR_PERIODS = 5
 NR_PERIODS_REAL_ID = 108
-SIMODEL_ID_LEN = 2.0  # [m]  It's necessary to update kickmaps
+SIMODEL_ID_LEN = 2.0  # [m]  It's necessary to update kickmaps and pymodels
 ID_KMAP_LEN = SIMODEL_ID_LEN
 RESCALE_KICKS = NR_PERIODS_REAL_ID/NR_PERIODS
 RESCALE_LENGTH = 1  # Radia simulations have fewer ID periods
 NOMINAL_GAP = 4.3  # [mm]
+ID_FAMNAME = 'IVU18'
 
 SIMODEL_FITTED = False
 SHIFT_FLAG = True
+FILTER_FLAG = False
 
 FOLDER_DATA = './results/model/data/'
 
 gaps = [NOMINAL_GAP]
 phases = [0]
-widths = [49]
+widths = [49, 40]
 field_component = 'by'
 var_param = 'width'
 
@@ -43,7 +45,7 @@ class CALC_TYPES:
 
 def get_termination_parameters(width=50):
     """."""
-    fname = FOLDER_DATA + 'respm_termination_{}.pickle'.format(width)
+    fname = FOLDER_DATA + '/general/respm_termination_{}.pickle'.format(width)
     term = load_pickle(fname)
     b1t, b2t, b3t, dist1, dist2 = term['results']
     return list([b1t, b2t, b3t, dist1, dist2])
@@ -71,14 +73,13 @@ def get_kmap_filename(gap, width, shift_flag=SHIFT_FLAG):
 
 
 def create_ids(
-        gap, width, nr_steps=None, rescale_kicks=RESCALE_KICKS,
+        fname, nr_steps=None, rescale_kicks=RESCALE_KICKS,
         rescale_length=RESCALE_LENGTH):
     # create IDs
     nr_steps = nr_steps or 40
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
     rescale_length = \
         rescale_length if rescale_length is not None else 1
-    fname = get_kmap_filename(gap=gap, width=width)
     IDModel = pymodels.si.IDModel
     ivu18 = IDModel(
         subsec=IDModel.SUBSECTIONS.ID08SB,
@@ -87,21 +88,6 @@ def create_ids(
         rescale_kicks=rescale_kicks, rescale_length=rescale_length)
     ids = [ivu18, ]
     return ids
-
-
-def create_model_ids(
-        gap, width,
-        rescale_kicks=RESCALE_KICKS,
-        rescale_length=RESCALE_LENGTH):
-    ids = create_ids(
-        gap, width, rescale_kicks=rescale_kicks,
-        rescale_length=rescale_length)
-    model = pymodels.si.create_accelerator(ids=ids)
-    twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
-    print('length : {:.4f} m'.format(model.length))
-    print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/np.pi))
-    print('tuney  : {:.6f}'.format(twiss.muy[-1]/2/np.pi))
-    return model, ids
 
 
 def generate_radia_model(width, gap=NOMINAL_GAP, phase=0,

@@ -28,6 +28,11 @@ def create_path(phase):
     fpath = utils.FOLDER_DATA
     phase_str = utils.get_phase_str(phase)
     fpath = fpath.replace('data/', 'data/phase_{}/'.format(phase_str))
+    if utils.INSERT_KYMA:
+        fpath += "kyma22/"
+        fpath = fpath.replace('kyma22/', 'kyma22-papu50/')
+    else:
+        fpath += 'papu50/'
     return fpath
 
 
@@ -164,7 +169,7 @@ def plot_beta_beating(
     plt.xlabel('spos [m]')
     plt.ylabel('Beta Beating [%]')
     plt.title('Tune shift' + '\n' + stg_tune)
-    plt.suptitle('kyma22 - Non-symmetrized optics')
+    plt.suptitle('PAPU50 - Non-symmetrized optics')
     plt.tight_layout()
     plt.legend()
     plt.grid()
@@ -191,7 +196,7 @@ def plot_beta_beating(
     plt.xlabel('spos [m]')
     plt.ylabel('Beta Beating [%]')
     plt.title('Beta Beating')
-    plt.suptitle('kyma22 - Symmetrized optics and uncorrected tunes')
+    plt.suptitle('PAPU50 - Symmetrized optics and uncorrected tunes')
     plt.legend()
     plt.grid()
     plt.tight_layout()
@@ -211,7 +216,7 @@ def plot_beta_beating(
 
     plt.figure(3)
     stg_tune = f'dtunex: {dtunex:+0.05f}\n' + f'dtuney: {dtuney:+0.05f}'
-    stg += '\n' + stg_tune
+    stg = stg + '\n' + stg_tune
     labelx = f'X ({bbeatx_rms:.3f} % rms)'
     labely = f'Y ({bbeaty_rms:.3f} % rms)'
     plt.plot(twiss0.spos, bbeatx, color='b', alpha=1.0, label=labelx)
@@ -219,7 +224,7 @@ def plot_beta_beating(
     plt.xlabel('spos [m]')
     plt.ylabel('Beta Beating [%]')
     plt.title('Beta Beating' + '\n' + stg)
-    plt.suptitle('kyma22 - Symmetrized optics and corrected tunes')
+    plt.suptitle('PAPU50 - Symmetrized optics and corrected tunes')
     plt.legend()
     plt.grid()
     plt.tight_layout()
@@ -227,6 +232,21 @@ def plot_beta_beating(
     plt.show()
 
     plt.clf()
+
+
+def calc_coupling(model, x0, nturns=1000):
+    coord_ini = np.array([x0, 0, 0, 0, 0, 0])
+    coord_fin, *_ = pyaccel.tracking.ring_pass(
+         model, coord_ini, nr_turns=nturns, turn_by_turn=True, parallel=True)
+    rx = coord_fin[0, :]
+    ry = coord_fin[2, :]
+    twiss, *_ = pyaccel.optics.calc_twiss(model)
+    betax, betay = twiss.betax, twiss.betay  # Beta functions
+    jx = 2/(betax[0]*nturns)*(np.sum(rx)**2)
+    jy = 2/(betay[0]*nturns)*(np.sum(ry)**2)
+
+    print('coupling k = {:.3f}'.format(jy/jx))
+    return jy/jx
 
 
 def analysis_dynapt(phase, model, calc_type, fitted_model):
@@ -307,12 +327,12 @@ def correct_optics(phase, beta_flag=True, fitted_model=False):
     kicks, spos_bpms, codx_c, cody_c, codx_u, cody_u, bpms = \
         orbcorr.correct_orbit_fb(
             model0, model1, corr_system='SOFB', nr_steps=1)
-    # plt.plot(spos_bpms, 1e6*codx_u, label='uncorrected')
-    # plt.plot(spos_bpms, 1e6*codx_c, label='corrected')
-    # plt.legend()
-    # plt.xlabel('pos [m]')
-    # plt.ylabel('codx [um]')
-    # plt.show()
+    plt.plot(spos_bpms, 1e6*codx_u, label='uncorrected')
+    plt.plot(spos_bpms, 1e6*codx_c, label='corrected')
+    plt.legend()
+    plt.xlabel('pos [m]')
+    plt.ylabel('codx [um]')
+    plt.show()
 
     # calculate beta beating and delta tunes
     twiss1 = analysis_uncorrected_perturbation(
@@ -346,6 +366,7 @@ def correct_optics(phase, beta_flag=True, fitted_model=False):
             if min(locs_beta_) < ind_id[0] and ind_id[1] < max(locs_beta_):
                 break
 
+        k = calc_coupling(model1, x0=1e-6, nturns=1000)
         print()
         print('symmetrizing ID {} in subsec {}'.format(fam_name, subsec))
 
@@ -366,6 +387,7 @@ def correct_optics(phase, beta_flag=True, fitted_model=False):
 
             # correct tunes
             twiss3 = correct_tunes(model1, twiss1, goal_tunes)
+            k = calc_coupling(model1, x0=1e-6, nturns=1000)
 
             plot_beta_beating(
                 phase, twiss0, twiss1, twiss2, twiss3, stg, fitted_model)
@@ -390,7 +412,7 @@ def run_analysis_dynapt(phase, fitted_model, calc_type):
 
 if __name__ == '__main__':
 
-    phase = 1 * utils.ID_PERIOD/2  # vertical field
+    phase = 0 * utils.ID_PERIOD/2  # vertical field
 
     # calc_type = CALC_TYPES.nominal
     # run_analysis_dynapt(

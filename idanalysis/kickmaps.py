@@ -239,8 +239,8 @@ class IDKickMap:
                 stg += 'px = {:.01f} urad, py = {:.01f} urad'.format(
                     pxf*1e6, pyf*1e6)
                 print(stg)
-                self.kickx[i, j] = pxf * brho**2
-                self.kicky[i, j] = pyf * brho**2
+                self.kickx[i, j] = pxf*brho**2
+                self.kicky[i, j] = pyf*brho**2
 
     def fmap_calc_kickmap(
             self, posx, posy, beam_energy=None, rk_s_step=None):

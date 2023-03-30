@@ -31,7 +31,7 @@ FOLDER_DATA = './results/model/data/'
 
 gaps = [NOMINAL_GAP]
 phases = [0]
-widths = [30]
+widths = [22.6, 22.3, 22]
 field_component = 'bx'
 var_param = 'width'
 
@@ -49,31 +49,6 @@ def get_termination_parameters(width=50):
     term = load_pickle(fname)
     b1t, b2t, b3t, dist1, dist2 = term['results']
     return list([b1t, b2t, b3t, dist1, dist2])
-
-
-def get_folder_data():
-    data_path = FOLDER_DATA
-    return data_path
-
-
-def get_gap_str(gap):
-    """."""
-    gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
-    return gap_str
-
-
-def get_kmap_filename(
-        gap, width, shift_flag=SHIFT_FLAG, filter_flag=FILTER_FLAG):
-    fpath = FOLDER_DATA + 'kickmaps/'
-    fpath = fpath.replace('model/data/', 'model/')
-    gap_str = get_gap_str(gap)
-    fname = fpath + f'kickmap-ID_width{width}_phasepos00p000' +\
-        f'_gap{gap_str}.txt'
-    if shift_flag:
-        fname = fname.replace('.txt', '-shifted_on_axis.txt')
-    if filter_flag:
-        fname = fname.replace('.txt', '-filtered.txt')
-    return fname
 
 
 def create_ids(
@@ -94,22 +69,7 @@ def create_ids(
     return ids
 
 
-def create_model_ids(
-        gap, phase, width,
-        rescale_kicks=RESCALE_KICKS,
-        rescale_length=RESCALE_LENGTH):
-    ids = create_ids(
-        gap=gap, width=width, rescale_kicks=rescale_kicks,
-        rescale_length=rescale_length)
-    model = pymodels.si.create_accelerator(ids=ids)
-    twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
-    print('length : {:.4f} m'.format(model.length))
-    print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/np.pi))
-    print('tuney  : {:.6f}'.format(twiss.muy[-1]/2/np.pi))
-    return model, ids
-
-
-def generate_radia_model(width, gap, phase=0,
+def generate_radia_model(width, gap=NOMINAL_GAP, phase=0,
                          termination_parameters=get_termination_parameters(),
                          solve=SOLVE_FLAG):
     """."""
