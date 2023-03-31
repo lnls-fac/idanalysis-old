@@ -35,7 +35,7 @@ KYMA_RESCALE_KICKS = 1  # Radia simulations have fewer ID periods
 KYMA_RESCALE_LENGTH = 1  # Radia simulations have fewer ID periods
 
 gaps = [NOMINAL_GAP]
-phases = [25]
+phases = [0, 25]
 widths = [40]
 field_component = 'by'
 var_param = 'phase'

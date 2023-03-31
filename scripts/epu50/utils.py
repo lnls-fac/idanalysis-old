@@ -9,7 +9,7 @@ from idanalysis import IDKickMap
 BEAM_ENERGY = 3.0  # [GeV]
 DEF_RK_S_STEP = 2  # [mm] seems converged for the measurement fieldmap grids
 ROLL_OFF_RT = 6.0  # [mm]
-SOLVE_FLAG = False
+SOLVE_FLAG = True
 
 ID_PERIOD = 50.0  # [mm]
 NR_PERIODS = 54  #
@@ -18,7 +18,7 @@ SIMODEL_ID_LEN = 2.770  # [m]
 ID_KMAP_LEN = SIMODEL_ID_LEN  # [m]
 RESCALE_KICKS = NR_PERIODS_REAL_ID/NR_PERIODS
 RESCALE_LENGTH = 1
-NOMINAL_GAP = 20
+NOMINAL_GAP = 22
 
 SIMODEL_FITTED = False
 SHIFT_FLAG = True
@@ -28,10 +28,12 @@ MEAS_DATA_PATH = './meas-data/epu-uvx/measurement/magnetic/hallprobe/'
 MEAS_FLAG = True
 
 gaps = [NOMINAL_GAP]
-phases = [0, 25]
+phases = [0]
 widths = [40]
 field_component = 'by'
 var_param = 'gap'
+
+FOLDER_BASE = '/home/gabriel/repos-dev/'
 
 
 class CALC_TYPES:
@@ -285,15 +287,20 @@ ID_CONFIGS = {
     }
 
 
-_phase25n = ['ID4083', 'ID4103', 'ID4088', 'ID4093', 'ID4108', 'ID4098']
-_phase16n = ['ID4081', 'ID4101', 'ID4086', 'ID4091', 'ID4106', 'ID4096']
-_phase00p = ['ID4079', 'ID4099', 'ID4084', 'ID4089', 'ID4104', 'ID4094']
-_phase16p = ['ID4080', 'ID4100', 'ID4085', 'ID4090', 'ID4105', 'ID4095']
-_phase25p = ['ID4082', 'ID4102', 'ID4087', 'ID4092', 'ID4107', 'ID4097']
+MEAS_phase25n = ['ID4083', 'ID4103', 'ID4088', 'ID4093', 'ID4108', 'ID4098']
+MEAS_phase16n = ['ID4081', 'ID4101', 'ID4086', 'ID4091', 'ID4106', 'ID4096']
+MEAS_phase00p = ['ID4079', 'ID4099', 'ID4084', 'ID4089', 'ID4104', 'ID4094']
+MEAS_phase16p = ['ID4080', 'ID4100', 'ID4085', 'ID4090', 'ID4105', 'ID4095']
+MEAS_phase25p = ['ID4082', 'ID4102', 'ID4087', 'ID4092', 'ID4107', 'ID4097']
 
-GAPS = ['22.0', '23.3', '25.7', '29.3', '32.5', '40.9']
-PHASES = ['-25.00', '-16.39', '+00.00', '+16.39', '+25.00']
-ORDERED_CONFIGS = [_phase25n, _phase16n, _phase00p, _phase16p, _phase25p]
+# MEAS_GAPS = ['22.0', '23.3', '25.7', '29.3', '32.5', '40.9']
+# MEAS_PHASES = ['-25.00', '-16.39', '+00.00', '+16.39', '+25.00']
+MEAS_GAPS = [22.0, 23.3, 25.7, 29.3, 32.5, 40.9]
+MEAS_PHASES = [25.00, -16.39, +00.00, +16.39, +25.00]
+
+ORDERED_CONFIGS = [MEAS_phase25n, MEAS_phase16n,
+                   MEAS_phase00p, MEAS_phase16p,
+                   MEAS_phase25p]
 
 
 def get_folder_data():
@@ -310,8 +317,8 @@ def get_data_ID(fname):
 
 def get_meas_idconfig(phase, gap):
     """."""
-    phase_idx = PHASES.index(phase)
-    gap_idx = GAPS.index(gap)
+    phase_idx = MEAS_PHASES.index(phase)
+    gap_idx = MEAS_GAPS.index(gap)
     idconfig = ORDERED_CONFIGS[phase_idx][gap_idx]
     return idconfig
 
@@ -343,15 +350,14 @@ def get_kmap_filename(phase, gap):
 
 
 def create_ids(
-        phase, gap, nr_steps=None, rescale_kicks=None, rescale_length=None):
+        fname, nr_steps=None, rescale_kicks=None, rescale_length=None):
     # create IDs
     nr_steps = nr_steps or 40
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
     rescale_length = \
         rescale_length if rescale_length is not None else 1
-    fname = get_kmap_filename(phase, gap)
-    if MEAS_FLAG:
-        rescale_length = 1
+    # if MEAS_FLAG:
+        #  rescale_length = 1
     IDModel = pymodels.si.IDModel
     epu50 = IDModel(
         subsec=IDModel.SUBSECTIONS.ID10SB,
@@ -378,12 +384,13 @@ def create_model_ids(
     return model, ids
 
 
-def generate_radia_model(phase, gap, nr_periods, solve=SOLVE_FLAG):
+def generate_radia_model(phase, gap, nr_periods=NR_PERIODS, width=widths[0],
+                         solve=SOLVE_FLAG):
     """."""
     gap = gap
     nr_periods = nr_periods
-    period_length = 50
-    block_shape = [[[0.1, 0], [40, 0], [40, -40], [0.1, -40]]]
+    period_length = ID_PERIOD
+    block_shape = [[[0.1, 0], [width, 0], [width, -width], [0.1, -width]]]
     longitudinal_distance = 0.2
     block_len = period_length/4 - longitudinal_distance
     start_lengths = [block_len/4, block_len/2, 3*block_len/4, block_len]
@@ -400,7 +407,7 @@ def generate_radia_model(phase, gap, nr_periods, solve=SOLVE_FLAG):
                 end_blocks_distance=end_distances)
 
     epu.dp = phase
-    if SOLVE_FLAG:
+    if solve:
         epu.solve()
 
     return epu

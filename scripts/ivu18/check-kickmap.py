@@ -18,7 +18,7 @@ if __name__ == '__main__':
     kickanalysis.plot_flag = True
     kickanalysis.shift_flag = True
     kickanalysis.filter_flag = False
-    kickanalysis.linear = True
+    kickanalysis.linear = False
 
     kickanalysis.check_kick_at_plane(
         gap=gap, phase=phase,

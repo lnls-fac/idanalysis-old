@@ -29,10 +29,14 @@ class RadiaModelCalibration:
         self._fmap = fmap
         self._epu = epu
         self._rz_meas = None
+        self._rx_meas = None
+        self._ry_meas = None
         self._bx_meas = None
         self._by_meas = None
         self._bz_meas = None
         self._rz_model = None
+        self._rx_model = None
+        self._ry_model = None
         self._bx_model = None
         self._by_model = None
         self._bz_model = None
@@ -152,6 +156,8 @@ class RadiaModelCalibration:
             self.rz_model, self.rz_meas + shift, self.bx_meas)
         bf1 = _np.concatenate((by_meas_fit, bx_meas_fit))
         bf2 = _np.concatenate((self.by_model, self.bx_model))
+        # bf1 = by_meas_fit
+        # bf2 = self.by_model
         scale = _np.dot(bf1, bf2) / _np.dot(bf2, bf2)
         residue = _np.sum((bf1 - scale * bf2)**2)/len(self.rz_model)
         return residue, scale, by_meas_fit, bx_meas_fit
@@ -325,7 +331,7 @@ def get_fmap(phase, gap):
     _, meas_id = MEAS_FILE.split('ID=')
     meas_id = meas_id.replace('.dat', '')
     idkickmap = IDKickMap()
-    fmap_fname = FOLDER_BASE + MEAS_DATA_PATH + MEAS_FILE
+    fmap_fname = MEAS_DATA_PATH + MEAS_FILE
     idkickmap.fmap_fname = fmap_fname
     fmap = idkickmap.fmap_config.fmap
 
@@ -361,7 +367,7 @@ def generate_kickmap(posx, posy, phase, gap, radia_model):
     idkickmap._radia_model_config.traj_init_px = 0
     idkickmap._radia_model_config.traj_init_py = 0
     idkickmap.traj_init_rz = -1800
-    idkickmap.calc_id_termination_kicks(period_len=50, kmap_idlen=2.773)
+    idkickmap.calc_id_termination_kicks(period_len=50, kmap_idlen=2.770)
     print(idkickmap._radia_model_config)
     idkickmap.fmap_calc_kickmap(posx=posx, posy=posy)
     fname = './results/model/kickmap-ID-p{}-g{}.txt'.format(phase, gap)
@@ -393,6 +399,7 @@ def run_calibrated_kickmap(phase, gap):
 
     # plot best solution and calibrates model
     by_meas_fit = cm.shiftscale_plot_fields(shift=minshift)
+
     cm.shiftscale_set(scale=minscale)
 
     # generate kickmap with calibrated model

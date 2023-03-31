@@ -31,7 +31,7 @@ FOLDER_DATA = './results/model/data/'
 
 gaps = [NOMINAL_GAP]
 phases = [0]
-widths = [49, 40]
+widths = [44]
 field_component = 'by'
 var_param = 'width'
 
@@ -97,13 +97,12 @@ def generate_radia_model(width, gap=NOMINAL_GAP, phase=0,
     period_length = 18.5
     br = 1.24
 
-    # width = 49
     height = 26
     chamfer_b = 5
 
     p_width = 34
     p_height = 21
-    pole_length = 2.9
+    pole_length = 2.8
     chamfer_p = 3
     y_pos = 0
 
