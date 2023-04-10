@@ -765,6 +765,7 @@ class FieldAnalysisFromRadia(Tools):
                         solve=False)
                     cm = RadiaModelCalibration(fmap, model)
                     cm._init_fields_rz()
+                    cm._init_fields_roll_off()
                     cm._plot_fields_rz()
 
                     # search for best shift and calc scale
