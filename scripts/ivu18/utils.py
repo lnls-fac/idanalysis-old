@@ -74,7 +74,7 @@ def get_kmap_filename(gap, width, shift_flag=SHIFT_FLAG):
 
 def create_ids(
         fname, nr_steps=None, rescale_kicks=RESCALE_KICKS,
-        rescale_length=RESCALE_LENGTH):
+        rescale_length=RESCALE_LENGTH, **kwargs):
     # create IDs
     nr_steps = nr_steps or 40
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0

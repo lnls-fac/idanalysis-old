@@ -16,7 +16,7 @@ if __name__ == '__main__':
     kickanalysis = AnalysisKickmap()
     kickanalysis.save_flag = True
     kickanalysis.plot_flag = True
-    kickanalysis.shift_flag = True
+    kickanalysis.shift_flag = False
     kickanalysis.filter_flag = False
     kickanalysis.linear = False
 

@@ -29,7 +29,7 @@ if __name__ == "__main__":
     radia_fanalysis.gridy = list(np.linspace(-2.5, +2.5, 11) / 1000)  # [m]
 
     # radia_fanalysis.run_calc_fields()
-    # radia_fanalysis.run_plot_data(phase=utils.phases[0], gap=utils.gaps[0])
+    radia_fanalysis.run_plot_data(phase=utils.phases[0], gap=utils.gaps[0])
     # radia_fanalysis.run_generate_kickmap()
 
     betax = 2.1
