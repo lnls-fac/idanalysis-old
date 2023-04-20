@@ -82,7 +82,7 @@ def create_ids(
 
 
 def generate_radia_model(width=widths[0], phase=0,
-                         gap=NOMINAL_GAP, solve=SOLVE_FLAG):
+                         gap=NOMINAL_GAP, solve=SOLVE_FLAG, **kwargs):
     """."""
     papu = PAPU(gap=gap)
     papu.dg = phase
