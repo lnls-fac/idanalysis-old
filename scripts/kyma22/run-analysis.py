@@ -14,7 +14,7 @@ if __name__ == "__main__":
     analysis.calc_type = analysis.CALC_TYPES.symmetrized
     analysis.orbcorr_plot_flag = True
     analysis.bb_plot_flag = True
-    analysis.linear = True
+    analysis.linear = False
 
     gap = utils.gaps[0]
     width = utils.widths[0]

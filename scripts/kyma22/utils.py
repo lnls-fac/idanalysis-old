@@ -21,7 +21,7 @@ RESCALE_LENGTH = 1
 NOMINAL_GAP = 8.0  # [mm] - fixed papu50 gap.
 ID_FAMNAME = 'APU22'
 
-SIMODEL_FITTED = False
+SIMODEL_FITTED = True
 SHIFT_FLAG = True
 FILTER_FLAG = False
 
@@ -65,7 +65,7 @@ def create_ids(
 
 
 def generate_radia_model(width=widths[0], phase=0, gap=NOMINAL_GAP,
-                         solve=SOLVE_FLAG):
+                         solve=SOLVE_FLAG, **kwargs):
     """."""
     kyma = Kyma22(nr_periods=NR_PERIODS)
     kyma.dg = phase
