@@ -7,8 +7,10 @@ from idanalysis import IDKickMap
 from idanalysis.fmap import FieldmapOnAxisAnalysis
 
 from utils import FOLDER_BASE, MEAS_DATA_PATH, ID_CONFIGS
-from utils import ORDERED_CONFIGS, DEF_RK_S_STEP, GAPS, PHASES
+from utils import DEF_RK_S_STEP, ORDERED_CONFIGS
 from utils import get_meas_idconfig
+GAPS = ['22.0', '23.3', '25.7', '29.3', '32.5', '40.9']
+PHASES = ['-25.00', '-16.39', '+00.00', '+16.39', '+25.00']
 
 
 def create_idkickmap(phase, gap):

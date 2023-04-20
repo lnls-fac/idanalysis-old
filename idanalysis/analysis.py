@@ -87,15 +87,35 @@ class Tools:
     @staticmethod
     def _calc_radia_roll_off(model, rt, peak_idx=0):
         field_component = utils.field_component
-        comp_idx = Tools._get_field_component_idx(field_component)
+        if hasattr(model, 'dp'):
+            phase = model.dp
+        else:
+            phase = 0
         period = model.period_length
+        phase_flag = False
+
+        # Relations valid for Apple-II devices not for APU
+        if _np.isclose(phase, period/2, atol=0.1*period):
+            phase_flag = True
+            if field_component == 'by':
+                field_component = 'bx'
+            else:
+                field_component = 'by'
+
+        comp_idx = Tools._get_field_component_idx(field_component)
         rz = _np.linspace(-period/2, period/2, 201)
         field = model.get_field(0, 0, rz)
         b = field[:, comp_idx]
         b_max_idx = _np.argmax(b)
         rz_at_max = rz[b_max_idx] + peak_idx*period
+
+        # Relations valid for Apple-II devices not for APU
         if field_component == 'bx':
-            field = model.get_field(0, rt, rz_at_max)
+            if phase_flag:
+                field = model.get_field(rt, 0, rz_at_max)
+            else:
+                field = model.get_field(0, rt, rz_at_max)
+
         elif field_component == 'by':
             field = model.get_field(rt, 0, rz_at_max)
         elif field_component == 'bz':
@@ -105,7 +125,7 @@ class Tools:
         roff_idx = _np.argmin(_np.abs(rt-utils.ROLL_OFF_RT))
         rt0_idx = _np.argmin(_np.abs(rt))
         roff = _np.abs(b[roff_idx]/b[rt0_idx]-1)
-        return b, roff
+        return b, roff, rz_at_max
 
     @staticmethod
     def _get_gap_str(gap):
@@ -138,14 +158,41 @@ class Tools:
         return fmap
 
     @staticmethod
-    def _get_fmap_roll_off(fmap, plot_flag=False):
-        by = fmap.by[fmap.ry_zero][fmap.rx_zero][:]
+    def _get_fmap_roll_off(fmap, phase, plot_flag=False):
+        period = utils.ID_PERIOD
+        field_component = utils.field_component
+        phase_flag = False
+
+        # Relations valid for Apple-II devices not for APU
+        if _np.isclose(a=phase, b=period/2, atol=0.1*period):
+            phase_flag = True
+            if field_component == 'by':
+                field_component = 'bx'
+            else:
+                field_component = 'by'
+
+        if field_component == 'by':
+            by = fmap.by[fmap.ry_zero][fmap.rx_zero][:]
+            rx = fmap.rx
+        elif field_component == 'bx':
+            by = fmap.bx[fmap.ry_zero][fmap.rx_zero][:]
+            if phase_flag:
+                rx = fmap.rx
+            else:
+                rx = fmap.ry
+        elif field_component == 'bz':
+            by = fmap.bz[fmap.ry_zero][fmap.rx_zero][:]
+            rx = fmap.rx
         idxmax = _np.argmax(
-            by[int(len(by)/2-len(by)/4):int(len(by)/2+len(by)/4)])
-        idxmax += int(len(by)/2-len(by)/4)
+            by[int(len(by)/2-period/2):int(len(by)/2+period/2)])
+        idxmax += int(len(by)/2-period/2)
         rzmax = fmap.rz[idxmax]
-        rx = fmap.rx
-        by_x = _np.array(fmap.by)
+        if field_component == 'by':
+            by_x = _np.array(fmap.by)
+        elif field_component == 'bx':
+            by_x = _np.array(fmap.bx)
+        else:
+            by_x = _np.array(fmap.bz)
         byx = by_x[0, :, idxmax]
         rx0idx = _np.argmin(_np.abs(rx))
         rtidx = _np.argmin(_np.abs(rx - utils.ROLL_OFF_RT))
@@ -156,7 +203,7 @@ class Tools:
                 utils.ROLL_OFF_RT, roff))
             _plt.legend()
             _plt.xlabel('rx [mm]')
-            _plt.ylabel('By [T]')
+            _plt.ylabel('B [T]')
             _plt.grid()
             _plt.show()
         return rx, byx, rzmax
@@ -186,13 +233,17 @@ class RadiaModelCalibration(Tools):
         self._ry_meas = None
         self._bx_meas = None
         self._by_meas = None
+        self._byx_meas = None
         self._bz_meas = None
+        self._df_bmeas = None
         self._rz_model = None
         self._rx_model = None
         self._ry_model = None
         self._bx_model = None
+        self._byx_model = None
         self._by_model = None
         self._bz_model = None
+        self._df_bmodel = None
         self._nrselblocks = 1
 
     def _set_rz_model(self, nr_pts_period=9):
@@ -220,6 +271,18 @@ class RadiaModelCalibration(Tools):
         self._by_meas = fmap.by[fmap.ry_zero][fmap.rx_zero][:]
         self._bz_meas = fmap.bz[fmap.ry_zero][fmap.rx_zero][:]
 
+    def _init_fields_rt(self, rx, b):
+        self._rx_meas = rx
+        self._rx_model = rx
+        self._byx_meas = b
+        b_model, _, rzmax = self._calc_radia_roll_off(
+            rt=rx, model=self._model)
+        self._byx_model = b_model
+        self._df_bmeas = _np.diff(self._byx_meas)/_np.diff(self._rx_meas)
+        self._df_bmodel = _np.diff(self._byx_model)/_np.diff(self._rx_model)
+        res = _np.sum((self._df_bmeas-self._df_bmodel)**2)/len(self._df_bmodel)
+        return res
+
     def _plot_fields_rz(self):
         fig, axs = _plt.subplots(2, sharex=True)
         axs[0].plot(self._rz_meas, self._by_meas, label='meas.')
@@ -229,6 +292,19 @@ class RadiaModelCalibration(Tools):
         axs[0].set(ylabel='By [T]')
         axs[1].set(xlabel='rz [mm]', ylabel='Bx [T]')
         _plt.xlim(-1600, 1600)
+        _plt.legend()
+        _plt.show()
+
+    def _plot_fields_rt(self):
+        fig, axs = _plt.subplots(2, sharex=True)
+        rx = self._rx_meas[:-1]
+        axs[0].plot(self._rx_meas, self._byx_meas, label='meas.')
+        axs[0].plot(self._rx_model, self._byx_model, label='model')
+        axs[1].plot(
+            rx, self._df_bmeas, label='meas')
+        axs[1].plot(rx, self._df_bmodel, label='model')
+        axs[0].set(ylabel='B [T]')
+        axs[1].set(xlabel='rt [mm]', ylabel='Field derivative [T/mm]')
         _plt.legend()
         _plt.show()
 
@@ -383,7 +459,7 @@ class FieldAnalysisFromRadia(Tools):
         rt_dict = dict()
         roll_off = dict()
         for var_params, id in self.models.items():
-            b, roff = self._calc_radia_roll_off(
+            b, roff, _ = self._calc_radia_roll_off(
                 model=id, rt=rt, peak_idx=peak_idx)
             b_[var_params] = b
             rt_dict[var_params] = rt
@@ -604,19 +680,22 @@ class FieldAnalysisFromRadia(Tools):
 
     def _read_data_roll_off(self, data, parameter):
         field_component = utils.field_component
-        b = data[parameter]['rolloff_{}'.format(field_component)]
-        if 'rolloff_rt' in data[parameter]:
-            rt = data[parameter]['rolloff_rt']
-        elif 'rolloff_rx' in data[parameter]:
-            rt = data[parameter]['rolloff_rx']
-        elif 'rolloff_ry' in data[parameter]:
-            rt = data[parameter]['rolloff_ry']
-        rtp_idx = _np.argmin(_np.abs(rt - utils.ROLL_OFF_RT))
-        rt0_idx = _np.argmin(_np.abs(rt))
-        roff = _np.abs(b[rtp_idx]/b[rt0_idx]-1)
-        b0 = b[rt0_idx]
-        roll_off = 100*(b/b0 - 1)
-        return rt, b, roll_off, roff
+        if 'rolloff_{}'.format(field_component) in data[parameter]:
+            b = data[parameter]['rolloff_{}'.format(field_component)]
+            if 'rolloff_rt' in data[parameter]:
+                rt = data[parameter]['rolloff_rt']
+            elif 'rolloff_rx' in data[parameter]:
+                rt = data[parameter]['rolloff_rx']
+            elif 'rolloff_ry' in data[parameter]:
+                rt = data[parameter]['rolloff_ry']
+            rtp_idx = _np.argmin(_np.abs(rt - utils.ROLL_OFF_RT))
+            rt0_idx = _np.argmin(_np.abs(rt))
+            roff = _np.abs(b[rtp_idx]/b[rt0_idx]-1)
+            b0 = b[rt0_idx]
+            roll_off = 100*(b/b0 - 1)
+            return rt, b, roll_off, roff
+
+        return
 
     def _plot_field_roll_off(self, data):
         field_component = utils.field_component
@@ -625,7 +704,11 @@ class FieldAnalysisFromRadia(Tools):
         colors = ['b', 'g', 'y', 'C1', 'r', 'k']
         var_parameters = list(data.keys())
         for i, parameter in enumerate(var_parameters):
-            rt, b, roll_off, roff = self._read_data_roll_off(data, parameter)
+            roff_data = self._read_data_roll_off(data, parameter)
+            if roff_data is None:
+                continue
+            else:
+                rt, b, roll_off, roff = roff_data
             label = utils.var_param +\
                 " {}, roll-off = {:.2f} %".format(parameter, 100*roff)
             _plt.plot(rt, roll_off, '.-', label=label, color=colors[i])
@@ -749,7 +832,7 @@ class FieldAnalysisFromRadia(Tools):
         idkickmap.kmap_idlen = utils.ID_KMAP_LEN
         idkickmap.save_kickmap_file(kickmap_filename=fname)
 
-    def calibrate_models(self):
+    def calibrate_models(self, plot_flag=False):
         models_ = dict()
         for width in utils.widths:
             for phase in utils.phases:
@@ -758,16 +841,15 @@ class FieldAnalysisFromRadia(Tools):
                         f'calibrating model for gap {gap} mm, phase {phase}' +
                         f' mm and width {width} mm')
                     fmap = self._get_fmap(phase=phase, gap=gap)
-                    rx, byx, _ = self._get_fmap_roll_off(fmap, plot_flag=True)
+                    rx, byx, rzmax = self._get_fmap_roll_off(
+                        fmap, plot_flag=plot_flag, phase=phase)
                     model = utils.generate_radia_model(
                         width=width, phase=phase, gap=gap,
                         nr_periods=utils.NR_PERIODS_REAL_ID,
                         solve=False)
                     cm = RadiaModelCalibration(fmap, model)
-                    cm._init_fields_rz()
-                    cm._init_fields_roll_off()
-                    cm._plot_fields_rz()
 
+                    cm._init_fields_rz()
                     # search for best shift and calc scale
                     shifts = _np.linspace(-0.25, 0.25, 31)*model.period_length
                     minshift, minscale, minresidue = shifts[0], 1, float('inf')
@@ -778,10 +860,35 @@ class FieldAnalysisFromRadia(Tools):
                             minshift, minscale = shift, scale
                             minresidue = residue
 
-                    cm._shiftscale_plot_fields(shift=minshift)
+                    residue = cm._init_fields_rt(rx, byx)
+                    shifts = _np.linspace(0.1, 1, 10)
+                    minshift, minresidue = shifts[0], float('inf')
+                    for shift in shifts:
+                        mr_scale = -1*minscale if minscale < 0 else minscale
+                        cm._model = utils.generate_radia_model(
+                            width=width, phase=phase, gap=gap,
+                            nr_periods=utils.NR_PERIODS_REAL_ID,
+                            solve=False, roff_calibration=shift,
+                            mr_scale=mr_scale)
+                        cm._init_fields_rt(rx, byx)
+                        residue = _np.sum(
+                            (cm._df_bmodel-cm._df_bmeas)**2)/len(cm._df_bmodel)
+                        print(residue)
+                        if residue < minresidue:
+                            minshift = shift
+                            minresidue = residue
+                    cm._model = utils.generate_radia_model(
+                            width=width, phase=phase, gap=gap,
+                            nr_periods=utils.NR_PERIODS_REAL_ID,
+                            solve=False, roff_calibration=minshift)
                     cm._shiftscale_set(scale=minscale)
                     cm._init_fields_rz()
-                    cm._plot_fields_rz()
+                    if plot_flag:
+                        cm._plot_fields_rz()
+                    residue = cm._init_fields_rt(rx, byx)
+                    if plot_flag:
+                        cm._plot_fields_rt()
+
                     key = (('width', width), ('phase', phase), ('gap', gap))
                     models_[(key)] = cm._model
         self.models = models_
@@ -1158,7 +1265,7 @@ class AnalysisEffects(Tools):
 
         return knobs, locs_beta, straight_nr
 
-    def _calc_coupling(self, x0, nturns=1000):
+    def _calc_action_ratio(self, x0, nturns=1000):
         coord_ini = _np.array([x0, 0, 0, 0, 0, 0])
         coord_fin, *_ = pyaccel.tracking.ring_pass(
             self._model_id, coord_ini, nr_turns=nturns,
@@ -1167,11 +1274,19 @@ class AnalysisEffects(Tools):
         ry = coord_fin[2, :]
         twiss, *_ = pyaccel.optics.calc_twiss(self._model_id)
         betax, betay = twiss.betax, twiss.betay  # Beta functions
-        jx = 2/(betax[0]*nturns)*(_np.sum(rx)**2)
-        jy = 2/(betay[0]*nturns)*(_np.sum(ry)**2)
+        jx = 1/(betax[0]*nturns)*(_np.sum(rx**2))
+        jy = 1/(betay[0]*nturns)*(_np.sum(ry**2))
 
-        print('coupling k = {:.3f}'.format(jy/jx))
+        print('action ratio = {:.3f}'.format(jy/jx))
         return jy/jx
+
+    def _calc_coupling(self):
+        ed_tang, *_ = pyaccel.optics.calc_edwards_teng(self._model_id)
+        min_tunesep, ratio =\
+            pyaccel.optics.estimate_coupling_parameters(ed_tang)
+        print('Minimum tune separation = {:.3f}'.format(min_tunesep))
+
+        return min_tunesep
 
     def _calc_dtune_betabeat(self, twiss1):
         dtunex = (twiss1.mux[-1] - self._twiss0.mux[-1]) / 2 / _np.pi
@@ -1430,7 +1545,7 @@ class AnalysisEffects(Tools):
                 if min(locs_beta_) < ind_id[0] and ind_id[1] < max(locs_beta_):
                     break
 
-            k = self._calc_coupling(x0=1e-6, nturns=1000)
+            k = self._calc_coupling()
             print()
             print('symmetrizing ID {} in subsec {}'.format(fam_name, subsec))
 
@@ -1472,10 +1587,10 @@ class AnalysisEffects(Tools):
         print(dynapxy)
         dynapxy.do_tracking()
         dynapxy.process_data()
-        fig, *ax = dynapxy.make_figure_diffusion(orders=(1, 2, 3, 4),
-                                                 nuy_bounds=(14.12, 14.45),
-                                                 nux_bounds=(49.05, 49.50))
-        fig.show()
+        fig, axx, ayy = dynapxy.make_figure_diffusion(
+            orders=(1, 2, 3, 4),
+            nuy_bounds=(14.12, 14.45),
+            nux_bounds=(49.05, 49.50))
 
         fpath = self._get_data_path(width=width, phase=phase, gap=gap)
         print(fpath)

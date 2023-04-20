@@ -385,16 +385,25 @@ def correct_orbit_fb(
         raise ValueError('Corretion system must be "SOFB" or "FOFB"')
 
     if plot_flag:
+        rmsx_u = np.std(1e6*codx_u)
+        rmsx_c = np.std(1e6*codx_c)
+        rmsy_u = np.std(1e6*cody_u)
+        rmsy_c = np.std(1e6*cody_c)
+
         plt.figure(1)
-        plt.plot(spos_bpms, 1e6*codx_u, label='uncorrected')
-        plt.plot(spos_bpms, 1e6*codx_c, label='corrected')
+        plt.plot(spos_bpms, 1e6*codx_u,
+                 label='Uncorrected - RMS = {:.3f}'.format(rmsx_u))
+        plt.plot(spos_bpms, 1e6*codx_c,
+                 label='Corrected - RMS = {:.3f}'.format(rmsx_c))
         plt.legend()
         plt.xlabel('pos [m]')
         plt.ylabel('codx [um]')
 
         plt.figure(2)
-        plt.plot(spos_bpms, 1e6*cody_u, label='uncorrected')
-        plt.plot(spos_bpms, 1e6*cody_c, label='corrected')
+        plt.plot(spos_bpms, 1e6*cody_u,
+                 label='Uncorrected - RMS = {:.3f}'.format(rmsy_u))
+        plt.plot(spos_bpms, 1e6*cody_c,
+                 label='Corrected - RMS = {:.3f}'.format(rmsy_c))
         plt.legend()
         plt.xlabel('pos [m]')
         plt.ylabel('cody [um]')

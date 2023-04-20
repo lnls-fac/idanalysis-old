@@ -19,28 +19,24 @@ ID_KMAP_LEN = SIMODEL_ID_LEN  # [m]
 RESCALE_KICKS = NR_PERIODS_REAL_ID/NR_PERIODS
 RESCALE_LENGTH = 1
 NOMINAL_GAP = 22
+ID_FAMNAME = 'EPU50'
 
 SIMODEL_FITTED = False
 SHIFT_FLAG = True
+FILTER_FLAG = False
 
 FOLDER_DATA = './results/model/data/'
 MEAS_DATA_PATH = './meas-data/epu-uvx/measurement/magnetic/hallprobe/'
 MEAS_FLAG = True
+REAL_WIDTH = 40
 
-gaps = [NOMINAL_GAP]
+gaps = [22.0]
 phases = [0]
-widths = [40]
+widths = [REAL_WIDTH]
 field_component = 'by'
-var_param = 'gap'
+var_param = 'phase'
 
 FOLDER_BASE = '/home/gabriel/repos-dev/'
-
-
-class CALC_TYPES:
-    """."""
-    nominal = 0
-    nonsymmetrized = 1
-    symmetrized = 2
 
 
 ID_CONFIGS = {
@@ -296,7 +292,7 @@ MEAS_phase25p = ['ID4082', 'ID4102', 'ID4087', 'ID4092', 'ID4107', 'ID4097']
 # MEAS_GAPS = ['22.0', '23.3', '25.7', '29.3', '32.5', '40.9']
 # MEAS_PHASES = ['-25.00', '-16.39', '+00.00', '+16.39', '+25.00']
 MEAS_GAPS = [22.0, 23.3, 25.7, 29.3, 32.5, 40.9]
-MEAS_PHASES = [25.00, -16.39, +00.00, +16.39, +25.00]
+MEAS_PHASES = [-25.00, -16.39, +00.00, +16.39, +25.00]
 
 ORDERED_CONFIGS = [MEAS_phase25n, MEAS_phase16n,
                    MEAS_phase00p, MEAS_phase16p,
@@ -368,29 +364,18 @@ def create_ids(
     return ids
 
 
-def create_model_ids(
-        phase=0,
-        rescale_kicks=RESCALE_KICKS,
-        rescale_length=RESCALE_LENGTH, meas_flag=True):
-    ids = create_ids(
-        rescale_kicks=rescale_kicks,
-        rescale_length=rescale_length,
-        meas_flag=meas_flag)
-    model = pymodels.si.create_accelerator(ids=ids)
-    twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
-    print('length : {:.4f} m'.format(model.length))
-    print('tunex  : {:.6f}'.format(twiss.mux[-1]/2/np.pi))
-    print('tuney  : {:.6f}'.format(twiss.muy[-1]/2/np.pi))
-    return model, ids
-
-
 def generate_radia_model(phase, gap, nr_periods=NR_PERIODS, width=widths[0],
-                         solve=SOLVE_FLAG):
+                         solve=SOLVE_FLAG, **kwargs):
     """."""
     gap = gap
     nr_periods = nr_periods
     period_length = ID_PERIOD
-    block_shape = [[[0.1, 0], [width, 0], [width, -width], [0.1, -width]]]
+    cs_gap = 0.1
+    if 'roff_calibration' in kwargs:
+        cs_gap += kwargs['roff_calibration']
+    block_shape = [
+            [[cs_gap, 0], [width+cs_gap, 0],
+             [width+cs_gap, -width], [cs_gap, -width]]]
     longitudinal_distance = 0.2
     block_len = period_length/4 - longitudinal_distance
     start_lengths = [block_len/4, block_len/2, 3*block_len/4, block_len]

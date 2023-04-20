@@ -2,9 +2,10 @@ from .deltadata import DeltaData
 from .epudata import EPUData
 from .trajectory import IDTrajectory
 from .kickmaps import IDKickMap
-from .analysiswip import FieldAnalysisFromRadia
-from .analysiswip import AnalysisKickmap
-from .analysiswip import AnalysisEffects
+from .analysis import FieldAnalysisFromRadia
+from .analysis import AnalysisKickmap
+from .analysis import AnalysisEffects
+from .analysis import Tools
 
 # This has to be defined before using the library.
 FOLDER_BASE = None
