@@ -31,7 +31,7 @@ FOLDER_DATA = './results/model/data/'
 
 gaps = [NOMINAL_GAP]
 phases = [0]
-widths = [22.6, 22.3, 22]
+widths = [32, 31]
 field_component = 'bx'
 var_param = 'width'
 
@@ -71,7 +71,7 @@ def create_ids(
 
 def generate_radia_model(width, gap=NOMINAL_GAP, phase=0,
                          termination_parameters=get_termination_parameters(),
-                         solve=SOLVE_FLAG):
+                         solve=SOLVE_FLAG, **kwargs):
     """."""
     period_length = 29
     br = 1.24
