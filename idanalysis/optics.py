@@ -92,7 +92,7 @@ def symm_get_knobs(tr, straight_nr, allquads=False):
     return knobs, knobs_in, knobs_out
 
 
-def correct_tunes_twoknobs(tr, goal_tunes):
+def correct_tunes_twoknobs(tr, goal_tunes, knobs_out):
 
     tunecorr = TuneCorr(tr, 'SI', method='Proportional', grouping='TwoKnobs')
     tunemat = tunecorr.calc_jacobian_matrix()
@@ -161,12 +161,14 @@ def correct_symmetry_withbeta(
     dk = np.dot(invmat, alpha.flatten())
 
     # apply correction
+    k0 = list()
     for i, fam in enumerate(knobs):
         inds = knobs[fam]
-        k0 = pyaccel.lattice.get_attribute(tr, 'polynom_b', inds, 1)
-        pyaccel.lattice.set_attribute(tr, 'polynom_b', inds, k0 + 1*dk[i], 1)
+        k0_ = pyaccel.lattice.get_attribute(tr, 'polynom_b', inds, 1)
+        pyaccel.lattice.set_attribute(tr, 'polynom_b', inds, k0_ + 1*dk[i], 1)
+        k0.append(k0_[0])
 
-    return dk
+    return dk, np.array(k0)
 
 
 def calc_dynapt_xy(

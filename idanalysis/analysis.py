@@ -285,27 +285,50 @@ class RadiaModelCalibration(Tools):
 
     def _plot_fields_rz(self):
         fig, axs = _plt.subplots(2, sharex=True)
-        axs[0].plot(self._rz_meas, self._by_meas, label='meas.')
-        axs[0].plot(self._rz_model, self._by_model, label='model')
-        axs[1].plot(self._rz_meas, self._bx_meas, label='meas.')
-        axs[1].plot(self._rz_model, self._bx_model, label='model')
+        by_meas_fit = _np.interp(
+            self._rz_model, self._rz_meas, self._by_meas)
+        bx_meas_fit = _np.interp(
+            self._rz_model, self._rz_meas, self._bx_meas)
+        b_model = _np.concatenate((self._by_model, self._bx_model))
+        b_meas = _np.concatenate((by_meas_fit, bx_meas_fit))
+        rms = 100*_np.std((b_model-b_meas)/b_meas)/len(b_meas)
+        axs[0].plot(self._rz_meas, self._by_meas, label='Measurements')
+        axs[0].plot(self._rz_model, self._by_model, label='Model')
+        axs[1].plot(self._rz_meas, self._bx_meas, label='Measurements')
+        axs[1].plot(
+            self._rz_model, self._bx_model,
+            label='Model - r.m.s = {:.2f} %'.format(rms))
         axs[0].set(ylabel='By [T]')
         axs[1].set(xlabel='rz [mm]', ylabel='Bx [T]')
+        axs[0].grid()
+        axs[1].grid()
         _plt.xlim(-1600, 1600)
-        _plt.legend()
+        _plt.legend(loc='upper right')
         _plt.show()
 
     def _plot_fields_rt(self):
-        fig, axs = _plt.subplots(2, sharex=True)
+        # fig, axs = _plt.subplots(2, sharex=True)
         rx = self._rx_meas[:-1]
-        axs[0].plot(self._rx_meas, self._byx_meas, label='meas.')
-        axs[0].plot(self._rx_model, self._byx_model, label='model')
-        axs[1].plot(
-            rx, self._df_bmeas, label='meas')
-        axs[1].plot(rx, self._df_bmodel, label='model')
-        axs[0].set(ylabel='B [T]')
-        axs[1].set(xlabel='rt [mm]', ylabel='Field derivative [T/mm]')
-        _plt.legend()
+        # axs[0].plot(self._rx_meas, self._byx_meas, label='Meas.')
+        # axs[0].plot(self._rx_model, self._byx_model, label='Model')
+        # axs[1].plot(
+        #     rx, self._df_bmeas, label='Meas')
+        # axs[1].plot(rx, self._df_bmodel, label='Model')
+        # axs[0].set(ylabel='By [T]')
+        # axs[1].set(xlabel='rx [mm]', ylabel='Field gradient [T/mm]')
+        # axs[0].grid()
+        # axs[1].grid()
+        rms = 100*_np.std(
+            (self._df_bmodel-self._df_bmeas)/self._df_bmeas)/len(
+                self._df_bmeas)
+        _plt.plot(rx, 1e4*self._df_bmeas, label='Measurements')
+        _plt.plot(
+            rx, 1e4*self._df_bmodel, label='Model - r.m.s = {:.2f} %'.format(
+                rms))
+        _plt.xlabel('rx [mm]')
+        _plt.ylabel('By gradient [G/mm]')
+        _plt.legend(loc='upper right')
+        _plt.grid()
         _plt.show()
 
     def _shiftscale_calc_residue(self, shift):
@@ -710,15 +733,15 @@ class FieldAnalysisFromRadia(Tools):
             else:
                 rt, b, roll_off, roff = roff_data
             label = utils.var_param +\
-                " {}, roll-off = {:.2f} %".format(parameter, 100*roff)
+                " {} mm, roll-off = {:.2f} %".format(parameter, 100*roff)
             _plt.plot(rt, roll_off, '.-', label=label, color=colors[i])
         if field_component == 'by':
             _plt.xlabel('x [mm]')
         else:
             _plt.xlabel('y [mm]')
-        _plt.ylabel('roll off [%]')
+        _plt.ylabel('Field roll off [%]')
         _plt.xlim(-utils.ROLL_OFF_RT, utils.ROLL_OFF_RT)
-        _plt.ylim(-102*roff, 1.02*_np.max(roll_off))
+        _plt.ylim(-102*roff, 1.1*_np.max(roll_off)+0.1)
         if field_component == 'by':
             _plt.title('Field roll-off at x = {} mm'.format(utils.ROLL_OFF_RT))
         elif field_component == 'bx':
@@ -1337,7 +1360,7 @@ class AnalysisEffects(Tools):
             _plt.grid()
             _plt.show()
 
-    def _plot_beta_beating(self, width, phase, gap):
+    def _plot_beta_beating(self, width, phase, gap, xlim=None):
         fpath = self._get_data_path(width=width, phase=phase, gap=gap)
         # Compare optics between nominal value and uncorrect optics due ID
         results = self._calc_dtune_betabeat(twiss1=self._twiss1)
@@ -1361,7 +1384,8 @@ class AnalysisEffects(Tools):
         label1 = {False: '-nominal', True: '-fittedmodel'}[self.fitted_model]
 
         _plt.figure(1)
-        stg_tune = f'dtunex: {dtunex:+0.04f}\n' + f'dtuney: {dtuney:+0.04f}'
+        stg_tune = f'\u0394\u03BDx: {dtunex:+0.04f}\n'
+        stg_tune += f'\u0394\u03BDy: {dtuney:+0.04f}'
         labelx = f'X ({bbeatx_rms:.3f} % rms)'
         labely = f'Y ({bbeaty_rms:.3f} % rms)'
         figname = fpath + 'opt{}-ids-nonsymm'.format(label1)
@@ -1371,9 +1395,18 @@ class AnalysisEffects(Tools):
                   color='b', alpha=1.0, label=labelx)
         _plt.plot(self._twiss0.spos, bbeaty,
                   color='r', alpha=0.8, label=labely)
+        bbmax = _np.max(_np.concatenate((bbeatx, bbeaty)))
+        bbmin = _np.min(_np.concatenate((bbeatx, bbeaty)))
+        ylim = (1.1*bbmin, 1.1*bbmax)
+        if xlim is None:
+            xlim = (0, self._twiss0.spos[-1])
+        pyaccel.graphics.draw_lattice(
+            self._model_id, offset=bbmin, height=bbmax/8, gca=True)
+        _plt.xlim(xlim)
+        _plt.ylim(ylim)
         _plt.xlabel('spos [m]')
         _plt.ylabel('Beta Beating [%]')
-        _plt.title('Tune shift' + '\n' + stg_tune)
+        _plt.title('Tune shift:' + '\n' + stg_tune)
         _plt.suptitle(self.id_famname + ' - Non-symmetrized optics')
         _plt.tight_layout()
         _plt.legend()
@@ -1407,6 +1440,11 @@ class AnalysisEffects(Tools):
                   color='b', alpha=1.0, label=labelx)
         _plt.plot(self._twiss0.spos, bbeaty,
                   color='r', alpha=0.8, label=labely)
+        _plt.xlim(xlim)
+        _plt.ylim(ylim)
+        # bbmax = _np.max(_np.concatenate((bbeatx, bbeaty)))
+        pyaccel.graphics.draw_lattice(
+            self._model_id, offset=bbmin, height=bbmax/8, gca=True)
         _plt.xlabel('spos [m]')
         _plt.ylabel('Beta Beating [%]')
         _plt.title('Beta Beating')
@@ -1443,9 +1481,14 @@ class AnalysisEffects(Tools):
                   color='b', alpha=1.0, label=labelx)
         _plt.plot(self._twiss0.spos, bbeaty,
                   color='r', alpha=0.8, label=labely)
+        _plt.xlim(xlim)
+        _plt.ylim(ylim)
+        # bbmax = _np.max(_np.concatenate((bbeatx, bbeaty)))
+        pyaccel.graphics.draw_lattice(
+            self._model_id, offset=bbmin, height=bbmax/8, gca=True)
         _plt.xlabel('spos [m]')
         _plt.ylabel('Beta Beating [%]')
-        _plt.title('Beta Beating' + '\n' + self._stg)
+        _plt.title('Corrections:' + '\n' + self._stg)
         _plt.suptitle(self.id_famname +
                       '- Symmetrized optics and corrected tunes')
         _plt.legend()
@@ -1458,23 +1501,28 @@ class AnalysisEffects(Tools):
     def _correct_beta(self, straight_nr, knobs, goal_beta, goal_alpha):
         dk_tot = _np.zeros(len(knobs))
         for i in range(7):
-            dk = optics.correct_symmetry_withbeta(
+            dk, k = optics.correct_symmetry_withbeta(
                 self._model_id, straight_nr, goal_beta, goal_alpha)
-            print('iteration #{}, dK: {}'.format(i+1, dk))
+            if i == 0:
+                k0 = k
+            print('iteration #{}, \u0394K: {}'.format(i+1, dk))
             dk_tot += dk
+        delta = dk_tot/k0
         self._stg = str()
         for i, fam in enumerate(knobs):
-            self._stg += '{:<9s} dK: {:+9.4f} 1/m² \n'.format(fam, dk_tot[i])
+            self._stg += '{:<9s} \u0394K: {:+9.3f} % \n'.format(
+                fam, 100*delta[i])
         print(self._stg)
         self._twiss2, *_ = pyaccel.optics.calc_twiss(
             self._model_id, indices='closed')
         print()
 
-    def _correct_tunes(self, goal_tunes):
+    def _correct_tunes(self, goal_tunes, knobs_out=None):
         tunes = self._twiss1.mux[-1]/_np.pi/2, self._twiss1.muy[-1]/_np.pi/2
         print('init    tunes: {:.9f} {:.9f}'.format(tunes[0], tunes[1]))
         for i in range(2):
-            optics.correct_tunes_twoknobs(self._model_id, goal_tunes)
+            optics.correct_tunes_twoknobs(
+                self._model_id, goal_tunes, knobs_out)
             twiss, *_ = pyaccel.optics.calc_twiss(self._model_id)
             tunes = twiss.mux[-1]/_np.pi/2, twiss.muy[-1]/_np.pi/2
             print('iter #{} tunes: {:.9f} {:.9f}'.format(
@@ -1544,7 +1592,6 @@ class AnalysisEffects(Tools):
                 locs_beta_ = locs_beta[subsec]
                 if min(locs_beta_) < ind_id[0] and ind_id[1] < max(locs_beta_):
                     break
-
             k = self._calc_coupling()
             print()
             print('symmetrizing ID {} in subsec {}'.format(fam_name, subsec))
@@ -1563,10 +1610,13 @@ class AnalysisEffects(Tools):
 
             # symmetrize optics (local quad fam knobs)
             if self._beta_flag:
+
                 self._correct_beta(
                     straight_nr_, knobs_, goal_beta, goal_alpha)
-                # correct tunes
-                self._correct_tunes(goal_tunes)
+
+                knobs_l = list(knobs_.values())
+                knobs_out = [item for sublist in knobs_l for item in sublist]
+                self._correct_tunes(goal_tunes, knobs_out)
 
                 if self.bb_plot_flag:
                     # plot results
