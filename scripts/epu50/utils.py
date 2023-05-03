@@ -31,7 +31,7 @@ MEAS_FLAG = True
 REAL_WIDTH = 40
 
 gaps = [22.0]
-phases = [0]
+phases = [16.39]
 widths = [REAL_WIDTH]
 field_component = 'by'
 var_param = 'phase'
