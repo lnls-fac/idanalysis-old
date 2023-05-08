@@ -245,6 +245,7 @@ class RadiaModelCalibration(Tools):
         self._bz_model = None
         self._df_bmodel = None
         self._nrselblocks = 1
+        self._neg_flag = 1
 
     def _set_rz_model(self, nr_pts_period=9):
         """."""
@@ -262,9 +263,9 @@ class RadiaModelCalibration(Tools):
         """Initialize model and measurement field arrays"""
         self._set_rz_model(nr_pts_period=nr_pts_period)
         field = self._model.get_field(0, 0, self._rz_model)  # On-axis
-        self._bz_model = field[:, 2]
-        self._by_model = field[:, 1]
-        self._bx_model = field[:, 0]
+        self._bz_model = self._neg_flag*field[:, 2]
+        self._by_model = self._neg_flag*field[:, 1]
+        self._bx_model = self._neg_flag*field[:, 0]
         fmap = self._fmap
         self._rz_meas = fmap.rz
         self._bx_meas = fmap.bx[fmap.ry_zero][fmap.rx_zero][:]
@@ -293,10 +294,10 @@ class RadiaModelCalibration(Tools):
         b_meas = _np.concatenate((by_meas_fit, bx_meas_fit))
         rms = 100*_np.std((b_model-b_meas)/b_meas)/len(b_meas)
         axs[0].plot(self._rz_meas, self._by_meas, label='Measurements')
-        axs[0].plot(self._rz_model, self._by_model, label='Model')
+        axs[0].plot(self._rz_model, -self._by_model, label='Model')
         axs[1].plot(self._rz_meas, self._bx_meas, label='Measurements')
         axs[1].plot(
-            self._rz_model, self._bx_model,
+            self._rz_model, -self._bx_model,
             label='Model - r.m.s = {:.2f} %'.format(rms))
         axs[0].set(ylabel='By [T]')
         axs[1].set(xlabel='rz [mm]', ylabel='Bx [T]')
@@ -887,7 +888,12 @@ class FieldAnalysisFromRadia(Tools):
                     shifts = _np.linspace(0.1, 1, 10)
                     minshift, minresidue = shifts[0], float('inf')
                     for shift in shifts:
-                        mr_scale = -1*minscale if minscale < 0 else minscale
+                        if minscale < 0:
+                            mr_scale = -1*minscale
+                            self._neg_flag = -1
+                        else:
+                            mr_scale = minscale
+                            self._neg_flag = 1
                         cm._model = utils.generate_radia_model(
                             width=width, phase=phase, gap=gap,
                             nr_periods=utils.NR_PERIODS_REAL_ID,
@@ -904,7 +910,7 @@ class FieldAnalysisFromRadia(Tools):
                             width=width, phase=phase, gap=gap,
                             nr_periods=utils.NR_PERIODS_REAL_ID,
                             solve=False, roff_calibration=minshift)
-                    cm._shiftscale_set(scale=minscale)
+                    cm._shiftscale_set(scale=mr_scale*1.05)
                     cm._init_fields_rz()
                     if plot_flag:
                         cm._plot_fields_rz()

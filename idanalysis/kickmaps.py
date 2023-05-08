@@ -592,10 +592,6 @@ class IDKickMap:
         kmap_fname = configs.get_kickmap_filename(configs[idx])
         self.kmap_fname = kmap_fname
 
-    # def filter_kmap(self, posx, posy):
-    #     for i, ryi in enumerate(self.posy):
-    #         pfit = _np.polyfit(self.posx, self.kickx[i, j], 21)
-
     def _load_kmap(self):
         """."""
         if not self.kmap_fname:
@@ -704,7 +700,6 @@ class IDKickMap:
     @staticmethod
     def _linear_function(x, a, b):
         return a*x + b
-
 
     @staticmethod
     def _find_value_idx(data, value):
