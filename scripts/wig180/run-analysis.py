@@ -1,7 +1,7 @@
 #!/usr/bin/env python-sirius
 
 import numpy as np
-from idanalysis import AnalysisEffects
+from idanalysis.analysis import AnalysisEffects
 import utils
 
 

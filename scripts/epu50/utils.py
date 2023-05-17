@@ -289,60 +289,13 @@ MEAS_phase00p = ['ID4079', 'ID4099', 'ID4084', 'ID4089', 'ID4104', 'ID4094']
 MEAS_phase16p = ['ID4080', 'ID4100', 'ID4085', 'ID4090', 'ID4105', 'ID4095']
 MEAS_phase25p = ['ID4082', 'ID4102', 'ID4087', 'ID4092', 'ID4107', 'ID4097']
 
-# MEAS_GAPS = ['22.0', '23.3', '25.7', '29.3', '32.5', '40.9']
-# MEAS_PHASES = ['-25.00', '-16.39', '+00.00', '+16.39', '+25.00']
+
 MEAS_GAPS = [22.0, 23.3, 25.7, 29.3, 32.5, 40.9]
 MEAS_PHASES = [-25.00, -16.39, +00.00, +16.39, +25.00]
 
 ORDERED_CONFIGS = [MEAS_phase25n, MEAS_phase16n,
                    MEAS_phase00p, MEAS_phase16p,
                    MEAS_phase25p]
-
-
-def get_folder_data():
-    data_path = FOLDER_DATA
-    return data_path
-
-
-def get_data_ID(fname):
-    """."""
-    _, idn = fname.split('ID=')
-    idn = idn.replace('.dat', '')
-    return idn
-
-
-def get_meas_idconfig(phase, gap):
-    """."""
-    phase_idx = MEAS_PHASES.index(phase)
-    gap_idx = MEAS_GAPS.index(gap)
-    idconfig = ORDERED_CONFIGS[phase_idx][gap_idx]
-    return idconfig
-
-
-def get_phase_str(phase):
-    """."""
-    phase_str = '{:+07.3f}'.format(phase).replace('.', 'p')
-    phase_str = phase_str.replace('+', 'pos').replace('-', 'neg')
-    return phase_str
-
-
-def get_gap_str(gap):
-    """."""
-    gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
-    return gap_str
-
-
-def get_kmap_filename(phase, gap):
-    phase_str = get_phase_str(phase)
-    gap_str = get_gap_str(gap)
-    fpath = FOLDER_DATA + 'kickmaps/'
-    fpath = fpath.replace('model/data/', 'model/')
-    if MEAS_FLAG:
-        fpath = fpath.replace('model/', 'measurements/')
-    fname = fpath
-    fname += 'kickmap-ID-epu50-phase_{phase_str}-gap_{gap_str}.txt'.format(
-        phase_str, gap_str)
-    return fname
 
 
 def create_ids(

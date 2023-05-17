@@ -1,6 +1,6 @@
 #!/usr/bin/env python-sirius
 
-from idanalysis import AnalysisKickmap
+from idanalysis.analysis import AnalysisKickmap
 
 import utils
 

@@ -12,12 +12,14 @@ if __name__ == "__main__":
     analysis.shift_flag = utils.SHIFT_FLAG
     analysis.filter_flag = utils.FILTER_FLAG
     analysis.calc_type = analysis.CALC_TYPES.symmetrized
-    analysis.orbcorr_plot_flag = True
+    analysis.orbcorr_plot_flag = False
     analysis.bb_plot_flag = True
     analysis.linear = False
+    analysis.meas_flag = utils.MEAS_FLAG
 
-    gap = utils.gaps[0]
-    phase = utils.phases[0]
-    widths = utils.widths
-    for width in widths:
-        analysis.run_analysis_dynapt(width=width, phase=phase, gap=gap)
+    gaps = utils.gaps
+    # phase = utils.phases[0]
+    width = utils.widths[0]
+    for phase in utils.phases:
+        for gap in gaps:
+            analysis.run_analysis_dynapt(width=width, phase=phase, gap=gap)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python-sirius
 
 import numpy as np
-from idanalysis import FieldAnalysisFromRadia
+from idanalysis.analysis import FieldAnalysisFromRadia
 import utils
 
 if __name__ == "__main__":

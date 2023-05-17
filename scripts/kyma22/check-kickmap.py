@@ -1,7 +1,7 @@
 #!/usr/bin/env python-sirius
 
 """Script to check kickmap"""
-from idanalysis import AnalysisKickmap
+from idanalysis.analysis import AnalysisKickmap
 
 import utils
 

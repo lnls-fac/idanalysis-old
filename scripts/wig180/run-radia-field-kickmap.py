@@ -1,7 +1,7 @@
 #!/usr/bin/env python-sirius
 
 import numpy as np
-from idanalysis import FieldAnalysisFromRadia
+from idanalysis.analysis import FieldAnalysisFromRadia
 import utils
 
 if __name__ == "__main__":
@@ -20,7 +20,8 @@ if __name__ == "__main__":
     radia_fanalysis.traj_max_rz = radia_fanalysis.rz_field_max
     radia_fanalysis.kmap_idlen = utils.ID_KMAP_LEN
 
-    # radia_fanalysis.calibrate_models(plot_flag=True)
+    radia_fanalysis.roff_deltas = np.linspace(0.1, 1, 10)
+    radia_fanalysis.calibrate_models(plot_flag=True)
 
     # Grid for low beta
     radia_fanalysis.gridx = list(np.linspace(-4.0, +4.0, 21) / 1000)  # [m]

@@ -4,7 +4,7 @@ import numpy as np
 
 from mathphys.functions import save_pickle
 
-from idanalysis import IDKickMap
+from idanalysis.analysis import IDKickMap
 import utils
 
 

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from mathphys.functions import save_pickle, load_pickle
 
-from idanalysis import FieldAnalysisFromRadia
+from idanalysis.analysis import FieldAnalysisFromRadia
 import utils
 
 if __name__ == "__main__":

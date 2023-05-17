@@ -1,7 +1,7 @@
 #!/usr/bin/env python-sirius
 
 import numpy as np
-import epics 
+import epics
 
 from siriuspy.devices import PowerSupply
 from siriuspy.devices import SOFB
@@ -51,11 +51,11 @@ def wig_set_gap(current_gap, desired_gap, corrs=None):
         input("Waiting for user adjustment, press enter when ready.")
         if corrs:
             set_corrs(gap, corrs)
-            
-        
-    
 
-def initialize_devices(sofb, corrs, timeout=DEF_TIMEOUT): 
+
+
+
+def initialize_devices(sofb, corrs, timeout=DEF_TIMEOUT):
     """."""
     # set sofb in sloworb mode
     sofb.cmd_change_opmode_to_sloworb(timeout=timeout)
@@ -115,12 +115,12 @@ def meas_orbm_wiggler_corrs(sofb, corrs):
 
 
 def run():
-    
+
     nr_points = 50
 
     sofb, corrs = create_devices()
     initialize_devices(sofb, corrs)
-    
+
     # open up maximum gap ans stores initial orbit
     wig_set_gap(current_gap = 59.6, desired_gap=300, corrs)
     orb0 = sofb_orb_acquire(sofb, nr_points=nr_points)
@@ -129,7 +129,7 @@ def run():
 
     # close gap to operation value
     wig_set_gap(current_gap = 300, desired_gap=59.6, corrs)
-    
+
     # set delta currents to zero
     dcurr_up, dcurr_down = 0, 0
     for _ in range(3):
@@ -146,10 +146,10 @@ def run():
             ismat = 1/smat
             invalid_idx = np.where(abs(smat)<=1e-5)
             for i in np.arange(len(invalid_idx[0])):
-                ismat[invalid_idx[0][i]] = 0 
+                ismat[invalid_idx[0][i]] = 0
             ismat = np.diag(ismat)
             invmat = -1 * np.dot(np.dot(vmat.T, ismat), umat.T)
-        
+
         # calc dI for dorb
         dcurr_up, dcurr_down += np.dot(invmat, dorb)
         dcurr = [dcurr_up, dcurr_down]
@@ -164,4 +164,3 @@ def run():
 if __name__ == "__main__":
     """."""
     run()
-

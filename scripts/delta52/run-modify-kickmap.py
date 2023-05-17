@@ -12,6 +12,7 @@ if __name__ == "__main__":
     widths = utils.widths
 
     kickanalysis = AnalysisKickmap()
+    kickanalysis.meas_flag = utils.MEAS_FLAG
     kickanalysis.run_shift_kickmap(gaps=gaps, phases=phases,
                                    widths=widths)
 
