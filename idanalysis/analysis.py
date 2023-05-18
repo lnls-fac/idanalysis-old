@@ -99,14 +99,9 @@ class Tools:
             famdata = pymodels.si.families.get_family_data(model)
             idcs_qn = _np.array(famdata['QN']['index']).ravel()
             idcs_qs = _np.array(famdata['QS']['index']).ravel()
-
             data = _load_pickle(utils.FIT_PATH)
-            modelf = data['fit_model']
-            famdataf = pymodels.si.families.get_family_data(modelf)
-            idcs_qnf = _np.array(famdataf['QN']['index']).ravel()
-            idcs_qsf = _np.array(famdataf['QS']['index']).ravel()
-            kl = pyaccel.lattice.get_attribute(modelf, 'KL', idcs_qnf)
-            ksl = pyaccel.lattice.get_attribute(modelf, 'KsL', idcs_qsf)
+            kl = data['KL']
+            ksl = data['KsL']
             pyaccel.lattice.set_attribute(model, 'KL', idcs_qn, kl)
             pyaccel.lattice.set_attribute(model, 'KsL', idcs_qs, ksl)
         model.cavity_on = False
@@ -533,7 +528,7 @@ class FieldAnalysisFromFieldmap(Tools):
 
         return data_plot
 
-    def _plot_field_on_axis(self, data, phase, gap):
+    def _plot_field_on_axis(self, data, phase, gap, sulfix=None):
         colors = ['b', 'g', 'y', 'C1', 'r', 'k']
         field_component = utils.field_component
         period = utils.ID_PERIOD
@@ -542,9 +537,12 @@ class FieldAnalysisFromFieldmap(Tools):
                 field_component = 'bx'
             else:
                 field_component = 'by'
-        fig, axs = _plt.subplots(3, 1, sharex=True)
+        fig, axs = _plt.subplots(3, 1, sharex=True, figsize=(12, 8))
         output_dir = utils.FOLDER_DATA + 'general'
         output_dir = output_dir.replace('model', 'measurements')
+        filename = output_dir + '/field-profile'
+        if sulfix is not None:
+            filename += sulfix
         self._mkdir_function(output_dir)
         var_parameters = list(data.keys())
         for i, parameter in enumerate(var_parameters):
@@ -563,10 +561,10 @@ class FieldAnalysisFromFieldmap(Tools):
                 axs[j].set_xlabel('z [mm]')
                 axs[j].legend()
                 axs[j].grid()
-        _plt.savefig(output_dir + '/field-profile', dpi=300)
+        _plt.savefig(filename, dpi=300)
         _plt.show()
 
-    def _plot_rk_traj(self, data):
+    def _plot_rk_traj(self, data, sulfix=None):
         colors = ['b', 'g', 'y', 'C1', 'r', 'k']
         var_parameters = list(data.keys())
         output_dir = utils.FOLDER_DATA + 'general'
@@ -599,12 +597,15 @@ class FieldAnalysisFromFieldmap(Tools):
             _plt.plot(s, py, color=colors[i], label=label)
             _plt.xlabel('s [mm]')
             _plt.ylabel('py [urad]')
-        sulfix = ['/traj-rx', '/traj-ry', '/traj-px', '/traj-py']
+        sulfix_ = ['/traj-rx', '/traj-ry', '/traj-px', '/traj-py']
         for i in [1, 2, 3, 4]:
             _plt.figure(i)
             _plt.legend()
             _plt.grid()
-            _plt.savefig(output_dir + sulfix[i-1], dpi=300)
+            filename = output_dir + sulfix_[i-1]
+            if sulfix is not None:
+                filename += sulfix
+            _plt.savefig(filename, dpi=300)
         _plt.show()
 
     def _read_data_roll_off(self, data, parameter):
@@ -624,11 +625,14 @@ class FieldAnalysisFromFieldmap(Tools):
             roll_off = 100*(b/b0 - 1)
             return rt, b, roll_off, roff
 
-    def _plot_field_roll_off(self, data):
+    def _plot_field_roll_off(self, data, sulfix=None):
         field_component = utils.field_component
         _plt.figure(1)
         output_dir = utils.FOLDER_DATA + 'general'
         output_dir = output_dir.replace('model', 'measurements')
+        filename = output_dir + '/field-rolloff'
+        if sulfix is not None:
+            filename += sulfix
         colors = ['b', 'g', 'y', 'C1', 'r', 'k']
         var_parameters = list(data.keys())
         for i, parameter in enumerate(var_parameters):
@@ -653,14 +657,15 @@ class FieldAnalysisFromFieldmap(Tools):
             _plt.title('Field roll-off at y = {} mm'.format(utils.ROLL_OFF_RT))
         _plt.legend()
         _plt.grid()
-        _plt.savefig(output_dir + '/field-rolloff', dpi=300)
+        _plt.savefig(filename, dpi=300)
         _plt.show()
 
-    def run_plot_data(self, phase=0, gap=0):
+    def run_plot_data(self, phase=0, gap=0, sulfix=None):
         data_plot = self.get_data_plot(phase=phase, gap=gap)
-        self._plot_field_on_axis(data=data_plot, phase=phase, gap=gap)
-        self._plot_rk_traj(data=data_plot)
-        self._plot_field_roll_off(data=data_plot)
+        self._plot_field_on_axis(data=data_plot,
+                                 phase=phase, gap=gap, sulfix=sulfix)
+        self._plot_rk_traj(data=data_plot, sulfix=sulfix)
+        self._plot_field_roll_off(data=data_plot, sulfix=sulfix)
 
 
 class RadiaModelCalibration(Tools):
@@ -1086,11 +1091,11 @@ class FieldAnalysisFromRadia(Tools):
                     print('File does not exist.')
         return data_plot
 
-    def run_plot_data(self, width=0, phase=0, gap=0):
+    def run_plot_data(self, width=0, phase=0, gap=0, sulfix=None):
         data_plot = self.get_data_plot(width=width, phase=phase, gap=gap)
-        self._plot_field_on_axis(data=data_plot)
-        self._plot_rk_traj(data=data_plot)
-        self._plot_field_roll_off(data=data_plot)
+        self._plot_field_on_axis(data=data_plot, sulfix=sulfix)
+        self._plot_rk_traj(data=data_plot, sulfix=sulfix)
+        self._plot_field_roll_off(data=data_plot, sulfix=sulfix)
 
     def run_generate_kickmap(self):
         if self.models:
@@ -1105,11 +1110,14 @@ class FieldAnalysisFromRadia(Tools):
                   f'and width {key[0][1]} mm')
             self._generate_kickmap(key, id)
 
-    def _plot_field_on_axis(self, data):
+    def _plot_field_on_axis(self, data, sulfix=None):
         colors = ['b', 'g', 'y', 'C1', 'r', 'k']
         field_component = utils.field_component
-        fig, axs = _plt.subplots(3, 1, sharex=True)
+        fig, axs = _plt.subplots(3, 1, sharex=True, figsize=(12, 8))
         output_dir = utils.FOLDER_DATA + 'general'
+        filename = output_dir + '/field-profile'
+        if sulfix is not None:
+            filename += sulfix
         self._mkdir_function(output_dir)
         var_parameters = list(data.keys())
         for i, parameter in enumerate(var_parameters):
@@ -1128,10 +1136,10 @@ class FieldAnalysisFromRadia(Tools):
                 axs[j].set_xlabel('z [mm]')
                 axs[j].legend()
                 axs[j].grid()
-        _plt.savefig(output_dir + '/field-profile', dpi=300)
+        _plt.savefig(filename, dpi=300)
         _plt.show()
 
-    def _plot_rk_traj(self, data):
+    def _plot_rk_traj(self, data, sulfix=None):
         colors = ['b', 'g', 'y', 'C1', 'r', 'k']
         var_parameters = list(data.keys())
         output_dir = utils.FOLDER_DATA + 'general'
@@ -1163,12 +1171,15 @@ class FieldAnalysisFromRadia(Tools):
             _plt.plot(s, py, color=colors[i], label=label)
             _plt.xlabel('s [mm]')
             _plt.ylabel('py [urad]')
-        sulfix = ['/traj-rx', '/traj-ry', '/traj-px', '/traj-py']
+        sulfix_ = ['/traj-rx', '/traj-ry', '/traj-px', '/traj-py']
         for i in [1, 2, 3, 4]:
             _plt.figure(i)
             _plt.legend()
             _plt.grid()
-            _plt.savefig(output_dir + sulfix[i-1], dpi=300)
+            filename = output_dir + sulfix_[i-1]
+            if sulfix is not None:
+                filename += sulfix
+            _plt.savefig(filename, dpi=300)
         _plt.show()
 
     def _read_data_roll_off(self, data, parameter):
@@ -1190,10 +1201,13 @@ class FieldAnalysisFromRadia(Tools):
 
         return
 
-    def _plot_field_roll_off(self, data):
+    def _plot_field_roll_off(self, data, sulfix=None):
         field_component = utils.field_component
         _plt.figure(1)
         output_dir = utils.FOLDER_DATA + 'general'
+        filename = output_dir + '/field-rolloff'
+        if sulfix is not None:
+            filename += sulfix
         colors = ['b', 'g', 'y', 'C1', 'r', 'k']
         var_parameters = list(data.keys())
         for i, parameter in enumerate(var_parameters):
@@ -1218,7 +1232,7 @@ class FieldAnalysisFromRadia(Tools):
             _plt.title('Field roll-off at y = {} mm'.format(utils.ROLL_OFF_RT))
         _plt.legend()
         _plt.grid()
-        _plt.savefig(output_dir + '/field-rolloff', dpi=300)
+        _plt.savefig(filename, dpi=300)
         _plt.show()
 
     def _get_planar_id_features(self,
@@ -1747,14 +1761,9 @@ class AnalysisEffects(Tools):
             famdata0 = pymodels.si.families.get_family_data(model0)
             idcs_qn0 = _np.array(famdata0['QN']['index']).ravel()
             idcs_qs0 = _np.array(famdata0['QS']['index']).ravel()
-
             data = _load_pickle(utils.FIT_PATH)
-            modelf = data['fit_model']
-            famdataf = pymodels.si.families.get_family_data(modelf)
-            idcs_qnf = _np.array(famdataf['QN']['index']).ravel()
-            idcs_qsf = _np.array(famdataf['QS']['index']).ravel()
-            kl = pyaccel.lattice.get_attribute(modelf, 'KL', idcs_qnf)
-            ksl = pyaccel.lattice.get_attribute(modelf, 'KsL', idcs_qsf)
+            kl = data['KL']
+            ksl = data['KsL']
             pyaccel.lattice.set_attribute(model0, 'KL', idcs_qn0, kl)
             pyaccel.lattice.set_attribute(model0, 'KsL', idcs_qs0, ksl)
 
@@ -2138,9 +2147,9 @@ class AnalysisEffects(Tools):
         model.vchamber_on = True
 
         dynapxy = DynapXY(model)
-        dynapxy.params.x_nrpts = 20
+        dynapxy.params.x_nrpts = 40
         dynapxy.params.y_nrpts = 20
-        dynapxy.params.nrturns = 1*512
+        dynapxy.params.nrturns = 2*1024
         print(dynapxy)
         dynapxy.do_tracking()
         dynapxy.process_data()

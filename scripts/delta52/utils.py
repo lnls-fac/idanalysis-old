@@ -21,8 +21,8 @@ RESCALE_LENGTH = 1
 NOMINAL_GAP = 13.6
 ID_FAMNAME = 'DELTA52'
 
-SIMODEL_FITTED = True
-FIT_PATH = '/home/gabriel/Desktop/my-data-by-day/2023-05-15-SI_low_coupling/fitting_ref_config_before_low_coupling.pickle'
+SIMODEL_FITTED = False
+FIT_PATH = '/home/gabriel/Desktop/my-data-by-day/2023-05-15-SI_low_coupling/fitting_ref_config_before_low_coupling_strengths.pickle'
 SHIFT_FLAG = True
 FILTER_FLAG = False
 
@@ -31,7 +31,7 @@ MEAS_DATA_PATH = './meas-data/id-sabia/model-03/measurement/magnetic/hallprobe/'
 MEAS_FLAG = False
 REAL_WIDTH = 45
 
-gaps = [13.125, 26.25]
+gaps = [13.125, 26.250, 0]
 phases = [0, -13.125, -26.25]
 # gaps = [0]
 # phases = [0]
@@ -140,8 +140,8 @@ def create_ids(
     rescale_kicks = rescale_kicks if rescale_kicks is not None else 1.0
     rescale_length = \
         rescale_length if rescale_length is not None else 1
-    # if MEAS_FLAG:
-        #  rescale_length = 1
+    if MEAS_FLAG:
+         rescale_length = 1
     IDModel = pymodels.si.IDModel
     delta52 = IDModel(
         subsec=IDModel.SUBSECTIONS.ID10SB,
@@ -156,8 +156,6 @@ def generate_radia_model(phase, gap,
                          solve=SOLVE_FLAG, **kwargs):
     """."""
 
-    # if 'roff_calibration' in kwargs:
-        # cs_gap += kwargs['roff_calibration']
     delta = DeltaSabia()
 
     delta.set_cassete_positions(dp=phase, dgv=gap)

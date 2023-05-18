@@ -61,45 +61,59 @@ def calc_on_traj_integrals(data):
 
 
 def plot_integrals(ix1_f, ix2_f, iy1_f, iy2_f,
-                   ix1_r, ix2_r, iy1_r, iy2_r):
+                   ix1_r, ix2_r, iy1_r, iy2_r, title):
     fig, axs = plt.subplots(3, 2, sharex=True, figsize=(12, 8))
     for i, phase in enumerate(utils.phases):
-        axs[i][0].plot(utils.gaps, ix1_f[:, i],
+        gaps = np.array(utils.gaps)
+        sort_inds = np.argsort(gaps)
+        gaps = gaps[sort_inds]
+        ix1f, ix2f = ix1_f[sort_inds, i], ix2_f[sort_inds, i]
+        ix1r, ix2r = ix1_r[sort_inds, i], ix2_r[sort_inds, i]
+        iy1f, iy2f = iy1_f[sort_inds, i], iy2_f[sort_inds, i]
+        iy1r, iy2r = iy1_r[sort_inds, i], iy2_r[sort_inds, i]
+        if phase != 0:
+            gaps = gaps[1:]
+            ix1f, ix2f = ix1f[1:], ix2f[1:]
+            ix1r, ix2r = ix1r[1:], ix2r[1:]
+            iy1f, iy2f = iy1f[1:], iy2f[1:]
+            iy1r, iy2r = iy1r[1:], iy2r[1:]
+        axs[i][0].plot(gaps, ix1f,
                        linestyle='--', marker='o', color='b',
                        label='measurements - bx')
-        axs[i][0].plot(utils.gaps, ix1_r[:, i],
+        axs[i][0].plot(gaps, ix1r,
                        linestyle=':', marker='v', color='C0',
                        label='model - bx')
-        axs[i][0].plot(utils.gaps, iy1_f[:, i],
+        axs[i][0].plot(gaps, iy1f,
                        linestyle='--', marker='o', color='r',
                        label='measurements - by')
-        axs[i][0].plot(utils.gaps, iy1_r[:, i],
+        axs[i][0].plot(gaps, iy1r,
                        linestyle=':', marker='v', color='#FF7F7F',
                        label='model- by')
-        axs[i][0].set_title('phase: {} mm'.format(phase))
-        axs[i][0].set_xlabel('Gap')
+        axs[i][0].set_title('phase: {} [mm]'.format(phase))
+        axs[i][0].set_xlabel('dgv [mm]')
         axs[i][0].set_ylabel('1st Field Integral [urad]')
 
         if i == 0:
             axs[i][0].legend()
 
-        axs[i][1].plot(utils.gaps, ix2_f[:, i],
+        axs[i][1].plot(gaps, ix2f,
                        linestyle='--', marker='o', color='b',
                        label='measurements - bx')
-        axs[i][1].plot(utils.gaps, ix2_r[:, i],
+        axs[i][1].plot(gaps, ix2r,
                        linestyle=':', marker='v', color='C0',
                        label='model - bx')
-        axs[i][1].plot(utils.gaps, iy2_f[:, i],
+        axs[i][1].plot(gaps, iy2f,
                        linestyle='--', marker='o', color='r',
                        label='measurements - by')
-        axs[i][1].plot(utils.gaps, iy2_r[:, i],
+        axs[i][1].plot(gaps, iy2r,
                        linestyle=':', marker='v', color='#FF7F7F',
                        label='model - by')
-        axs[i][1].set_title('phase: {} mm'.format(phase))
-        axs[i][1].set_xlabel('Gap')
+        axs[i][1].set_title('phase: {} [mm]'.format(phase))
+        axs[i][1].set_xlabel('dgv [mm]')
         axs[i][1].set_ylabel('2nd Field Integral [um]')
 
     # Adjust the spacing between subplots
+    plt.suptitle(title)
     plt.tight_layout()
     # Display the plot
     plt.show()
@@ -108,8 +122,6 @@ def plot_integrals(ix1_f, ix2_f, iy1_f, iy2_f,
 if __name__ == "__main__":
 
     width = utils.widths[0]
-    phase = utils.phases[1]
-    # gap = utils.gaps[0]
 
     fmap_fanalysis = FieldAnalysisFromFieldmap()
     radia_fanalysis = FieldAnalysisFromRadia()
@@ -131,20 +143,26 @@ if __name__ == "__main__":
         data_radia = radia_fanalysis.get_data_plot(width=width,
                                                    phase=phase)
 
-        ix1_f[:, i], iy1_f[:, i], ix2_f[:, i], iy2_f[:, i] =\
-            calc_on_axis_integrals(data_fmap)
+        ret1, ret2, ret3, ret4 = calc_on_axis_integrals(data_fmap)
+        ix1_f[:len(ret1), i], iy1_f[:len(ret2), i] = ret1, ret2
+        ix2_f[:len(ret3), i], iy2_f[:len(ret4), i] = ret3, ret4
 
-        ix1_r[:, i], iy1_r[:, i], ix2_r[:, i], iy2_r[:, i] =\
-            calc_on_axis_integrals(data_radia)
+        ret1, ret2, ret3, ret4 = calc_on_axis_integrals(data_radia)
+        ix1_r[:len(ret1), i], iy1_r[:len(ret2), i] = ret1, ret2
+        ix2_r[:len(ret3), i], iy2_r[:len(ret4), i] = ret3, ret4
 
-        ix1_ft[:, i], iy1_ft[:, i], ix2_ft[:, i], iy2_ft[:, i] =\
-            calc_on_traj_integrals(data_fmap)
+        ret1, ret2, ret3, ret4 = calc_on_traj_integrals(data_fmap)
+        ix1_ft[:len(ret1), i], iy1_ft[:len(ret2), i] = ret1, ret2
+        ix2_ft[:len(ret3), i], iy2_ft[:len(ret4), i] = ret3, ret4
 
-        ix1_rt[:, i], iy1_rt[:, i], ix2_rt[:, i], iy2_rt[:, i] =\
-            calc_on_traj_integrals(data_radia)
+        ret1, ret2, ret3, ret4 = calc_on_traj_integrals(data_radia)
+        ix1_rt[:len(ret1), i], iy1_rt[:len(ret2), i] = ret1, ret2
+        ix2_rt[:len(ret3), i], iy2_rt[:len(ret4), i] = ret3, ret4
 
     plot_integrals(ix1_f, ix2_f, iy1_f, iy2_f,
-                   ix1_r, ix2_r, iy1_r, iy2_r)
+                   ix1_r, ix2_r, iy1_r, iy2_r,
+                   title='On-axis Integrals')
 
     plot_integrals(ix1_ft, ix2_ft, iy1_ft, iy2_ft,
-                   ix1_rt, ix2_rt, iy1_rt, iy2_rt)
+                   ix1_rt, ix2_rt, iy1_rt, iy2_rt,
+                   title='On-traj Integrals')
